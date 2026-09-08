@@ -1,4 +1,4 @@
-// generate_plan_docx.js — main assembler
+// generate_srs_docx.js — SRS v1.0 assembler (3-section: cover / Roman TOC / Arabic body)
 const {
   Document, Packer, Paragraph, TextRun, Header, Footer, PageNumber,
   NumberFormat, AlignmentType, SectionType, TableOfContents, PageBreak,
@@ -7,30 +7,28 @@ const fs = require("fs");
 const path = require("path");
 
 const { P, FONT, HFONT, buildCoverR1 } = require("./plan_lib");
-const A = require("./plan_content_a");
-const B = require("./plan_content_b");
-const C = require("./plan_content_c");
-const D = require("./plan_content_d");
+const A = require("./srs_content_a");
+const B = require("./srs_content_b");
+const C = require("./srs_content_c");
+const D = require("./srs_content_d");
 
-const OUT = "/home/z/my-project/download/Rent_Control_System_Implementation_Plan.docx";
+const OUT = "/home/z/my-project/download/Rent_Control_System_SRS_v1.0.docx";
 
-// ── cover config ──
 const coverConfig = {
   title: "Residential House Rent Control and Administration System",
-  subtitle: "Master Implementation Plan and Step-by-Step Development Guide",
-  englishLabel: "IMPLEMENTATION PLAN",
+  subtitle: "Software Requirements Specification (SRS) - Version 1.0",
+  englishLabel: "PHASE 1 DELIVERABLE",
   metaLines: [
     "Legal Basis: Proclamation 1320/2016 + Directive 7/2016 + Model Agreement",
-    "Methodology: Hybrid V-Model + Incremental Agile, Phase-Gated",
-    "Scope: Federal - City Bureau - Sub-city - Woreda Tiers",
-    "Version 1.0 - September 2026",
+    "Contents: 13 Modules, 74 Functional Requirements, 12 NFRs, 21 Use Cases",
+    "Gate: G1 - Requirements Baseline Approval",
+    "Date: September 2026",
   ],
   footerLeft: "Rent Control and Administration System Project",
-  footerRight: "Implementation Plan V1.0",
+  footerRight: "SRS v1.0",
   palette: { bg: P.bg, accent: P.accent, cover: P.cover },
 };
 
-// ── shared page setup ──
 const pgSize = { width: 11906, height: 16838 };
 const pgMargin = { top: 1440, bottom: 1440, left: 1701, right: 1417 };
 
@@ -48,14 +46,13 @@ function docHeader() {
       alignment: AlignmentType.CENTER,
       spacing: { after: 0 },
       children: [new TextRun({
-        text: "Rent Control and Administration System - Implementation Plan",
+        text: "Rent Control and Administration System - Software Requirements Specification v1.0",
         size: 18, color: "808080", font: FONT,
       })],
     })],
   });
 }
 
-// ── front matter: TOC ──
 const frontMatter = [
   new Paragraph({
     alignment: AlignmentType.CENTER,
@@ -76,26 +73,25 @@ const frontMatter = [
   new Paragraph({ children: [new PageBreak()] }),
 ];
 
-// ── body ──
 const body = [
   ...A.chapter1(),
   ...A.chapter2(),
-  ...A.chapter3(),
-  ...B.chapter4(),
-  ...B.chapter5(),
-  ...B.chapter6(),
-  ...C.chapter7(),
-  ...C.chapter8(),
-  ...C.chapter9(),
+  ...B.chapter3Intro(),
+  ...B.m1(), ...B.m2(), ...B.m3(), ...B.m4(), ...B.m5(), ...B.m6(), ...B.m7(),
+  ...C.m8(), ...C.m9(), ...C.m10(), ...C.m11(), ...C.m12(), ...C.m13(),
+  ...C.chapter4(),
+  ...D.chapter5(),
+  ...D.chapter6(),
+  ...D.chapter7(),
+  ...D.chapter8(),
+  ...D.chapter9(),
   ...D.chapter10(),
   ...D.chapter11(),
-  ...D.chapter12(),
 ];
 
-// ── document ──
 const doc = new Document({
   creator: "Rent Control and Administration System Project",
-  title: "Residential House Rent Control and Administration System - Implementation Plan",
+  title: "Residential House Rent Control and Administration System - SRS v1.0",
   styles: {
     default: {
       document: {
@@ -118,14 +114,12 @@ const doc = new Document({
   },
   sections: [
     {
-      // Section 1: Cover — margin 0, no header/footer, no page numbers
       properties: {
         page: { size: pgSize, margin: { top: 0, bottom: 0, left: 0, right: 0 } },
       },
       children: buildCoverR1(coverConfig),
     },
     {
-      // Section 2: Front matter (TOC) — Roman numerals
       properties: {
         type: SectionType.NEXT_PAGE,
         page: {
@@ -137,7 +131,6 @@ const doc = new Document({
       children: frontMatter,
     },
     {
-      // Section 3: Body — Arabic numerals starting at 1
       properties: {
         type: SectionType.NEXT_PAGE,
         page: {

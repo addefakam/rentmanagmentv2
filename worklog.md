@@ -33,3 +33,20 @@ Work Log:
 
 Stage Summary:
 - Deliverable confirmed intact and validated. Presented plan skeleton to user; awaiting Gate G0 approval to start Phase 1 (SRS v1.0 consolidation).
+
+---
+Task ID: 2 (Phase 1 - Gate G0 approved)
+Agent: Main agent (Super Z)
+Task: Produce SRS v1.0 (Phase 1 deliverable) with full legal traceability per approved implementation plan.
+
+Work Log:
+- Re-read full docx skill chain (create route, common-rules, toc, docx-js-core, report scene) and reused plan_lib.js (R1 cover, GO-1 palette) for series consistency.
+- Wrote SRS content scripts: srs_content_a.js (Ch1-2), srs_content_b.js (Ch3 M1-M7), srs_content_c.js (Ch3 M8-M13 + Ch4), srs_content_d.js (Ch5-11), generate_srs_docx.js (3-section assembler).
+- Fixed 2 generation bugs: (1) nested tbl() arrays serialized as invalid <0/> XML -> spread all tbl() calls; (2) raw '<=' in text -> reworded.
+- Ran add_toc_placeholders.py --auto (41 headings, exit 0), postprocess_footers.py (ROMAN/arabic patched, 1 empty pgNumType stripped), postcheck.py: 0 errors, 1 acceptable warning (TOC PageBreak separator).
+- Verified via LibreOffice PDF render: 41 pages; cover, TOC, FR tables, NFR table, use case registry all clean.
+
+Stage Summary:
+- Deliverable: /home/z/my-project/download/Rent_Control_System_SRS_v1.0.docx (41 pages, 11 chapters: 13 modules / 74 FRs / 12 NFRs / 21 UC registry / Proclamation+Directive+Model-Agreement traceability matrices / open items O1-O6 / G1 approval block).
+- Two [G1-CONFIRM] items flagged: FR-M11-01 (Dir. Art. 22 fine ladder figures) and FR-M13-04 (regional config), plus open items O1-O6.
+- Awaiting Gate G1 approval to freeze requirements baseline and start Phase 2 (Architecture & Design).
