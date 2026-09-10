@@ -50,6 +50,12 @@ export const CAPABILITIES: Record<string, string[]> = {
   "promotion:run": ["SYSTEM_ADMIN"],
   "uat:run": ["SYSTEM_ADMIN", "BUREAU_HEAD"], // Phase 6 acceptance battery coordinator
   "analytics:compute": ["BUREAU_ANALYST"],
+  // Phase 7 — migration, reconciliation, training, pilot, awareness
+  "migration:run": ["WOREDA_REGISTRAR", "SYSTEM_ADMIN"], // Dir. Art. 8(2) legacy intake
+  "reconciliation:run": ["SUBCITY_MONITOR", "BUREAU_ANALYST", "SYSTEM_ADMIN"], // Dir. Art. 13
+  "training:record": ["SYSTEM_ADMIN", "BUREAU_HEAD"], // plan 5.8 training records
+  "pilot:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // plan 5.8 pilot operation
+  "awareness:manage": ["MINISTRY_ANALYST", "BUREAU_HEAD"], // Proc. Arts. 14, 16
 };
 
 export type Actor = {

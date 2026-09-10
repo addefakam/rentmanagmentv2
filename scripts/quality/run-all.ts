@@ -13,17 +13,29 @@ const files = [
   "tests/integration.test.ts",
   "tests/security.test.ts",
   "tests/compliance-legal.test.ts",
+  "tests/phase7.test.ts",
 ];
 
-const proc = Bun.spawnSync({
-  cmd: ["bun", "test", ...files],
-  cwd: "/home/z/my-project",
-  env: { ...process.env, DO_NOT_TRACK: "1" },
-  stdout: "pipe",
-  stderr: "pipe",
-});
+// Suites run ONE FILE PER PROCESS, sequentially: the suites share a single
+// seeded SQLite database, and parallel workers corrupt each other's fixtures
+// (unique party codes derive from table counts). Sequential execution is the
+// deterministic, evidence-grade mode for the gate battery.
+let allOut = "";
+let anyFail = false;
+for (const f of files) {
+  const one = Bun.spawnSync({
+    cmd: ["bun", "test", f],
+    cwd: "/home/z/my-project",
+    env: { ...process.env, DO_NOT_TRACK: "1" },
+    stdout: "pipe",
+    stderr: "pipe",
+  });
+  allOut += new TextDecoder().decode(one.stdout) + new TextDecoder().decode(one.stderr);
+  if (one.exitCode !== 0) anyFail = true;
+}
+const proc = { stdout: allOut, exitCode: anyFail ? 1 : 0 };
 
-const out = new TextDecoder().decode(proc.stdout) + new TextDecoder().decode(proc.stderr);
+const out = String(proc.stdout);
 const byTest: Record<string, "pass" | "fail"> = {};
 for (const line of out.split("\n")) {
   const m = line.match(/^\((pass|fail)\)\s+(.+?)(\s+\[\d+\.?\d*ms\])?$/);

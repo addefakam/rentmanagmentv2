@@ -23,6 +23,9 @@ import {
 import {
   COMPLAINT_GROUNDS, CITY_CONFIGS, DEMO_STAFF, PUBLICATIONS,
 } from "../src/lib/seed-data/catalogs-p4";
+import {
+  LEGACY_BOOKS, TRAINING_COURSES, TRAINING_SESSIONS, PILOT_SPEC, AWARENESS_ITEMS,
+} from "../src/lib/seed-data/catalogs-p7";
 
 const prisma = new PrismaClient();
 
@@ -166,6 +169,17 @@ async function seedEnvironments() {
 // catalogues). They are cleared FIRST so the configuration seed stays
 // idempotent under foreign-key enforcement (Dir. Art. 13 data custody).
 async function clearOperational() {
+  // Phase 7 tables reference parties/properties/files and org units - clear
+  // them before the operational entities they reference (Dir. Art. 13 custody).
+  await prisma.migrationRecord.deleteMany({});
+  await prisma.legacyBookEntry.deleteMany({});
+  await prisma.reconciliationReport.deleteMany({});
+  await prisma.traineeRecord.deleteMany({});
+  await prisma.trainingSession.deleteMany({});
+  await prisma.trainingCourse.deleteMany({});
+  await prisma.pilotDayLog.deleteMany({});
+  await prisma.pilotConfig.deleteMany({});
+  await prisma.awarenessItem.deleteMany({});
   await prisma.replicationLog.deleteMany({});
   await prisma.backupRun.deleteMany({});
   await prisma.aggregationSnapshot.deleteMany({});
@@ -192,7 +206,11 @@ async function clearOperational() {
   await prisma.cityConfig.deleteMany({});
 }
 
-export async function runSeed(): Promise<{ seededAt: Date; counts: Record<string, number> }> {
+export async function runSeed(): Promise<{
+  seededAt: Date;
+  counts: Record<string, number>;
+  phase7: { migratedTotal: number; reconciledWoredas: number; traineeCount: number; pilotDays: number; awareness: number };
+}> {
   await clearOperational();
   await seedOrgTree();
   await seedCatalogs();
@@ -216,8 +234,118 @@ export async function runSeed(): Promise<{ seededAt: Date; counts: Record<string
     cityConfigs: await prisma.cityConfig.count(),
     staffUsers: await prisma.systemUser.count(),
     publications: await prisma.publicationItem.count(),
+    legacyBookRows: await prisma.legacyBookEntry.count(),
+    legacyMigrated: await prisma.migrationRecord.count(),
+    reconciliationsBalanced: await prisma.reconciliationReport.count({ where: { balanced: true } }),
+    trainingCourses: await prisma.trainingCourse.count(),
+    trainees: await prisma.traineeRecord.count(),
+    pilotDays: await prisma.pilotDayLog.count(),
+    awarenessItems: await prisma.awarenessItem.count(),
   };
-  return { seededAt: new Date(), counts };
+  const p7 = await seedPhase7();
+  return { seededAt: new Date(), counts, phase7: p7 };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7 seed: legacy books of the pilot woredas, migration executed at seed
+// time through the service layer (so the platform ships reconciled), training
+// curriculum with competence records, the active pilot with its day logs, and
+// the trilingual awareness materials awaiting the owner's G7 approval.
+// ---------------------------------------------------------------------------
+async function seedPhase7() {
+  const { migrateLegacyWoreda, reconcileAllMigrated, createTrainingSession, addTrainee, openPilot, logPilotDay, createAwarenessItem } = await import("../src/lib/domain/phase7");
+
+  // 1. Legacy paper books of the pilot woredas (source register, Dir. Art. 8(2)).
+  for (const [woredaCode, book] of Object.entries(LEGACY_BOOKS)) {
+    const woreda = await prisma.orgUnit.findUnique({ where: { code: woredaCode } });
+    if (!woreda) throw new Error(`Pilot woreda ${woredaCode} not found in the org tree seed`);
+    for (const e of book.entries) {
+      await prisma.legacyBookEntry.create({
+        data: {
+          woredaId: woreda.id, bookRef: book.bookRef, pageNo: e.pageNo, entryNo: e.entryNo,
+          landlordName: e.landlordName, tenantName: e.tenantName, houseAddress: e.houseAddress,
+          monthlyRent: e.monthlyRent, contractDate: new Date(e.contractDate),
+          leaseStart: new Date(e.leaseStart), leaseYears: e.leaseYears,
+          scanAttached: true, // source documents scanned before migration
+        },
+      });
+    }
+  }
+
+  // 2. Migration executed by the woreda registrar (STF-0001), then reconciliation.
+  let migratedTotal = 0;
+  for (const woredaCode of Object.keys(LEGACY_BOOKS)) {
+    const woreda = await prisma.orgUnit.findUnique({ where: { code: woredaCode } });
+    const res = await migrateLegacyWoreda(woreda!.id, "STF-0001");
+    migratedTotal += res.migrated;
+  }
+  const reports = await reconcileAllMigrated();
+  if (!reports.every((r) => r.balanced)) {
+    throw new Error("Phase 7 seed reconciliation failed: not all pilot woredas balanced");
+  }
+
+  // 3. Training curriculum and held sessions with competence records.
+  for (const c of TRAINING_COURSES) {
+    await prisma.trainingCourse.create({ data: { ...c } });
+  }
+  let traineeCount = 0;
+  for (const s of TRAINING_SESSIONS) {
+    const course = await prisma.trainingCourse.findUnique({ where: { code: s.courseCode } });
+    const org = await prisma.orgUnit.findUnique({ where: { code: s.orgCode } });
+    if (!course || !org) throw new Error(`Phase 7 seed: training course/org not found for ${s.courseCode}/${s.orgCode}`);
+    const heldAt = new Date(); heldAt.setUTCDate(heldAt.getUTCDate() - s.daysAgo);
+    const session = await createTrainingSession({ courseCode: s.courseCode, heldAt, trainer: s.trainer, orgUnitId: org.id, venue: s.venue });
+    for (const t of s.trainees) {
+      await addTrainee({
+        sessionId: session.id, name: t.name, staffCode: t.staffCode ?? undefined,
+        roleCode: t.roleCode, attendance: t.attendance as "PRESENT" | "ABSENT",
+        assessmentScore: t.score,
+      });
+      traineeCount += 1;
+    }
+  }
+
+  // 4. Active pilot over the three Bole woredas with its day logs.
+  const subCity = await prisma.orgUnit.findUnique({ where: { code: PILOT_SPEC.subCityCode } });
+  if (!subCity) throw new Error("Pilot sub-city not found");
+  const startedAt = new Date(); startedAt.setUTCDate(startedAt.getUTCDate() - PILOT_SPEC.daysAgoStart);
+  const pilot = await openPilot({
+    subCityId: subCity.id, woredaCodes: PILOT_SPEC.woredaCodes,
+    startedAt, plannedWeeks: PILOT_SPEC.plannedWeeks, ownerApprovalRef: PILOT_SPEC.ownerApprovalRef,
+  });
+  // Deterministic day logs: working days only, one row per woreda per day;
+  // cycle time falls 95 -> 38 minutes, compliance rises 90 -> 100 percent.
+  let dayCount = 0;
+  const cursor = new Date(startedAt.getTime());
+  while (dayCount < PILOT_SPEC.daysPerWoreda) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const dow = cursor.getUTCDay();
+    if (dow === 0 || dow === 6) continue; // working-day calendar
+    dayCount += 1;
+    const cycle = Math.max(38, 95 - (dayCount - 1) * 12);
+    const compliance = Math.min(100, 90 + (dayCount - 1) * 2);
+    for (const woredaCode of PILOT_SPEC.woredaCodes) {
+      const opened = 4 + ((dayCount + woredaCode.length) % 4);
+      await logPilotDay({
+        date: new Date(cursor), woredaCode,
+        filesOpened: opened,
+        filesRegistered: opened - (dayCount % 2), // some filings carry to the next day
+        avgCycleMinutes: cycle + (woredaCode.charCodeAt(woredaCode.length - 1) % 3),
+        checklistCompliancePct: compliance,
+        replicationCorrect: true,
+        incidents: dayCount === 2 ? "Console slow under morning load; resolved same day (observation only)." : undefined,
+        severity: dayCount === 2 ? "SEV4" : "NONE",
+        supportNotes: dayCount === 1 ? "Front-desk coaching: checklist item order." : undefined,
+      });
+    }
+  }
+
+  // 5. Awareness materials await the owner's Gate G7 approval.
+  for (const a of AWARENESS_ITEMS) {
+    await createAwarenessItem(a);
+  }
+
+  return { migratedTotal, reconciledWoredas: reports.length, traineeCount, pilotDays: dayCount * PILOT_SPEC.woredaCodes.length, awareness: AWARENESS_ITEMS.length };
 }
 
 // Direct execution support

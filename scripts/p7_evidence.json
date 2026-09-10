@@ -1,0 +1,735 @@
+{
+  "generatedAt": "2026-09-10T10:48:23.037Z",
+  "migration": {
+    "woredas": [
+      {
+        "woredaCode": "AA-BOLE-W01",
+        "bookRef": "BL-W1-RB-03",
+        "bookRows": 12,
+        "migrated": 12,
+        "registered": 12,
+        "minRent": 8000,
+        "maxRent": 15000,
+        "minTerm": 2,
+        "maxTerm": 3,
+        "sampleFile": "AA-BOLE-W01/2026/0001",
+        "bookPositions": [
+          "BL-W1-RB-03 p.1/e.1 -> file AA-BOLE-W01/2026/0001",
+          "BL-W1-RB-03 p.1/e.2 -> file AA-BOLE-W01/2026/0002"
+        ]
+      },
+      {
+        "woredaCode": "AA-BOLE-W02",
+        "bookRef": "BL-W2-RB-02",
+        "bookRows": 9,
+        "migrated": 9,
+        "registered": 9,
+        "minRent": 8800,
+        "maxRent": 14200,
+        "minTerm": 2,
+        "maxTerm": 3,
+        "sampleFile": "AA-BOLE-W02/2026/0001",
+        "bookPositions": [
+          "BL-W2-RB-02 p.1/e.1 -> file AA-BOLE-W02/2026/0001",
+          "BL-W2-RB-02 p.1/e.2 -> file AA-BOLE-W02/2026/0002"
+        ]
+      },
+      {
+        "woredaCode": "AA-BOLE-W03",
+        "bookRef": "BL-W3-RB-01",
+        "bookRows": 7,
+        "migrated": 7,
+        "registered": 7,
+        "minRent": 8700,
+        "maxRent": 13900,
+        "minTerm": 2,
+        "maxTerm": 3,
+        "sampleFile": "AA-BOLE-W03/2026/0001",
+        "bookPositions": [
+          "BL-W3-RB-01 p.1/e.1 -> file AA-BOLE-W03/2026/0001",
+          "BL-W3-RB-01 p.1/e.2 -> file AA-BOLE-W03/2026/0002"
+        ]
+      }
+    ],
+    "totals": {
+      "bookRows": 28,
+      "migrated": 28,
+      "registeredLegacy": 28,
+      "annotations": 28,
+      "clocksMet": 28,
+      "replicationRows": 96,
+      "migrationReplications": 84
+    }
+  },
+  "reconciliation": [
+    {
+      "woredaCode": "AA-BOLE-W01",
+      "id": "cmtvehjuz017qjjkbrds8pes0",
+      "bookCount": 12,
+      "migratedCount": 12,
+      "platformCount": 12,
+      "variance": 0,
+      "balanced": true,
+      "note": "Book, migration register and platform agree (Dir. Art. 13).",
+      "createdAt": "2026-09-10T10:44:42.827Z"
+    },
+    {
+      "woredaCode": "AA-BOLE-W02",
+      "id": "cmtvehjv1017sjjkb8ao8ixv6",
+      "bookCount": 9,
+      "migratedCount": 9,
+      "platformCount": 9,
+      "variance": 0,
+      "balanced": true,
+      "note": "Book, migration register and platform agree (Dir. Art. 13).",
+      "createdAt": "2026-09-10T10:44:42.830Z"
+    },
+    {
+      "woredaCode": "AA-BOLE-W03",
+      "id": "cmtvehjv4017ujjkbgyglh6r9",
+      "bookCount": 7,
+      "migratedCount": 7,
+      "platformCount": 7,
+      "variance": 0,
+      "balanced": true,
+      "note": "Book, migration register and platform agree (Dir. Art. 13).",
+      "createdAt": "2026-09-10T10:44:42.832Z"
+    }
+  ],
+  "training": [
+    {
+      "code": "TRN-B1",
+      "titleEn": "Bureau Analytics and Rate Publication",
+      "tierScope": "BUREAU",
+      "audienceRole": "BUREAU_ANALYST",
+      "durationHours": 10,
+      "legalBasis": "Proc. Arts. 8-9; Dir. Arts. 11, 13",
+      "sessions": 1,
+      "trainees": 1,
+      "competent": 1,
+      "needsSupport": 0,
+      "sessionRows": [
+        {
+          "heldAt": "2026-08-30",
+          "trainer": "Bureau Study Lead",
+          "venue": "Bureau conference room",
+          "trainees": [
+            {
+              "name": "Lidya Fikru (role designation)",
+              "roleCode": "BUREAU_ANALYST",
+              "attendance": "PRESENT",
+              "score": 90,
+              "competence": "COMPETENT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TRN-B2",
+      "titleEn": "Bureau Head Decisions and Penalties",
+      "tierScope": "BUREAU",
+      "audienceRole": "BUREAU_HEAD",
+      "durationHours": 8,
+      "legalBasis": "Proc. Arts. 8, 29-32; Dir. Art. 22",
+      "sessions": 1,
+      "trainees": 1,
+      "competent": 1,
+      "needsSupport": 0,
+      "sessionRows": [
+        {
+          "heldAt": "2026-08-31",
+          "trainer": "Legal Session Chair",
+          "venue": "Bureau conference room",
+          "trainees": [
+            {
+              "name": "Dawit Kebede (role designation)",
+              "roleCode": "BUREAU_HEAD",
+              "attendance": "PRESENT",
+              "score": 94,
+              "competence": "COMPETENT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TRN-S1",
+      "titleEn": "Sub-City Monitoring and Replication",
+      "tierScope": "SUB_CITY",
+      "audienceRole": "SUBCITY_MONITOR",
+      "durationHours": 8,
+      "legalBasis": "Dir. Arts. 13, 20; Proc. Art. 20",
+      "sessions": 2,
+      "trainees": 3,
+      "competent": 2,
+      "needsSupport": 1,
+      "sessionRows": [
+        {
+          "heldAt": "2026-08-31",
+          "trainer": "Sub-City Operations Trainer",
+          "venue": "Bole sub-city hall",
+          "trainees": [
+            {
+              "name": "Yohannes Girma (role designation)",
+              "roleCode": "SUBCITY_MONITOR",
+              "attendance": "PRESENT",
+              "score": 86,
+              "competence": "COMPETENT"
+            },
+            {
+              "name": "Hana Mekonnen",
+              "roleCode": "SUBCITY_MONITOR",
+              "attendance": "PRESENT",
+              "score": 61,
+              "competence": "NEEDS_SUPPORT"
+            }
+          ]
+        },
+        {
+          "heldAt": "2026-09-02",
+          "trainer": "Committee Secretariat",
+          "venue": "Bureau hearing room",
+          "trainees": [
+            {
+              "name": "Committee Member (role designation)",
+              "roleCode": "COMMITTEE_MEMBER",
+              "attendance": "PRESENT",
+              "score": 87,
+              "competence": "COMPETENT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TRN-S9",
+      "titleEn": "System Administration and Continuity",
+      "tierScope": "SYSTEM",
+      "audienceRole": "SYSTEM_ADMIN",
+      "durationHours": 10,
+      "legalBasis": "Dir. Arts. 14, 16; NFR-04/07",
+      "sessions": 1,
+      "trainees": 1,
+      "competent": 1,
+      "needsSupport": 0,
+      "sessionRows": [
+        {
+          "heldAt": "2026-09-01",
+          "trainer": "Platform Engineering",
+          "venue": "Bureau IT room",
+          "trainees": [
+            {
+              "name": "System Administrator (role designation)",
+              "roleCode": "SYSTEM_ADMIN",
+              "attendance": "PRESENT",
+              "score": 91,
+              "competence": "COMPETENT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TRN-W1",
+      "titleEn": "Woreda Registrar Front-Desk Practice",
+      "tierScope": "WOREDA",
+      "audienceRole": "WOREDA_REGISTRAR",
+      "durationHours": 12,
+      "legalBasis": "Dir. Arts. 6-9, 17-19; Proc. Arts. 4, 20",
+      "sessions": 1,
+      "trainees": 2,
+      "competent": 2,
+      "needsSupport": 0,
+      "sessionRows": [
+        {
+          "heldAt": "2026-08-29",
+          "trainer": "Lead Registrar Trainer",
+          "venue": "Bole W01 training room",
+          "trainees": [
+            {
+              "name": "Abebe Kebede (role designation)",
+              "roleCode": "WOREDA_REGISTRAR",
+              "attendance": "PRESENT",
+              "score": 92,
+              "competence": "COMPETENT"
+            },
+            {
+              "name": "Selam Tadesse",
+              "roleCode": "WOREDA_REGISTRAR",
+              "attendance": "PRESENT",
+              "score": 84,
+              "competence": "COMPETENT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "TRN-W2",
+      "titleEn": "Stamping Desk Practice",
+      "tierScope": "WOREDA",
+      "audienceRole": "WOREDA_STAMPER",
+      "durationHours": 6,
+      "legalBasis": "Dir. Arts. 9-10",
+      "sessions": 1,
+      "trainees": 1,
+      "competent": 1,
+      "needsSupport": 0,
+      "sessionRows": [
+        {
+          "heldAt": "2026-08-30",
+          "trainer": "Registry Practice Trainer",
+          "venue": "Bole W01 training room",
+          "trainees": [
+            {
+              "name": "Marta Hailu (role designation)",
+              "roleCode": "WOREDA_STAMPER",
+              "attendance": "PRESENT",
+              "score": 88,
+              "competence": "COMPETENT"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "pilot": {
+    "subCity": "AA-BOLE",
+    "subCityName": "Bole Sub-city",
+    "woredaCodes": [
+      "AA-BOLE-W01",
+      "AA-BOLE-W02",
+      "AA-BOLE-W03"
+    ],
+    "startedAt": "2026-09-01",
+    "plannedWeeks": 2,
+    "ownerApprovalRef": "G6-APPROVAL-2026-09",
+    "dayLogs": [
+      {
+        "seq": 1,
+        "date": "2026-09-02",
+        "woredaCode": "AA-BOLE-W01",
+        "filesOpened": 4,
+        "filesRegistered": 3,
+        "avgCycleMinutes": 96,
+        "checklistCompliancePct": 90,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": "Front-desk coaching: checklist item order."
+      },
+      {
+        "seq": 2,
+        "date": "2026-09-02",
+        "woredaCode": "AA-BOLE-W02",
+        "filesOpened": 4,
+        "filesRegistered": 3,
+        "avgCycleMinutes": 97,
+        "checklistCompliancePct": 90,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": "Front-desk coaching: checklist item order."
+      },
+      {
+        "seq": 3,
+        "date": "2026-09-02",
+        "woredaCode": "AA-BOLE-W03",
+        "filesOpened": 4,
+        "filesRegistered": 3,
+        "avgCycleMinutes": 95,
+        "checklistCompliancePct": 90,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": "Front-desk coaching: checklist item order."
+      },
+      {
+        "seq": 4,
+        "date": "2026-09-03",
+        "woredaCode": "AA-BOLE-W01",
+        "filesOpened": 5,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 84,
+        "checklistCompliancePct": 92,
+        "replicationCorrect": true,
+        "severity": "SEV4",
+        "incidents": "Console slow under morning load; resolved same day (observation only).",
+        "supportNotes": null
+      },
+      {
+        "seq": 5,
+        "date": "2026-09-03",
+        "woredaCode": "AA-BOLE-W02",
+        "filesOpened": 5,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 85,
+        "checklistCompliancePct": 92,
+        "replicationCorrect": true,
+        "severity": "SEV4",
+        "incidents": "Console slow under morning load; resolved same day (observation only).",
+        "supportNotes": null
+      },
+      {
+        "seq": 6,
+        "date": "2026-09-03",
+        "woredaCode": "AA-BOLE-W03",
+        "filesOpened": 5,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 83,
+        "checklistCompliancePct": 92,
+        "replicationCorrect": true,
+        "severity": "SEV4",
+        "incidents": "Console slow under morning load; resolved same day (observation only).",
+        "supportNotes": null
+      },
+      {
+        "seq": 7,
+        "date": "2026-09-04",
+        "woredaCode": "AA-BOLE-W01",
+        "filesOpened": 6,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 72,
+        "checklistCompliancePct": 94,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 8,
+        "date": "2026-09-04",
+        "woredaCode": "AA-BOLE-W02",
+        "filesOpened": 6,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 73,
+        "checklistCompliancePct": 94,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 9,
+        "date": "2026-09-04",
+        "woredaCode": "AA-BOLE-W03",
+        "filesOpened": 6,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 71,
+        "checklistCompliancePct": 94,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 10,
+        "date": "2026-09-07",
+        "woredaCode": "AA-BOLE-W01",
+        "filesOpened": 7,
+        "filesRegistered": 7,
+        "avgCycleMinutes": 60,
+        "checklistCompliancePct": 96,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 11,
+        "date": "2026-09-07",
+        "woredaCode": "AA-BOLE-W02",
+        "filesOpened": 7,
+        "filesRegistered": 7,
+        "avgCycleMinutes": 61,
+        "checklistCompliancePct": 96,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 12,
+        "date": "2026-09-07",
+        "woredaCode": "AA-BOLE-W03",
+        "filesOpened": 7,
+        "filesRegistered": 7,
+        "avgCycleMinutes": 59,
+        "checklistCompliancePct": 96,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 13,
+        "date": "2026-09-08",
+        "woredaCode": "AA-BOLE-W01",
+        "filesOpened": 4,
+        "filesRegistered": 3,
+        "avgCycleMinutes": 48,
+        "checklistCompliancePct": 98,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 14,
+        "date": "2026-09-08",
+        "woredaCode": "AA-BOLE-W02",
+        "filesOpened": 4,
+        "filesRegistered": 3,
+        "avgCycleMinutes": 49,
+        "checklistCompliancePct": 98,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 15,
+        "date": "2026-09-08",
+        "woredaCode": "AA-BOLE-W03",
+        "filesOpened": 4,
+        "filesRegistered": 3,
+        "avgCycleMinutes": 47,
+        "checklistCompliancePct": 98,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 16,
+        "date": "2026-09-09",
+        "woredaCode": "AA-BOLE-W01",
+        "filesOpened": 5,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 39,
+        "checklistCompliancePct": 100,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 17,
+        "date": "2026-09-09",
+        "woredaCode": "AA-BOLE-W02",
+        "filesOpened": 5,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 40,
+        "checklistCompliancePct": 100,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      },
+      {
+        "seq": 18,
+        "date": "2026-09-09",
+        "woredaCode": "AA-BOLE-W03",
+        "filesOpened": 5,
+        "filesRegistered": 5,
+        "avgCycleMinutes": 38,
+        "checklistCompliancePct": 100,
+        "replicationCorrect": true,
+        "severity": "NONE",
+        "incidents": null,
+        "supportNotes": null
+      }
+    ],
+    "perWoreda": [
+      {
+        "woredaCode": "AA-BOLE-W01",
+        "days": 6,
+        "filesOpened": 31,
+        "filesRegistered": 28,
+        "firstCycle": 96,
+        "lastCycle": 39,
+        "avgCycle": 66.5,
+        "avgCompliance": 95,
+        "replicationOk": true,
+        "sev1": 0
+      },
+      {
+        "woredaCode": "AA-BOLE-W02",
+        "days": 6,
+        "filesOpened": 31,
+        "filesRegistered": 28,
+        "firstCycle": 97,
+        "lastCycle": 40,
+        "avgCycle": 67.5,
+        "avgCompliance": 95,
+        "replicationOk": true,
+        "sev1": 0
+      },
+      {
+        "woredaCode": "AA-BOLE-W03",
+        "days": 6,
+        "filesOpened": 31,
+        "filesRegistered": 28,
+        "firstCycle": 95,
+        "lastCycle": 38,
+        "avgCycle": 65.5,
+        "avgCompliance": 95,
+        "replicationOk": true,
+        "sev1": 0
+      }
+    ]
+  },
+  "exit": {
+    "ready": true,
+    "checks": [
+      {
+        "criterion": "Pilot open with the owner's authorization",
+        "basis": "Gate G6 decision; plan 5.8",
+        "pass": true,
+        "detail": "Pilot over AA-BOLE-W01, AA-BOLE-W02, AA-BOLE-W03 since 2026-09-01; approval ref G6-APPROVAL-2026-09."
+      },
+      {
+        "criterion": "No severity-one issue during the pilot",
+        "basis": "Gate G7 exit criterion (plan 5.8)",
+        "pass": true,
+        "detail": "18 day-log entries; SEV1 count 0."
+      },
+      {
+        "criterion": "Reconciliation balances in every pilot woreda",
+        "basis": "Dir. Art. 13; Gate G7 exit criterion",
+        "pass": true,
+        "detail": "3/3 pilot woredas balanced; 28 legacy book rows in scope."
+      },
+      {
+        "criterion": "Replication correctness at one hundred percent",
+        "basis": "Dir. Art. 13; plan 5.8 measurement",
+        "pass": true,
+        "detail": "18/18 day-log entries report correct upward replication."
+      },
+      {
+        "criterion": "Role and tier training coverage competent",
+        "basis": "Plan 5.8 training activity",
+        "pass": true,
+        "detail": "All required roles trained competent: WOREDA_REGISTRAR, WOREDA_STAMPER, SUBCITY_MONITOR, BUREAU_ANALYST, BUREAU_HEAD, SYSTEM_ADMIN."
+      },
+      {
+        "criterion": "Awareness materials prepared for both legal bases",
+        "basis": "Proc. Arts. 14, 16",
+        "pass": true,
+        "detail": "Proc. Art. 16: 0/2 approved; Proc. Art. 14: 0/2 approved"
+      }
+    ],
+    "metrics": {
+      "daysLogged": 18,
+      "woredas": [
+        "AA-BOLE-W01",
+        "AA-BOLE-W02",
+        "AA-BOLE-W03"
+      ],
+      "avgCycleMinutes": 66.5,
+      "avgChecklistPct": 95,
+      "replicationCorrectPct": 100,
+      "sev1Count": 0,
+      "balancedWoredas": 3,
+      "totalBookRows": 28,
+      "competentRoles": [
+        "WOREDA_REGISTRAR",
+        "WOREDA_STAMPER",
+        "SUBCITY_MONITOR",
+        "BUREAU_ANALYST",
+        "BUREAU_HEAD",
+        "SYSTEM_ADMIN",
+        "COMMITTEE_MEMBER"
+      ],
+      "missingRoles": [],
+      "awarenessByBasis": {
+        "Proc. Art. 16": {
+          "total": 2,
+          "approved": 0
+        },
+        "Proc. Art. 14": {
+          "total": 2,
+          "approved": 0
+        }
+      }
+    }
+  },
+  "awareness": [
+    {
+      "basis": "Proc. Art. 16",
+      "channel": "POSTER",
+      "titleEn": "What a valid rent contract looks like",
+      "titleAm": "ትክክለኛ የኪራይ ውል እንዴት ይመስላል",
+      "titleOm": "Waliin kiraalaa dhugaa akkam fakkaata",
+      "bodyEn": "A valid residential rent contract is written on the Bureau model contract, certified at your woreda, carries the office stamp, and is registered in the woreda registry book within 30 days. Keep your certified copy - it is your legal protection.",
+      "status": "PENDING_OWNER_APPROVAL",
+      "ownerApprovalRef": null
+    },
+    {
+      "basis": "Proc. Art. 14",
+      "channel": "RADIO",
+      "titleEn": "Know your rights and duties under the rent proclamation",
+      "titleAm": "በኪራይ አዋጁ መብቶችንና ግዴታዎችዎን ይወቁ",
+      "titleOm": "Mirga fi dirqama kee kiraalaa beekuu",
+      "bodyEn": "Rent is paid only through electronic channels; the advance cannot exceed two months; increases follow the published ceiling; disputes go to your woreda office first. Listen for the Bureau's weekly program on your local station.",
+      "status": "PENDING_OWNER_APPROVAL",
+      "ownerApprovalRef": null
+    },
+    {
+      "basis": "Proc. Art. 14",
+      "channel": "SMS",
+      "titleEn": "Legacy contracts: register before the deadline",
+      "titleAm": "ቀደም ያሉ ውሎች፦ ከጊዜው በፊት ያስመዝግቡ",
+      "titleOm": "Waliin duraa: guyyaa dura galmeessi",
+      "bodyEn": "Existing rent contracts must be presented at the woreda where the house is located within 30 days plus 3 grace days of the announcement. Registration protects both landlord and tenant.",
+      "status": "PENDING_OWNER_APPROVAL",
+      "ownerApprovalRef": null
+    },
+    {
+      "basis": "Proc. Art. 16",
+      "channel": "PORTAL",
+      "titleEn": "The annual rent ceiling, explained",
+      "titleAm": "ዓመታዊ የኪራይ ጣሪያ ያስረዳ",
+      "titleOm": "Daangaa kiraalaa waggaaati ifa jecha",
+      "bodyEn": "Each June 1 the Bureau publishes the maximum increase; from June 30 the new ceiling applies. Check the ceiling for your woreda on this portal before signing or renewing any contract.",
+      "status": "PENDING_OWNER_APPROVAL",
+      "ownerApprovalRef": null
+    }
+  ],
+  "verification": {
+    "battery": {
+      "command": "bun test tests/seed-config.test.ts tests/phase4-domain.test.ts tests/integration.test.ts tests/security.test.ts tests/compliance-legal.test.ts tests/phase7.test.ts",
+      "pass": 131,
+      "fail": 0,
+      "suites": 6
+    },
+    "e2eP7": {
+      "checks": 20,
+      "result": "all passed",
+      "note": "migration intake incl. 1-year legacy term + 403/422 refusals, reconciliation, training competence, pilot day log, awareness approval flow; shipped state restored by reseed"
+    },
+    "e2eGoldenPath": {
+      "checks": 31,
+      "result": "all passed",
+      "note": "Phase 4 golden path regression after the Phase 7 schema extension"
+    },
+    "console": "P7 tab verified in Amharic, English and Afan Oromo and at 390px mobile width; no page errors."
+  },
+  "defects": [
+    {
+      "id": "DEF-07-01",
+      "severity": "SEV-4",
+      "status": "FIXED_RE_TESTED",
+      "title": "Quality battery ran test files in parallel against the shared database, producing order-dependent fixture contention",
+      "fix": "Runner now executes one suite per process, sequentially (deterministic); full battery re-run green at 131 pass / 0 fail."
+    },
+    {
+      "id": "DEF-07-02",
+      "severity": "SEV-4",
+      "status": "FIXED_RE_TESTED",
+      "title": "Reconciliation scope initially counted every legacy filing in the woreda instead of the migration register",
+      "fix": "Reconciled definition: paper book rows vs migration register records registered on the platform (Dir. Art. 13 custody); compliant front-desk legacy filings outside the book are out of scope. Tests updated to relational assertions."
+    }
+  ]
+}

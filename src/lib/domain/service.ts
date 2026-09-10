@@ -153,7 +153,10 @@ export async function createRegistrationFile(input: {
       `${label} must be a verified party before filing.`);
   }
 
-  // Statutory lease rules (Proc. Arts. 5, 6, 12, 13)
+  // Statutory lease rules (Proc. Arts. 5, 6, 12, 13). Legacy exception:
+  // a pre-proclamation contract is registered as it stands under Dir. Art.
+  // 8(2) - the Art. 6 minimum-term rule governs new and amended contracts,
+  // not the legacy intake, which carries the LEGACY_ART7 annotation instead.
   const city = await db.cityConfig.findFirst({ where: { isActive: true } });
   const v = validateLease({
     leaseStart: input.leaseStart, leaseEnd: input.leaseEnd, monthlyRent: input.monthlyRent,
@@ -161,7 +164,7 @@ export async function createRegistrationFile(input: {
     minLeaseYears: city?.minLeaseYears ?? LAW.MIN_LEASE_YEARS,
     maxPrepayMonths: city?.maxPrepayMonths ?? LAW.MAX_PREPAYMENT_MONTHS,
   });
-  if (!v.ok) throw new LegalError(v.rule, v.message);
+  if (!v.ok && !(input.isLegacy && v.rule === "Proc. Art. 6")) throw new LegalError(v.rule, v.message);
 
   // Witnesses: exactly three (model agreement)
   const w = validateWitnesses(input.witnesses.length);

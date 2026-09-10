@@ -33,6 +33,11 @@ model OrgUnit {
   registrations      RegistrationFile[]
   controlTeams       ControlTeam[]
   snapshots          AggregationSnapshot[]
+  legacyBookEntries  LegacyBookEntry[]
+  legacyMigrations   MigrationRecord[]
+  reconciliationReports ReconciliationReport[]
+  trainingSessions   TrainingSession[]
+  pilotSubCities     PilotConfig[]
   isActive           Boolean   @default(true)
   confirmationStatus String    @default("CONFIRMED") // CONFIRMED | PENDING_OFFICIAL_REGISTER
   sourceNote         String?
@@ -327,6 +332,8 @@ model Party {
   tenantFiles           RegistrationFile[] @relation("FileTenant")
   agentFiles            RegistrationFile[] @relation("FileAgent")
   properties            Property[]
+  legacyLandlordRecords MigrationRecord[]  @relation("LegacyLandlord")
+  legacyTenantRecords   MigrationRecord[]  @relation("LegacyTenant")
   createdAt             DateTime  @default(now())
 
   @@index([type])
@@ -375,6 +382,7 @@ model Property {
   files                RegistrationFile[]
   visits               ControlVisit[]
   penaltyCases         PenaltyCase[]
+  legacyMigrations     MigrationRecord[]
   createdAt            DateTime @default(now())
 
   @@index([woredaId])
@@ -420,6 +428,7 @@ model RegistrationFile {
   annotations            FileAnnotation[]
   bookEntries            RegistryBookEntry[]
   payments               Payment[]
+  legacyMigration        MigrationRecord?
   createdAt              DateTime  @default(now())
 
   @@index([woredaId])
@@ -766,4 +775,169 @@ model AuditEvent {
   @@index([entity, entityRef])
   @@index([actorCode])
   @@index([at])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7 - Legacy migration (Proc. Art. 7; Dir. Art. 8(2); Dir. Art. 13).
+// The paper registry books of pre-proclamation contracts enter the platform:
+// each book row becomes parties + property + a registered file carrying the
+// LEGACY_ART7 annotation; migrated counts reconcile against the books.
+// ---------------------------------------------------------------------------
+model LegacyBookEntry {
+  id              String   @id @default(cuid())
+  woredaId        String
+  woreda          OrgUnit  @relation(fields: [woredaId], references: [id])
+  bookRef         String   // paper register book reference (Dir. Art. 9 format)
+  pageNo          Int
+  entryNo         Int
+  landlordName    String
+  tenantName      String
+  houseAddress    String
+  monthlyRent     Float
+  contractDate    DateTime
+  leaseStart      DateTime
+  leaseYears      Float
+  scanAttached    Boolean  @default(false) // source document scanned and attached
+  migrated        Boolean  @default(false)
+  migrationRecord MigrationRecord?
+
+  @@unique([woredaId, bookRef, pageNo, entryNo])
+  @@index([woredaId])
+}
+
+model MigrationRecord {
+  id             String   @id @default(cuid())
+  legacyEntryId  String   @unique
+  legacyEntry    LegacyBookEntry @relation(fields: [legacyEntryId], references: [id])
+  woredaId       String
+  woreda         OrgUnit  @relation(fields: [woredaId], references: [id])
+  landlordId     String
+  landlord       Party    @relation("LegacyLandlord", fields: [landlordId], references: [id])
+  tenantId       String
+  tenant         Party    @relation("LegacyTenant", fields: [tenantId], references: [id])
+  propertyId     String
+  property       Property @relation(fields: [propertyId], references: [id])
+  fileId         String   @unique // one migration record per registration file (1:1)
+  file           RegistrationFile @relation(fields: [fileId], references: [id])
+  annotationCode String   @default("LEGACY_ART7") // Dir. Art. 8(2)
+  annotationText String
+  status         String   @default("MIGRATED") // MIGRATED | DISCREPANCY
+  note           String?
+  migratedAt     DateTime @default(now())
+  migratedBy     String   // staff code
+
+  @@index([woredaId])
+}
+
+model ReconciliationReport {
+  id            String   @id @default(cuid())
+  woredaId      String
+  woreda        OrgUnit  @relation(fields: [woredaId], references: [id])
+  bookCount     Int      // rows in the paper book (LegacyBookEntry)
+  migratedCount Int      // MigrationRecord rows
+  platformCount Int      // RegistrationFile isLegacy REGISTERED in the woreda
+  variance      Int      // bookCount - platformCount
+  balanced      Boolean
+  note          String?
+  createdAt     DateTime @default(now())
+
+  @@index([woredaId])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7 - Training by role and tier (plan section 5.8): courses, sessions,
+// attendance and competence records feeding the pilot exit check.
+// ---------------------------------------------------------------------------
+model TrainingCourse {
+  id            String  @id @default(cuid())
+  code          String  @unique
+  titleEn       String
+  titleAm       String
+  titleOm       String
+  tierScope     String  // WOREDA | SUB_CITY | BUREAU | SYSTEM
+  audienceRole  String  // role code
+  modules       String
+  durationHours Float
+  legalBasis    String
+  sessions      TrainingSession[]
+}
+
+model TrainingSession {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    TrainingCourse @relation(fields: [courseId], references: [id])
+  heldAt    DateTime
+  trainer   String
+  orgUnitId String
+  orgUnit   OrgUnit  @relation(fields: [orgUnitId], references: [id])
+  venue     String
+  trainees  TraineeRecord[]
+}
+
+model TraineeRecord {
+  id              String   @id @default(cuid())
+  sessionId       String
+  session         TrainingSession @relation(fields: [sessionId], references: [id])
+  name            String
+  staffCode       String?
+  roleCode        String
+  attendance      String   @default("PRESENT") // PRESENT | ABSENT
+  assessmentScore Int? // 0-100
+  competence      String? // COMPETENT | NEEDS_SUPPORT (>= 70 competent)
+
+  @@index([sessionId])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7 - Pilot operation (plan section 5.8): agreed woredas, daily support,
+// measured registration cycle time, checklist compliance, replication
+// correctness; exit = no severity-one issue and balanced reconciliation.
+// ---------------------------------------------------------------------------
+model PilotConfig {
+  id               String   @id @default(cuid())
+  subCityId        String
+  subCity          OrgUnit  @relation(fields: [subCityId], references: [id])
+  woredaCodes      String   // comma-separated woreda codes
+  startedAt        DateTime
+  plannedWeeks     Int
+  ownerApprovalRef String
+  active           Boolean  @default(true)
+  dayLogs          PilotDayLog[]
+}
+
+model PilotDayLog {
+  id                     String  @id @default(cuid())
+  configId               String
+  config                 PilotConfig @relation(fields: [configId], references: [id])
+  seq                    Int
+  date                   DateTime
+  woredaCode             String
+  filesOpened            Int
+  filesRegistered        Int
+  avgCycleMinutes        Float
+  checklistCompliancePct Float
+  replicationCorrect     Boolean
+  incidents              String?
+  severity               String  @default("NONE") // NONE | SEV1 | SEV2 | SEV3 | SEV4
+  supportNotes           String?
+
+  @@unique([configId, seq])
+  @@index([woredaCode])
+}
+
+// ---------------------------------------------------------------------------
+// Phase 7 - Public awareness materials (Proc. Arts. 14, 16), trilingual per
+// CR-01/NFR-06; the owner approves the materials at Gate G7.
+// ---------------------------------------------------------------------------
+model AwarenessItem {
+  id               String   @id @default(cuid())
+  basis            String // Proc. Art. 14 | Proc. Art. 16
+  channel          String // POSTER | RADIO | SMS | PORTAL | BROCHURE
+  titleEn          String
+  titleAm          String
+  titleOm          String
+  bodyEn           String
+  status           String   @default("PENDING_OWNER_APPROVAL")
+  ownerApprovalRef String?
+  createdAt        DateTime @default(now())
 }
