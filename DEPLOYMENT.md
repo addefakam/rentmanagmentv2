@@ -44,6 +44,11 @@ This guide takes the repository from GitHub to a working Vercel deployment backe
 
 ## 3. Initialize the database (schema + seed)
 
+> **STATUS: ALREADY DONE for this project's Neon database.** The schema was pushed, the
+> full platform state was loaded, and the tamper-evident audit chain verified intact
+> (814/814 events) on 2026-09-11. The steps below are only needed when provisioning a
+> **fresh** Neon database, or to re-run after a reset.
+
 A fresh Neon database is empty. From your local machine (repository checked out):
 
 ```bash
@@ -65,6 +70,13 @@ handover, PIR, closure minute).
 Without seeding the console still renders (auth falls back to demo mode) but every register
 will be empty — **seed before reviewing**.
 
+> **Slow seed / timeouts over WAN?** `prisma/seed.ts` writes row-by-row; across a WAN (and
+> through Neon's pooler, which terminates long transactions) it can stall. The repository
+> ships `scripts/etl-sqlite-to-neon.ts`: seed a local SQLite database first (quick, local),
+> then bulk-copy everything with batched `createMany` — this is how this project's Neon
+> database was populated. The script realigns the `AuditEvent.seq` sequence, and the
+> resulting hash chain verifies intact. Verify with `scripts/check-neon.ts`.
+
 ## 4. Verify
 
 - Open the deployment URL → the console loads in demo mode (no sign-in wall).
@@ -76,6 +88,10 @@ will be empty — **seed before reviewing**.
 
 - **Local development stays on SQLite.** `DATABASE_URL=file:./db/custom.db` + `npm run dev`.
   The build wrapper switches schemas automatically in both directions.
+- **Neon pooling:** for the app's `DATABASE_URL` on Vercel, use the **pooled** endpoint
+  (host contains `-pooler`) and append `&pgbouncer=true` — Prisma must disable prepared
+  statements for PgBouncer transaction mode, or runtime queries fail. For one-off
+  migrations/seeding use the **direct** endpoint (host without `-pooler`).
 - **Two schema files, one rule:** `prisma/schema.prisma` (SQLite) and
   `prisma/schema.postgres.prisma` (PostgreSQL) must stay model-identical. If you change one,
   copy the change to the other — the datasource block is the only intended difference.
