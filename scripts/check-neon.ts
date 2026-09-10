@@ -11,14 +11,14 @@ const count = async (name: string, table: () => Promise<number>) => {
 
 const w = async () => {
   await count("OrgUnit", () => db.orgUnit.count());
-  await count("Staff", () => db.staff.count());
+  await count("SystemUser", () => db.systemUser.count());
   await count("PlatformSetting", () => db.platformSetting.count());
   await count("PenaltyParameter", () => db.penaltyParameter.count());
   await count("LocalizationResource", () => db.localizationResource.count().catch(() => -1));
   await count("Party", () => db.party.count());
   await count("Property", () => db.property.count());
-  await count("RentalRegistration", () => db.rentalRegistration.count().catch(() => -1));
-  await count("LegacyRegisterEntry", () => (db as never as { legacyRegisterEntry?: { count: () => Promise<number> } }).legacyRegisterEntry?.count?.() ?? -1);
+  await count("RegistryBookEntry", () => db.registryBookEntry.count().catch(() => -1));
+  await count("LegacyBookEntry", () => db.legacyBookEntry.count().catch(() => -1));
   await count("GoLiveWave", () => db.goLiveWave.count().catch(() => -1));
   await count("HypercareReport", () => db.hypercareReport.count().catch(() => -1));
   await count("AuditEvent", () => db.auditEvent.count().catch(() => -1));
