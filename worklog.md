@@ -287,3 +287,23 @@ Stage Summary:
 - Neon database is deployment-ready with the full frozen closure state.
 - Only remaining owner step: set DATABASE_URL on Vercel (pooled endpoint + pgbouncer=true) and redeploy.
 - Security notes delivered: rotate Neon password (pasted in chat), revoke GitHub PAT (used for pushes).
+
+---
+Task ID: 14 (Neon end-to-end runtime verification + deploy docs hardening)
+Agent: Main agent (Super Z)
+Task: Owner reported "not fixed yet" after Task 13; verify the whole chain live and fix whatever remains.
+
+Work Log:
+- Live Neon check (direct endpoint ep-mute-lake-a5sd9364): ALL DATA PRESENT - OrgUnit 131, SystemUser 8, PlatformSetting 1, PenaltyParameter 14, LocalizationResource 23, Party 56, Property 28, RegistryBookEntry 28, LegacyBookEntry 28, GoLiveWave 4, HypercareReport 28, AuditEvent 814, ClosureMinute CM-P8-G9-01 SIGNED GATE-G9-2026-09-11. Provisioning from Task 13 is intact; nothing to re-push.
+- Fixed scripts/check-neon.ts model-name bugs (staff->systemUser, rentalRegistration->registryBookEntry, legacyRegisterEntry->legacyBookEntry) - checker now runs clean.
+- Full Vercel simulation: `npm run build` with postgres DATABASE_URL -> wrapper picked schema.postgres.prisma, generated pg client, next build OK (all routes dynamic).
+- Ran `next start` (production) against the POOLED Neon endpoint + pgbouncer=true: home 200, /api/platform 200 with real data, parties/waves APIs 200 with real data.
+- Also tested pooled WITHOUT pgbouncer=true: also 200 (Neon PgBouncer now supports prepared statements). Both variants healthy; pgbouncer=true still recommended.
+- Restored local sqlite Prisma client afterwards (local dev unaffected).
+- Hardened DEPLOYMENT.md: exact DATABASE_URL value format (pooled host + pgbouncer=true), note that env changes require a fresh deploy, new section "5. If it is still not working - 60-second checklist" (deployment status, env var presence/scope, redeploy-after-env-change, *.vercel.app smoke test via /api/platform, check-neon.ts healthy counts).
+- Committed d91faca. PUSH BLOCKED: no GitHub credentials in environment (PAT revoked/scrubbed per earlier security advice) - commit is local, needs owner PAT or owner push.
+
+Stage Summary:
+- Entire app+DB chain PROVEN working end to end: build (postgres) -> runtime (pooled Neon) -> real data. Nothing is broken in the repo or the Neon database.
+- Remaining failure domain is exclusively Vercel project configuration (env var absent/not in Production scope, stale deployment not redeployed after env change, or stale build-command override).
+- d91faca pending push; owner action list delivered in chat.
