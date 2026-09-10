@@ -1,0 +1,244 @@
+// ============================================================================
+// Rent Control and Administration System — Phase 3 Configuration Domain Schema
+// Phase 3: Environments and Seed Configuration (Gate G3)
+// Legal basis: Proclamation No. 1320/2016, Addis Ababa Directive No. 7/2016,
+// Model Rental Agreement, SRS v1.1 (incl. CR-01 trilingual), Implementation Plan v1.0
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// M13 / Directive Arts. 2, 14 — Organizational hierarchy:
+// Ministry (federal) -> City Bureau -> Sub-city -> Woreda
+// ---------------------------------------------------------------------------
+model OrgUnit {
+  id                 String    @id @default(cuid())
+  code               String    @unique
+  tier               String // MINISTRY | BUREAU | SUB_CITY | WOREDA
+  nameEn             String
+  nameAm             String
+  nameOm             String
+  parentId           String?
+  parent             OrgUnit?  @relation("OrgTree", fields: [parentId], references: [id])
+  children           OrgUnit[] @relation("OrgTree")
+  isActive           Boolean   @default(true)
+  confirmationStatus String    @default("CONFIRMED") // CONFIRMED | PENDING_OFFICIAL_REGISTER
+  sourceNote         String?
+  createdAt          DateTime  @default(now())
+
+  @@index([parentId])
+  @@index([tier])
+}
+
+// ---------------------------------------------------------------------------
+// M13 / SRS actors — Role catalogue (trilingual, tier-scoped)
+// ---------------------------------------------------------------------------
+model Role {
+  id         String  @id @default(cuid())
+  code       String  @unique
+  nameEn     String
+  nameAm     String
+  nameOm     String
+  tierScope  String // PUBLIC | WOREDA | SUB_CITY | BUREAU | CITY_COMMITTEE | MINISTRY | SYSTEM
+  legalNote  String?
+  isActive   Boolean @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// M1 / Directive Art. 7 — Accepted identification catalogue
+// (original-and-copy rule)
+// ---------------------------------------------------------------------------
+model IdentificationType {
+  id              String  @id @default(cuid())
+  code            String  @unique
+  nameEn          String
+  nameAm          String
+  nameOm          String
+  requiresOriginal Boolean @default(true)
+  requiresCopy    Boolean @default(true)
+  legalNote       String?
+  isActive        Boolean @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// M2 / Proclamation Arts. 2, 10 — Property status types with exemption clocks
+// (new construction 4 years, vacant 2 years)
+// ---------------------------------------------------------------------------
+model PropertyStatusType {
+  id              String  @id @default(cuid())
+  code            String  @unique
+  nameEn          String
+  nameAm          String
+  nameOm          String
+  exemptionMonths Int?
+  legalBasis      String?
+  isActive        Boolean @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// M3 / Proclamation Art. 5; Directive Art. 4 — Model contract v1 (versioned,
+// trilingual per CR-01). Amharic is the canonical legal rendering.
+// ---------------------------------------------------------------------------
+model ModelContract {
+  id             String                 @id @default(cuid())
+  version        String                 @unique
+  status         String                 @default("ACTIVE") // ACTIVE | SUPERSEDED
+  issuedBy       String
+  legalBasis     String
+  effectiveFrom  DateTime
+  canonicalLang  String                 @default("am")
+  sections       ModelContractSection[]
+}
+
+model ModelContractSection {
+  id                  String        @id @default(cuid())
+  contractId          String
+  contract            ModelContract @relation(fields: [contractId], references: [id])
+  orderNo             Int
+  code                String
+  titleEn             String
+  titleAm             String
+  titleOm             String
+  contentEn           String?
+  contentAm           String?
+  contentOm           String?
+  certificationStatus String        @default("PENDING_LEGAL_REVIEW") // CERTIFIED_AM | PENDING_LEGAL_REVIEW
+  legalBasis          String?
+
+  @@unique([contractId, orderNo])
+  @@index([contractId])
+}
+
+// ---------------------------------------------------------------------------
+// M9 / Proclamation Arts. 29-32; Directive Art. 22 — Penalty parameters
+// (configurable ladder; figures flagged PENDING_OFFICIAL_TEXT per O1)
+// ---------------------------------------------------------------------------
+model PenaltyParameter {
+  id                 String   @id @default(cuid())
+  code               String   @unique
+  category           String // OFFENSE_FINE | SURCHARGE_BAND | REFERRAL_RULE | GLOBAL_CAP
+  offenseEn          String
+  offenseAm          String
+  offenseOm          String
+  valueType          String // MULTIPLE_OF_MONTHLY_RENT | PERCENT | PERCENT_PER_CASH_PAYMENT
+  valueMin           Float?
+  valueMax           Float?
+  rangeLabelEn       String?
+  rangeLabelAm       String?
+  basisRef           String
+  confirmationStatus String   @default("PENDING_OFFICIAL_TEXT") // CONFIRMED | PENDING_OFFICIAL_TEXT
+  isActive           Boolean  @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// M5 / Proclamation Art. 8; Directive Art. 11 — Annual adjustment calendar
+// (June 1 publication, June 30 effect)
+// ---------------------------------------------------------------------------
+model CalendarEvent {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  nameEn      String
+  nameAm      String
+  nameOm      String
+  month       Int
+  day         Int
+  windowDays  Int?
+  recurrence  String  @default("ANNUAL")
+  legalBasis  String
+  description String?
+}
+
+// ---------------------------------------------------------------------------
+// M13 / CR-01 — Language catalogue and localization resources
+// ---------------------------------------------------------------------------
+model Language {
+  id         String  @id @default(cuid())
+  code       String  @unique // am | en | om
+  nameNative String
+  nameEn     String
+  direction  String  @default("ltr")
+  isDefault  Boolean @default(false)
+  status     String  @default("ACTIVE") // ACTIVE | PENDING_CERTIFICATION
+  legalNote  String?
+}
+
+model LocalizationResource {
+  id                  String @id @default(cuid())
+  key                 String @unique
+  domain              String // UI | DOCUMENT | NOTIFICATION
+  valueAm             String
+  valueEn             String
+  valueOm             String
+  certificationStatus String @default("PENDING_CERTIFICATION") // CERTIFIED | PENDING_CERTIFICATION
+}
+
+// ---------------------------------------------------------------------------
+// P3 deliverable — Environment inventory (Directive Art. 13 backup scheme)
+// ---------------------------------------------------------------------------
+model Environment {
+  id               String   @id @default(cuid())
+  name             String   @unique
+  stage            String   @unique // DEV | STAGING | PROD
+  purpose          String
+  database         String
+  appUrl           String?
+  backupScheme     String
+  replicationTarget String?
+  rpoMinutes       Int?
+  rtoHours         Int?
+  restoreDrill     String?
+  isActive         Boolean  @default(true)
+  notes            String?
+}
+
+// ---------------------------------------------------------------------------
+// P3 deliverable — Staged promotion records (release tagging + evidence)
+// ---------------------------------------------------------------------------
+model Release {
+  id          String        @id @default(cuid())
+  tag         String        @unique
+  status      String        @default("PENDING") // PROMOTING | PROMOTED | FAILED
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+  notes       String?
+  steps       ReleaseStep[]
+}
+
+model ReleaseStep {
+  id          String       @id @default(cuid())
+  releaseId   String
+  release     Release      @relation(fields: [releaseId], references: [id])
+  orderNo     Int
+  stage       String // DEV | STAGING | PROD
+  name        String
+  status      String       @default("PENDING") // RUNNING | PASSED | FAILED
+  detail      String?
+  startedAt   DateTime     @default(now())
+  completedAt DateTime?
+  durationMs  Int?
+  checks      ValidationCheck[]
+
+  @@unique([releaseId, orderNo])
+  @@index([releaseId])
+}
+
+model ValidationCheck {
+  id           String      @id @default(cuid())
+  stepId       String
+  step         ReleaseStep @relation(fields: [stepId], references: [id])
+  name         String
+  expected     String
+  actual       String
+  passed       Boolean
+  severity     String      @default("BLOCKING") // BLOCKING | ADVISORY
+  checkedAt    DateTime    @default(now())
+
+  @@index([stepId])
+}

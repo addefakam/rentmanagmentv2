@@ -1,4 +1,4 @@
-// generate_srs_docx.js — SRS v1.1 assembler (3-section: cover / Roman TOC / Arabic body); v1.1 = CR-01 trilingual
+// generate_p3_docx.js — Phase 3 report assembler (3-section: cover / Roman TOC / Arabic body)
 const {
   Document, Packer, Paragraph, TextRun, Header, Footer, PageNumber,
   NumberFormat, AlignmentType, SectionType, TableOfContents, PageBreak,
@@ -7,25 +7,23 @@ const fs = require("fs");
 const path = require("path");
 
 const { P, FONT, HFONT, buildCoverR1 } = require("./plan_lib");
-const A = require("./srs_content_a");
-const B = require("./srs_content_b");
-const C = require("./srs_content_c");
-const D = require("./srs_content_d");
+const C = require("./p3_content");
 
-const OUT = "/home/z/my-project/download/Rent_Control_System_SRS_v1.1.docx";
+const OUT = "/home/z/my-project/download/Rent_Control_System_Phase3_Report.docx";
 
 const coverConfig = {
-  title: "Residential House Rent Control and Administration System",
-  subtitle: "Software Requirements Specification (SRS) - Version 1.1 (CR-01: Trilingual)",
-  englishLabel: "PHASE 1 DELIVERABLE",
+  title: "Phase 3 Report: Environments and Seed Configuration",
+  subtitle: "Residential House Rent Control and Administration System - Gate G3 Package",
+  englishLabel: "PHASE 3 DELIVERABLE",
   metaLines: [
     "Legal Basis: Proclamation 1320/2016 + Directive 7/2016 + Model Agreement",
-    "Contents: 13 Modules, 74 Functional Requirements, 12 NFRs, 21 Use Cases",
-    "Gate: G1 - Requirements Baseline Approval",
+    "Contents: Environment Inventory, Pipeline Documentation, Seeded Configuration",
+    "Baseline: SRS v1.1 (CR-01 Trilingual: Amharic, English, Afan Oromo)",
+    "Gate: G3 - Environments and Seed Configuration Approval",
     "Date: September 2026",
   ],
   footerLeft: "Rent Control and Administration System Project",
-  footerRight: "SRS v1.1",
+  footerRight: "Phase 3 Report",
   palette: { bg: P.bg, accent: P.accent, cover: P.cover },
 };
 
@@ -46,7 +44,7 @@ function docHeader() {
       alignment: AlignmentType.CENTER,
       spacing: { after: 0 },
       children: [new TextRun({
-        text: "Rent Control and Administration System - Software Requirements Specification v1.1",
+        text: "Rent Control and Administration System - Phase 3 Report: Environments and Seed Configuration",
         size: 18, color: "808080", font: FONT,
       })],
     })],
@@ -74,24 +72,19 @@ const frontMatter = [
 ];
 
 const body = [
-  ...A.chapter1(),
-  ...A.chapter2(),
-  ...B.chapter3Intro(),
-  ...B.m1(), ...B.m2(), ...B.m3(), ...B.m4(), ...B.m5(), ...B.m6(), ...B.m7(),
-  ...C.m8(), ...C.m9(), ...C.m10(), ...C.m11(), ...C.m12(), ...C.m13(),
+  ...C.chapter1(),
+  ...C.chapter2(),
+  ...C.chapter3(),
   ...C.chapter4(),
-  ...D.chapter5(),
-  ...D.chapter6(),
-  ...D.chapter7(),
-  ...D.chapter8(),
-  ...D.chapter9(),
-  ...D.chapter10(),
-  ...D.chapter11(),
+  ...C.chapter5(),
+  ...C.chapter6(),
+  ...C.chapter7(),
+  ...C.chapter8(),
 ];
 
 const doc = new Document({
   creator: "Rent Control and Administration System Project",
-  title: "Residential House Rent Control and Administration System - SRS v1.1",
+  title: "Residential House Rent Control and Administration System - Phase 3 Report",
   styles: {
     default: {
       document: {

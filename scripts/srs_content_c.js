@@ -101,7 +101,7 @@ function m12() {
 function m13() {
   return [
     h2("3.13 Module M13 - System Administration, Security, Audit and Configuration"),
-    p("This module carries the obligations that keep the platform legally trustworthy over years of operation. The Directive mandates hybrid record keeping - hard and soft copies, scanning of contracts, duplicates, identity photos, and payment documents, backups at every tier, uniform register formats with sequential numbering across all woredas, and change propagation when a woreda corrects data (Article 13). The Proclamation and the standards baseline add security and auditability: every create, read of sensitive data, update, and decision is logged immutably; personal data is protected under the Personal Data Protection Proclamation; and regional variation (each city's directive figures, holiday calendars, fine ladders) lives in versioned configuration rather than code. The module also owns the bilingual user interface with dual EC/GC calendars, the notification service that keeps every legal deadline visible to citizens and officers, and the document generation and stamping workflow records required by Articles 8 to 10 of the Directive."),
+    p("This module carries the obligations that keep the platform legally trustworthy over years of operation. The Directive mandates hybrid record keeping - hard and soft copies, scanning of contracts, duplicates, identity photos, and payment documents, backups at every tier, uniform register formats with sequential numbering across all woredas, and change propagation when a woreda corrects data (Article 13). The Proclamation and the standards baseline add security and auditability: every create, read of sensitive data, update, and decision is logged immutably; personal data is protected under the Personal Data Protection Proclamation; and regional variation (each city's directive figures, holiday calendars, fine ladders) lives in versioned configuration rather than code. The module also owns the trilingual user interface (Amharic, English and Afan Oromo, per approved change request CR-01) with dual EC/GC calendars, the notification service that keeps every legal deadline visible to citizens and officers, and the document generation and stamping workflow records required by Articles 8 to 10 of the Directive."),
     ...tbl({
       caption: "M13 functional requirements",
       headers: H, widths: W, zebra: true,
@@ -110,7 +110,7 @@ function m13() {
         fr("FR-M13-02", "Manage scanned documents and attachments (contracts, duplicates, ID photos, payment documents) with hard-copy register cross-references and per-tier backup jobs.", "Dir. Art. 13(1-4)"),
         fr("FR-M13-03", "Enforce uniform register formats and uninterrupted sequential numbering per register across all woredas.", "Dir. Art. 13(3)"),
         fr("FR-M13-04", "Provide versioned regional configuration: directive parameters, fine ladders, increase rates, working-day calendars, and model contract text per jurisdiction.", "Proc. Art. 29; Dir. Art. 22 [G1-CONFIRM]"),
-        fr("FR-M13-05", "Deliver bilingual UI (Amharic and English) with dual Ethiopian and Gregorian calendar rendering and storage conversion.", "Dir. Art. 26 (EC dates); usability"),
+        fr("FR-M13-05", "Deliver trilingual UI (Amharic, English and Afan Oromo) with a language switcher on every screen and fallback to Amharic or English wherever a certified Afan Oromo rendering is not yet available, with dual Ethiopian and Gregorian calendar rendering and storage conversion.", "Dir. Art. 26 (EC dates); usability; CR-01"),
         fr("FR-M13-06", "Operate the notification service (SMS, email, in-app) for registration deadlines, June 1 and June 30 events, appeal windows, hearing schedules, and exemption expiries.", "Proc. Arts. 4, 8, 24; Dir. Art. 6(1)"),
         fr("FR-M13-07", "Record stamp issuance events, back-stamp verification annotations, and archive binding references produced by the certification workflow.", "Dir. Arts. 9, 10(7)"),
       ],
@@ -122,7 +122,7 @@ function chapter4() {
   return [
     h1("4. External Interface Requirements"),
     h2("4.1 User Interfaces"),
-    p("The system presents four distinct user experiences on one platform. The public portal serves citizens and visitors in Amharic and English with rent statistics, contract and landlord verification lookups, the downloadable model agreement, and complaint submission. The citizen workspace (landlord, tenant, agent) supports registration, contract preparation, payment visibility, and case tracking. The office back-office serves registrars, stampers, inspectors, and case handlers with queue-based workflows, checklist screens mirroring the Directive verification points, and scanner integration. The committee workspace schedules hearings and records decisions, while the Bureau and Ministry consoles provide configuration, dashboards, and publication control. All interfaces follow a single design system, are responsive for mobile use, and meet accessibility basics (contrast, keyboard navigation)."),
+    p("The system presents four distinct user experiences on one platform. The public portal serves citizens and visitors in Amharic, English and Afan Oromo (CR-01) with rent statistics, contract and landlord verification lookups, the downloadable model agreement, and complaint submission. The citizen workspace (landlord, tenant, agent) supports registration, contract preparation, payment visibility, and case tracking. The office back-office serves registrars, stampers, inspectors, and case handlers with queue-based workflows, checklist screens mirroring the Directive verification points, and scanner integration. The committee workspace schedules hearings and records decisions, while the Bureau and Ministry consoles provide configuration, dashboards, and publication control. All interfaces follow a single design system, are responsive for mobile use, and meet accessibility basics (contrast, keyboard navigation)."),
     h2("4.2 Software and Communications Interfaces"),
     ...tbl({
       caption: "External system interfaces",
@@ -131,7 +131,7 @@ function chapter4() {
       zebra: true,
       rows: [
         ["Banking / e-payment gateway", "Inbound payment notifications; outbound reconciliation queries; validates the Article 13 electronic-only rule", "Contract-dependent (placeholder partner); file-based fallback required"],
-        ["SMS gateway", "Outbound deadline and event notifications to parties", "Afar-format templates; bilingual"],
+        ["SMS gateway", "Outbound deadline and event notifications to parties", "Localizable templates; trilingual (Amharic, English, Afan Oromo) per CR-01"],
         ["Email service", "Outbound formal notices, receipts, hearing schedules", "Delivery logging for audit"],
         ["Document scanning station", "Capture of contracts, IDs, duplicates at woreda offices", "Dir. Art. 13(2); PDF/A archiving"],
         ["Tax system referral", "Outbound vacancy surcharge events and filtered owner data", "Dir. Art. 22(8-9); initial phase manual export acceptable"],

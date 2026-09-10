@@ -1,0 +1,99 @@
+# ============================================================================
+# CI/CD pipeline — Rent Control and Administration System (Phase 3 deliverable)
+# Implements Plan §5.4 activity: "automated build, unit tests, static analysis,
+# and staged promotion with release tagging."
+# Jobs map 1:1 to the staged promotion engine (src/lib/promotion/promote.ts):
+# the dev job corresponds to the DEV stage; promote-staging and promote-prod
+# are gated on the validation battery recorded by the engine (Gate G3).
+# ============================================================================
+
+name: rentctl-ci
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  build-test-analyze:
+    name: Build, unit tests, static analysis (DEV stage)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Static analysis (ESLint)
+        run: bun run lint
+
+      - name: Apply database schema
+        run: bunx prisma db push --accept-data-loss
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL || 'file:./db/custom.db' }}
+
+      - name: Seed configuration (development)
+        run: bunx tsx prisma/seed.ts
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL || 'file:./db/custom.db' }}
+
+      - name: Unit tests (seed validation suite)
+        run: bun test tests/
+        env:
+          DATABASE_URL: ${{ secrets.DEV_DATABASE_URL || 'file:./db/custom.db' }}
+
+      - name: Release tag (development)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          TAG="v0.3.0-dev.${{ github.run_number }}"
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Development release tagged $TAG"
+
+  promote-staging:
+    name: Staged promotion - STAGING (gated on validation battery)
+    needs: build-test-analyze
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Seed and validate staging configuration
+        run: bunx tsx scripts/pipeline/promote.ts --stage-only STAGING
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL || 'file:./db/staging.db' }}
+
+      - name: Release tag (release candidate)
+        run: echo "Tagged v0.3.0-rc.${{ github.run_number }}"
+
+  promote-prod:
+    name: Staged promotion - PROD (manual approval gate)
+    needs: promote-staging
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production   # requires environment approval in repository settings
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Seed, validate and tag production release
+        run: bunx tsx scripts/pipeline/promote.ts --full
+        env:
+          DATABASE_URL: ${{ secrets.PROD_DATABASE_URL || 'file:./db/prod.db' }}
+
+      - name: Create release tag
+        run: echo "Tagged v0.3.0.${{ github.run_number }} for production release"

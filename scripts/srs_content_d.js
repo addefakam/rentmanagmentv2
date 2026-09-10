@@ -16,7 +16,7 @@ function chapter5() {
         ["NFR-03", "Recoverability", "Backups per tier per Directive Art. 13(4): nightly full plus continuous transaction logging; recovery point objective 15 minutes, recovery time objective 4 hours; annual restore drill evidenced."],
         ["NFR-04", "Security", "OWASP ASVS Level 2 controls; TLS 1.2+ in transit; encryption at rest for personal and financial data; role-based access with least privilege; secrets management; annual penetration test before go-live."],
         ["NFR-05", "Privacy", "Personal data processing limited to legal purposes under PDPP 1321/2024; consent and purpose registry; anonymization gate before any publication; data subject request workflow with statutory response times."],
-        ["NFR-06", "Locale and calendar", "Full Amharic and English interfaces; dual Ethiopian and Gregorian calendar display with unambiguous storage (UTC instants plus EC dates for legal records); Ethiopian numeric formatting for currency."],
+        ["NFR-06", "Locale and calendar", "Full Amharic, English and Afan Oromo interfaces (approved change request CR-01) with a language switcher on every screen and graceful fallback where a certified Afan Oromo rendering is pending; trilingual terminology glossary so interface labels, forms, notices and generated documents use the directive's own words; dual Ethiopian and Gregorian calendar display with unambiguous storage (UTC instants plus EC dates for legal records); Ethiopian numeric formatting for currency."],
         ["NFR-07", "Auditability", "One hundred percent of state-changing actions and sensitive reads logged immutably; logs retained at least 7 years; audit export per case and per user on demand."],
         ["NFR-08", "Scalability", "Architecture sized for national rollout: at least 10 regions, 100 sub-cities, and 1,000 woreda offices without architectural change; horizontal scaling of stateless services."],
         ["NFR-09", "Usability", "A registrar completes a standard contract registration in 15 minutes or less after two days of training; task-success rate above 90 percent in UAT scenarios; context help cites the governing legal article on each screen."],
@@ -187,6 +187,15 @@ function chapter11() {
     h1("11. Approval and Change Control"),
     p("This SRS becomes the frozen Phase 1 baseline when the owner signs the Gate G1 approval below. After freezing, any change follows the change control procedure of the implementation plan: a change request describing the driver (legal amendment, operational correction, or enhancement), an impact analysis across the traceability matrix, and explicit owner approval before the baseline is updated and re-versioned. Minor editorial corrections that do not alter behavior may be applied by the project librarian with traceable version notes."),
     ...tbl({
+      caption: "Approved change requests affecting this baseline",
+      headers: ["CR", "Title and driver", "Requirements touched", "Approval"],
+      widths: [10, 42, 30, 18],
+      zebra: true,
+      rows: [
+        ["CR-01", "Add Afan Oromo as a third system language alongside Amharic and English. Driver: owner directive of 2026-09-10; the platform serves Oromo-speaking landlords, tenants and officers, so public portal, office workbenches, notifications and generated documents must render in all three languages, with certified legal terminology and fallback where a rendering is not yet certified.", "NFR-06; FR-M13-05; M13 module text; public portal interface text; SMS and notification template rules; terminology glossary (bilingual to trilingual)", "Approved by owner 2026-09-10"],
+      ],
+    }),
+    ...tbl({
       caption: "Gate G1 approval record",
       headers: ["Role", "Name", "Signature", "Date"],
       widths: [30, 30, 22, 18],
@@ -206,6 +215,7 @@ function chapter11() {
       rows: [
         ["0.9", "2026-09-08", "Business Analysis Team", "Draft consolidated from legal analysis, FR workshop, and use case model"],
         ["1.0", "2026-09-08", "Business Analysis Team", "Issued for Gate G1 owner review and approval"],
+        ["1.1", "2026-09-10", "Business Analysis Team", "CR-01 applied: Afan Oromo added as third language across UI, notifications, document generation and glossary; trilingual localization requirements recorded (NFR-06, FR-M13-05); issued for Gate G3 package"],
       ],
     }),
   ];
