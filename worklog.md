@@ -229,3 +229,21 @@ Stage Summary:
 - Program verification totals: battery 176/0 across 7 suites; e2e golden 31/31, P7 20/20, P8 34/34, G9 28/28; UAT 50/50; legal matrix 47 rows (45 CONFIRMED + 2 CONFIRMED_W_DISPOSITION + 0 deviations); migration reconciled w/ Dir. Art. 8(2); audit chain 814/814 intact.
 - Standing service BAU (accepted by owner): Wave 2 cutover order with city operations (checklist green, sequencing gates satisfied); production auth switch at each physical cutover; monthly Ministry feed under runbook v1.1; 2027 annual cycle workspace; backlog BL-01..03 monthly review; O-1 official Amharic figures land as data update; O-8 glossary workshop with culture bureau.
 - No open items at any severity. Project team released. End of program.
+
+---
+Task ID: 11 (GitHub push)
+Agent: Main agent (Super Z)
+Task: Push the completed project to https://github.com/addefakam/rentmanagmentv2 (owner request).
+
+Work Log:
+- Audited repo state: branch main, 15 commits, clean tree; found .env, db/custom.db and tool-results/ (72 files) tracked; no credentials in environment (no gh/ssh/netrc/token).
+- Hygiene: extended .gitignore (.env, db/*.db, /tool-results/), added .env.example and a GitHub-facing README.md (legal basis, enforcement table, stack, quick start, layout, verification record, gate ledger, sources).
+- Untracked secrets/artifacts (git rm --cached), committed as 5cd283f "chore: prepare repository for GitHub push" (242 tracked files; download/ deliverables and upload/ legal sources retained).
+- Owner supplied a PAT; verified via ls-remote (repo exists, empty); pushed main -> main (new branch) using the token once in the push URL.
+- Scrubbed the token from .git/config (branch.main.remote reset to clean origin); swept the working tree for token remnants (zero hits).
+- Verified: unauthenticated ls-remote sees refs/heads/main at 5cd283f (repo is public); full 16-commit history on GitHub.
+
+Stage Summary:
+- Project published: https://github.com/addefakam/rentmanagmentv2 (public, branch main, 16 commits, 242 files).
+- Token not stored anywhere in the repo or config; owner advised to revoke it after use.
+- Note: history contains the earlier tracked .env (local file path only, no secrets) and db/custom.db (synthetic demo data) removed in 5cd283f - no sensitive content published; history rewrite unnecessary.
