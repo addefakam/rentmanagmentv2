@@ -255,7 +255,14 @@ describe("Proclamation compliance", () => {
     expect(over.ok).toBe(false);
     expect(over.rule).toMatch(/Arts?\.? 8/);
     const within = validateIncreaseAgainstCeiling(5000, 5700, ceiling);
+    expect(within).not.toBeNull();
     expect(within.ok).toBe(true);
+    // DEF-06-03 fix: clean up the fixture so the shared demonstration database
+    // keeps only the real annual cycle (a leftover far-future EFFECTIVE row
+    // would govern ceiling validation as the latest effected rate set).
+    await db.rentAdjustment.deleteMany({ where: { year } });
+    await db.publicationItem.deleteMany({ where: { code: `PUB-CEILING-${year}` } });
+    await db.deadlineTrack.deleteMany({ where: { subjectType: "ADJUSTMENT", subjectRef: String(year) } });
   });
 
   it("TC-P09 exemption window suspends adjustment applicability", () => {

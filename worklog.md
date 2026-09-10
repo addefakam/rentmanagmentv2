@@ -118,3 +118,15 @@ Stage Summary:
 - Deliverables: Phase 5 security+integration layer in the platform, 113-test battery, 47-row executed compliance matrix (no failed legal rule), perf evidence vs NFR-01, download/Rent_Control_System_Phase5_Report.docx (Gate G5 package).
 - G5 exit criteria evidenced: all critical tests pass; compliance matrix shows no failed rule. Open items: O1, O-7, O-8 carried w/ dispositions; O-9 closed. Finding F-1 (console read-path authz) disposed to Phase 8 go-live hardening.
 - Next: awaiting owner Gate G5 approval to start Phase 6 (User Acceptance and Legal Validation: role-based UAT, legal validation memorandum, defect triage).
+
+---
+Task ID: 6 (Gate G5 approved -> Phase 6 in progress)
+Agent: Main agent (Super Z)
+Task: Record owner Gate G5 approval ("approve"); execute Phase 6 (User Acceptance and Legal Validation) per plan section 5.7; assemble the Gate G6 package.
+
+Work Log:
+- Gate G5 approval recorded (owner message "approve"). Phase 6 scope confirmed from plan §5.7: role-based UAT from use cases, legal validation session vs compliance matrix, defect triage; deliverables UAT scripts+results, legal validation memorandum, defect log; G6 exit = signed UAT certificate + memorandum with no unresolved deviation.
+- (in progress)
+
+Stage Summary:
+- (in progress)

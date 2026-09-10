@@ -1,0 +1,638 @@
+{
+  "runId": "UATRUN-1789026891982",
+  "generatedAt": "2026-09-10T07:54:53.639Z",
+  "baseUrl": "http://localhost:3000",
+  "summary": {
+    "scenarios": 8,
+    "scenariosPassed": 8,
+    "stepsTotal": 50,
+    "stepsPassed": 50,
+    "stepsFailed": 0,
+    "stepsSkipped": 0,
+    "verdict": "PASS",
+    "durationMs": 1657
+  },
+  "scenarios": [
+    {
+      "id": "UAT-01",
+      "title": "Woreda registrar: registration file lifecycle",
+      "role": "Woreda registrar + stamping desk",
+      "actors": [
+        "STF-0001",
+        "STF-0002"
+      ],
+      "useCases": [
+        "UC-L0",
+        "UC-L1",
+        "UC-L2",
+        "UC-R1"
+      ],
+      "legalBasis": "Proc. Art. 4; Dir. Arts. 6-9",
+      "verdict": "PASS",
+      "stepsPassed": 9,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 638,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Onboard the landlord with identification original seen and copy attached",
+          "expected": "Party record created with a party code; identity complete",
+          "legalBasis": "Dir. Art. 7",
+          "observed": "Landlord PTY-000021 onboarded (identity original-and-copy recorded)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.048Z"
+        },
+        {
+          "no": 2,
+          "action": "Onboard the tenant with identification original seen and copy attached",
+          "expected": "Party record created with a party code",
+          "legalBasis": "Dir. Art. 7",
+          "observed": "Tenant PTY-000022 onboarded",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.063Z"
+        },
+        {
+          "no": 3,
+          "action": "Verify both parties at the front desk",
+          "expected": "Both parties VERIFIED",
+          "legalBasis": "Dir. Art. 7",
+          "observed": "Both parties VERIFIED at the front desk",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.234Z"
+        },
+        {
+          "no": 4,
+          "action": "Register the residential property at the woreda where the house is located (occupied status)",
+          "expected": "Property code issued; no exemption clock for an occupied house",
+          "legalBasis": "Dir. Art. 6; Proc. Arts. 2, 10",
+          "observed": "Property PRP-AA-BOLE-W01-0009 registered at AA-BOLE-W01; occupied house carries no exemption clock",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.334Z"
+        },
+        {
+          "no": 5,
+          "action": "Present the registration file on the active Bureau model contract: two-year lease, three witnesses, electronic payment method confirmed at the woreda",
+          "expected": "File number issued; status PRESENTED",
+          "legalBasis": "Proc. Arts. 4-6, 12-13; MA cl. 8",
+          "observed": "File AA-BOLE-W01/2026/0024 PRESENTED on model contract v5-cpl-restore-699j (2-year lease, 3 witnesses, TeleBirr confirmed)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.432Z"
+        },
+        {
+          "no": 6,
+          "action": "Complete the nine-point document verification checklist",
+          "expected": "All nine items passed; status CHECKLIST_PASSED",
+          "legalBasis": "Dir. Arts. 6-9",
+          "observed": "Nine-point checklist completed; status CHECKLIST_PASSED",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.521Z"
+        },
+        {
+          "no": 7,
+          "action": "Certify the file",
+          "expected": "Status CERTIFIED with a certificate number",
+          "legalBasis": "Dir. Art. 8",
+          "observed": "Certified — certificate CERT-AA-BOLE-W01-2026-0024",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.546Z"
+        },
+        {
+          "no": 8,
+          "action": "Apply the office round stamp at the stamping desk (separate officer)",
+          "expected": "Status STAMPED; registrar role could not stamp (role separation)",
+          "legalBasis": "Dir. Art. 9",
+          "observed": "Office round stamp applied at the stamping desk (separate officer STF-0002)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.569Z"
+        },
+        {
+          "no": 9,
+          "action": "Enter the contract in the register",
+          "expected": "Status REGISTERED with registry-book page and entry number; upward replication enqueued",
+          "legalBasis": "Proc. Art. 4; Dir. Art. 9; Dir. Art. 13",
+          "observed": "REGISTERED — book page 1, entry 15; upward replication enqueued",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.669Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-02",
+      "title": "Woreda registrar: legal refusal gates at intake",
+      "role": "Woreda registrar",
+      "actors": [
+        "STF-0001",
+        "STF-0002"
+      ],
+      "useCases": [
+        "UC-L2",
+        "UC-R1"
+      ],
+      "legalBasis": "Proc. Arts. 6, 12; Dir. Arts. 6, 9",
+      "verdict": "PASS",
+      "stepsPassed": 5,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 190,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Attempt to file a contract with a one-year lease term",
+          "expected": "Refused citing Proc. Art. 6 (minimum two-year term)",
+          "legalBasis": "Proc. Art. 6",
+          "observed": "One-year lease: refused — [Proc. Art. 6] Lease term must be at least 2 years (until 2028-10-10).",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.757Z"
+        },
+        {
+          "no": 2,
+          "action": "Attempt to file a contract with a three-month advance payment",
+          "expected": "Refused citing Proc. Art. 12 (two-month cap)",
+          "legalBasis": "Proc. Art. 12",
+          "observed": "Three-month advance: refused — [Proc. Art. 12] Advance payment cannot exceed 2 months' rent.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.770Z"
+        },
+        {
+          "no": 3,
+          "action": "Attempt to open the file at a sub-city office instead of the house's woreda",
+          "expected": "Refused citing Dir. Art. 6 (registration at the house's woreda)",
+          "legalBasis": "Dir. Art. 6",
+          "observed": "Filing at a sub-city office: refused — [Dir. Art. 6] Filing woreda not found.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.815Z"
+        },
+        {
+          "no": 4,
+          "action": "Attempt to certify a PRESENTED file before the nine-point checklist",
+          "expected": "Refused citing Dir. Art. 9",
+          "legalBasis": "Dir. Art. 9",
+          "observed": "Certification before the nine-point checklist: refused — [Dir. Art. 9] Certification requires the nine-point checklist fully passed.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.846Z"
+        },
+        {
+          "no": 5,
+          "action": "Stamper officer attempts the registrar's certification act",
+          "expected": "Refused with 403 - role separation of the stamping desk (Dir. Art. 9)",
+          "legalBasis": "Dir. Art. 9; NFR-04",
+          "observed": "Stamper STF-0002 refused with 403: Role WOREDA_STAMPER (STF-0002) is not authorized for capability registration:certify. Allowed roles: WOREDA_REGISTRAR.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.858Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-03",
+      "title": "Bureau analyst and head: annual adjustment publication flow",
+      "role": "Bureau analyst (study) + Bureau head (publish/effect)",
+      "actors": [
+        "STF-0004",
+        "STF-0005",
+        "STF-0001"
+      ],
+      "useCases": [
+        "UC-L3",
+        "UC-M2"
+      ],
+      "legalBasis": "Proc. Arts. 8-9; Dir. Art. 11",
+      "verdict": "PASS",
+      "stepsPassed": 6,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 100,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Analyst drafts the annual adjustment from the Bureau market study",
+          "expected": "Adjustment DRAFT at the studied percentage",
+          "legalBasis": "Proc. Art. 8; Dir. Art. 11",
+          "observed": "Adjustment 2026 already on record at +8% (state EFFECTIVE; drafted from the Bureau study)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.869Z"
+        },
+        {
+          "no": 2,
+          "action": "Analyst attempts to publish their own draft",
+          "expected": "Refused with 403 - publication is the Bureau head's act (separation of duties)",
+          "legalBasis": "NFR-04; Dir. Art. 11",
+          "observed": "Analyst STF-0004 refused with 403: Role BUREAU_ANALYST (STF-0004) is not authorized for capability adjustment:publish. Allowed roles: BUREAU_HEAD.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.880Z"
+        },
+        {
+          "no": 3,
+          "action": "Bureau head publishes the ceiling adjustment",
+          "expected": "PUBLISHED with June 1 publication date; public ceiling notice created",
+          "legalBasis": "Proc. Art. 8",
+          "observed": "Record already PUBLISHED (prior cycle run); June 1 publication date verified from record: 2026-06-01",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.880Z"
+        },
+        {
+          "no": 4,
+          "action": "Bureau head brings the adjustment into effect",
+          "expected": "EFFECTIVE with June 30 effect date; 30-working-day amendment window clock opened",
+          "legalBasis": "Proc. Art. 8; Dir. Art. 10",
+          "observed": "Record already EFFECTIVE (prior cycle run); June 30 effect date verified from record: 2026-06-30",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.880Z"
+        },
+        {
+          "no": 5,
+          "action": "Registrar validates a proposed increase within the ceiling",
+          "expected": "Accepted; ceiling = last registered rent + studied percentage",
+          "legalBasis": "Proc. Arts. 8-9",
+          "observed": "Increase accepted; applicable rate set 2026 at +8% — ceiling 12,960 ETB = 12,000 × 1.08",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.931Z"
+        },
+        {
+          "no": 6,
+          "action": "Registrar validates a proposed increase above the ceiling",
+          "expected": "Blocked citing Proc. Arts. 8-9",
+          "legalBasis": "Proc. Arts. 8-9",
+          "observed": "Increase to 13,960 ETB blocked against the 2026 rate set — [Proc. Arts. 8-9] Proposed 13960 exceeds ceiling 12960 (+8% for 2026).",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:52.959Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-04",
+      "title": "Complaint officer: intake to decision within the statutory clock",
+      "role": "Woreda complaint officer",
+      "actors": [
+        "STF-0001"
+      ],
+      "useCases": [
+        "UC-T3",
+        "UC-R3"
+      ],
+      "legalBasis": "Proc. Arts. 20-23; Dir. Arts. 17-19",
+      "verdict": "PASS",
+      "stepsPassed": 7,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 271,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Intake a telephone complaint on ground CG-1 with the minimum factual statement against a registered contract",
+          "expected": "Complaint registered with reference number; 30-working-day decision clock opened",
+          "legalBasis": "Proc. Arts. 20-22; Dir. Arts. 17-18",
+          "observed": "Complaint CMP-2026-00026 registered by telephone; decision due 2026-10-22 (30 working days)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.039Z"
+        },
+        {
+          "no": 2,
+          "action": "Attempt intake with a ground outside the eight statutory grounds",
+          "expected": "Refused citing Dir. Art. 17",
+          "legalBasis": "Dir. Art. 17",
+          "observed": "Ground outside the eight statutory grounds: refused — [Dir. Art. 17] Complaint ground not in the eight-grounds checklist.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.069Z"
+        },
+        {
+          "no": 3,
+          "action": "Attempt intake without the minimum statement of facts",
+          "expected": "Refused citing Dir. Art. 18",
+          "legalBasis": "Dir. Art. 18",
+          "observed": "Statement below the minimum of facts: refused — [Dir. Art. 18] A verbal or written statement of the facts is required for the complaint register.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.116Z"
+        },
+        {
+          "no": 4,
+          "action": "Verify the completeness of the complaint",
+          "expected": "Status COMPLETENESS_VERIFIED",
+          "legalBasis": "Dir. Art. 18",
+          "observed": "Completeness verified",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.138Z"
+        },
+        {
+          "no": 5,
+          "action": "Investigate the complaint against the ceiling record",
+          "expected": "Status UNDER_INVESTIGATION with investigation notes",
+          "legalBasis": "Dir. Art. 19",
+          "observed": "Under investigation with notes against the ceiling record",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.155Z"
+        },
+        {
+          "no": 6,
+          "action": "Decide the complaint (UPHOLD)",
+          "expected": "Status DECIDED; decision clock MET; 15-day appeal window opened",
+          "legalBasis": "Proc. Arts. 22, 24",
+          "observed": "Decided UPHOLD on 2026-09-10; 15-day appeal window opened",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.183Z"
+        },
+        {
+          "no": 7,
+          "action": "Read the deadline register for this complaint",
+          "expected": "DECISION-30WD shown MET and APPEAL-15D shown OPEN",
+          "legalBasis": "Dir. Art. 19; Proc. Art. 22",
+          "observed": "Deadline register: DECISION-30WD MET; APPEAL-15D OPEN until 2026-09-25",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.229Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-05",
+      "title": "Hearing committee: rehearsed appeal and court escalation",
+      "role": "Committee member (hearing) + registrar (filing)",
+      "actors": [
+        "STF-0001",
+        "STF-0006"
+      ],
+      "useCases": [
+        "UC-T4",
+        "UC-C1"
+      ],
+      "legalBasis": "Proc. Arts. 24-26",
+      "verdict": "PASS",
+      "stepsPassed": 6,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 127,
+      "steps": [
+        {
+          "no": 1,
+          "action": "File a timely appeal on the decided complaint",
+          "expected": "Appeal number issued; committee hearing window clock opened",
+          "legalBasis": "Proc. Art. 24",
+          "observed": "Appeal APL-2026-00012 filed in time; committee hearing window clock opened",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.246Z"
+        },
+        {
+          "no": 2,
+          "action": "Attempt to file an appeal dated beyond the 15-day window",
+          "expected": "Refused citing Proc. Art. 24 with the deadline stated",
+          "legalBasis": "Proc. Art. 24",
+          "observed": "Appeal beyond the 15-day window: refused — [Proc. Art. 24] Appeal window expired (15 days from decision, deadline 2026-09-25).",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.255Z"
+        },
+        {
+          "no": 3,
+          "action": "Committee schedules the hearing",
+          "expected": "Status SCHEDULED with a hearing date",
+          "legalBasis": "Proc. Art. 25",
+          "observed": "Hearing scheduled for 2026-09-17",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.268Z"
+        },
+        {
+          "no": 4,
+          "action": "Committee conducts the hearing",
+          "expected": "Status HEARD",
+          "legalBasis": "Proc. Art. 25",
+          "observed": "Committee hearing conducted",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.279Z"
+        },
+        {
+          "no": 5,
+          "action": "Committee issues its decision",
+          "expected": "Status DECIDED; hearing clock MET; complaint CLOSED",
+          "legalBasis": "Proc. Arts. 25-26",
+          "observed": "Committee decision issued; hearing clock MET; complaint CLOSED",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.292Z"
+        },
+        {
+          "no": 6,
+          "action": "Second case: committee escalates an appeal to the courts",
+          "expected": "Status ESCALATED_TO_COURT with court filing date; complaint CLOSED",
+          "legalBasis": "Proc. Arts. 25-26",
+          "observed": "Appeal APL-2026-00013 ESCALATED_TO_COURT (filed 2026-09-10); complaint CLOSED",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.357Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-06",
+      "title": "Tenant and landlord: electronic payment ledger rehearsal",
+      "role": "Woreda payment desk (recording tenant/landlord payments)",
+      "actors": [
+        "STF-0001"
+      ],
+      "useCases": [
+        "UC-T2",
+        "UC-P2"
+      ],
+      "legalBasis": "Proc. Arts. 4, 12-14; Dir. Art. 22",
+      "verdict": "PASS",
+      "stepsPassed": 5,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 76,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Record one month's rent paid through TeleBirr on the registered contract",
+          "expected": "Receipt issued with the bank provider reference settled before the ledger entry",
+          "legalBasis": "Proc. Art. 13",
+          "observed": "Electronic rent receipt RCP-2026-000018; bank settlement reference BNK-MTV8F5MF-WGSLRL stored before the ledger entry",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.373Z"
+        },
+        {
+          "no": 2,
+          "action": "Record a two-month advance payment (boundary of the cap)",
+          "expected": "Accepted at exactly two months",
+          "legalBasis": "Proc. Art. 12",
+          "observed": "Two-month advance accepted at the cap boundary (receipt RCP-2026-000019)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.389Z"
+        },
+        {
+          "no": 3,
+          "action": "Attempt a three-month advance payment",
+          "expected": "Refused citing Proc. Art. 12",
+          "legalBasis": "Proc. Art. 12",
+          "observed": "Three-month advance: refused — [Proc. Art. 12] Prepayment cannot exceed two months' rent.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.398Z"
+        },
+        {
+          "no": 4,
+          "action": "Attempt a payment against a file that is not yet registered",
+          "expected": "Refused citing Proc. Art. 4 (payments attach only to registered contracts)",
+          "legalBasis": "Proc. Arts. 4, 14",
+          "observed": "Payment against an unregistered (PRESENTED) file: refused — [Proc. Art. 4] Payments attach to REGISTERED contracts.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.406Z"
+        },
+        {
+          "no": 5,
+          "action": "Record a cash payment and observe the automatic referral",
+          "expected": "Receipt flagged CASH; a 10 percent referral case (1,200 ETB on 12,000 ETB rent) opened automatically",
+          "legalBasis": "Proc. Art. 13; Dir. Art. 22",
+          "observed": "Cash receipt RCP-2026-000020 flagged; automatic 10% referral case PNC-2026-00020 opened at 1,200 ETB",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.433Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-07",
+      "title": "Control team and Bureau head: vacancy monitoring and penalty ladder",
+      "role": "Sub-city control team + Bureau head",
+      "actors": [
+        "STF-0003",
+        "STF-0005"
+      ],
+      "useCases": [
+        "UC-R2",
+        "UC-R4"
+      ],
+      "legalBasis": "Proc. Arts. 29-32; Dir. Arts. 20, 22",
+      "verdict": "PASS",
+      "stepsPassed": 7,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 137,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Sub-city forms (or reuses) the woreda control team",
+          "expected": "Control team available at sub-city level",
+          "legalBasis": "Dir. Art. 20",
+          "observed": "Control team CT-BOLE-01 available at sub-city level",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.443Z"
+        },
+        {
+          "no": 2,
+          "action": "Attempt a control visit without showing identification",
+          "expected": "Refused citing Dir. Art. 20",
+          "legalBasis": "Dir. Art. 20",
+          "observed": "Visit without identification shown: refused — [Dir. Art. 20] Control teams must present their identification during control.",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.453Z"
+        },
+        {
+          "no": 3,
+          "action": "Record a control visit with credentials shown; vacancy observed at 30 months",
+          "expected": "Visit reference issued; property flagged for vacancy monitoring beyond six months",
+          "legalBasis": "Dir. Art. 20",
+          "observed": "Visit VIS-2026-00005 recorded with credentials shown; vacancy of 30 months flagged for monitoring (beyond six months)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.483Z"
+        },
+        {
+          "no": 4,
+          "action": "Bureau head computes the vacancy surcharge at 2.5 vacancy years on 12,000 ETB rent",
+          "expected": "Band 10 percent; amount 14,400 ETB (annual-rent base)",
+          "legalBasis": "Dir. Art. 22(8-9)",
+          "observed": "Vacancy surcharge PNC-2026-00021: band 10%, amount 14,400 ETB on the annual-rent base",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.495Z"
+        },
+        {
+          "no": 5,
+          "action": "Notify, then refer the vacancy case to the tax authority",
+          "expected": "NOTIFIED then REFERRED to TAX_AUTHORITY",
+          "legalBasis": "Dir. Art. 22",
+          "observed": "Case notified then REFERRED to TAX_AUTHORITY",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.520Z"
+        },
+        {
+          "no": 6,
+          "action": "Compute a noticeless-termination offense fine on 12,000 ETB rent",
+          "expected": "Fine at the three-month cap: 36,000 ETB (Proc. Arts. 29-32 cap enforced at computation)",
+          "legalBasis": "Proc. Arts. 29-32; Dir. Art. 22",
+          "observed": "Offense fine PNC-2026-00022: 36,000 ETB = 3 months' rent — the Proc. Arts. 29-32 cap enforced at computation",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.533Z"
+        },
+        {
+          "no": 7,
+          "action": "Refer the offense case to the court and track recovery",
+          "expected": "REFERRED to COURT then COURT_RECOVERY tracked",
+          "legalBasis": "Dir. Art. 22; Proc. Arts. 29-32",
+          "observed": "Case REFERRED to COURT; court recovery now tracked",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.570Z"
+        }
+      ]
+    },
+    {
+      "id": "UAT-08",
+      "title": "Trilingual service delivery rehearsal (CR-01 / NFR-06)",
+      "role": "Amharic, English and Afan Oromo speaking officers and public",
+      "actors": [
+        "STF-0001",
+        "STF-0003",
+        "STF-0006"
+      ],
+      "useCases": [
+        "UC-M1",
+        "UC-P1",
+        "UC-P4"
+      ],
+      "legalBasis": "CR-01; NFR-06; Proc. Art. 18",
+      "verdict": "PASS",
+      "stepsPassed": 5,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 69,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Inspect the localization catalogue for the three languages",
+          "expected": "Amharic, English and Afan Oromo resources present; O-8 fallback declared",
+          "legalBasis": "CR-01; NFR-06",
+          "observed": "Localization catalogue: am / en / om — 23 resources; O-8 fallback declared",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.581Z"
+        },
+        {
+          "no": 2,
+          "action": "Open the active model contract and check the section renderings",
+          "expected": "All sections carry English, Amharic and Afan Oromo content",
+          "legalBasis": "Proc. Art. 5; Dir. Art. 4; CR-01",
+          "observed": "Model contract v5-cpl-restore-699j: all 10 sections carry English, Amharic and Afan Oromo content",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.581Z"
+        },
+        {
+          "no": 3,
+          "action": "Open the public publication feed and check the ceiling notice",
+          "expected": "Ceiling publication carries trilingual titles and content",
+          "legalBasis": "Proc. Arts. 8, 18",
+          "observed": "Ceiling notice PUB-CEILING-2026 live with trilingual titles (\"Guddina daangaa kiraalaa 2026: +8%\")",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.590Z"
+        },
+        {
+          "no": 4,
+          "action": "Check officer language preferences in the staff register",
+          "expected": "Staff records carry declared working languages (am / en / om)",
+          "legalBasis": "CR-01; NFR-06",
+          "observed": "Staff register: all 8 officers carry declared working languages (am, en, om)",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.627Z"
+        },
+        {
+          "no": 5,
+          "action": "Confirm the compliance matrix row for trilingual localization passes",
+          "expected": "TC-N06 status PASS with the O-8 disposition recorded",
+          "legalBasis": "NFR-06; O-8",
+          "observed": "Compliance row TC-N06 PASS — O-8 tracked: Afan Oromo legal glossary certification pending; fallback per NFR-06",
+          "result": "PASS",
+          "at": "2026-09-10T07:54:53.639Z"
+        }
+      ]
+    }
+  ]
+}

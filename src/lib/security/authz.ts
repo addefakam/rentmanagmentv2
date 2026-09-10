@@ -48,6 +48,7 @@ export const CAPABILITIES: Record<string, string[]> = {
   "publication:manage": ["MINISTRY_ANALYST"],
   "modelcontract:amend": ["BUREAU_HEAD"],
   "promotion:run": ["SYSTEM_ADMIN"],
+  "uat:run": ["SYSTEM_ADMIN", "BUREAU_HEAD"], // Phase 6 acceptance battery coordinator
   "analytics:compute": ["BUREAU_ANALYST"],
 };
 
