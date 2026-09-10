@@ -35,15 +35,18 @@ Implementation of **Ethiopia's Proclamation No. 1320/2016** (Residential House R
 - Domain layer under `src/lib/domain/` — one module per phase (registrations, adjustments, disputes, penalties, migration, go-live, operations)
 - Role/Capability security model under `src/lib/security/`
 
-## Quick start
+## Quick start (local, SQLite)
 
 ```bash
-bun install                # or npm install
-cp .env.example .env       # adjust DATABASE_URL if needed
-bunx prisma db push        # create the schema
-bun scripts/load/seed.ts   # seed catalogs + shipped operational state
-bun run dev                # http://localhost:3000
+npm install                # or bun install / pnpm install
+cp .env.example .env       # local SQLite URL (default)
+npm run db:push            # create the schema
+npm run db:seed            # seed catalogs + shipped operational state
+npm run dev                # http://localhost:3000
 ```
+
+**Deploying to Vercel + Neon Postgres?** See [DEPLOYMENT.md](./DEPLOYMENT.md) — the build is
+database-aware (`scripts/build.mjs` selects the Prisma schema from `DATABASE_URL`).
 
 ## Repository layout
 
