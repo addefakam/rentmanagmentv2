@@ -1,30 +1,31 @@
-// generate_p8_docx.js — Phase 8 report assembler (3-section: cover / Roman TOC / Arabic body)
+// generate_closure_docx.js — Project Closure Minute (Signed) assembler
+// (3-section: cover / Roman TOC / Arabic body), mirroring the G9 pipeline.
 const {
   Document, Packer, Paragraph, TextRun, Header, Footer, PageNumber,
-  NumberFormat, AlignmentType, SectionType, TableOfContents, PageBreak,
+  NumberFormat, SectionType, TableOfContents, PageBreak, AlignmentType,
 } = require("docx");
 const fs = require("fs");
 const path = require("path");
 
 const { P, FONT, HFONT, buildCoverR1 } = require("./plan_lib");
-const A = require("./p8_content_a");
-const B = require("./p8_content_b");
+const A = require("./closure_content");
+const B = require("./closure_content_b");
 
-const OUT = "/home/z/my-project/download/Rent_Control_System_Phase8_Report.docx";
+const OUT = "/home/z/my-project/download/Rent_Control_System_Project_Closure_Minute.docx";
 
 const coverConfig = {
-  title: "Phase 8 Report: Go-Live, Operations and Continuous Improvement",
-  subtitle: "Residential House Rent Control and Administration System - Gate G8 Package",
-  englishLabel: "PHASE 8 DELIVERABLE",
+  title: "Project Closure Minute (Signed): The Gate G9 Decision Executed and the Program Closed",
+  subtitle: "Residential House Rent Control and Administration System - Final Gate Record",
+  englishLabel: "PROJECT CLOSURE DELIVERABLE",
   metaLines: [
     "Legal Basis: Proclamation 1320/2016 + Directive 7/2016 + Model Agreement",
-    "Contents: Go-Live Hardening, Wave Cutover Checklist, Drills, Support Arrangements, Operations Manual",
+    "Contents: Owner Decision Record, Signed Closure Minute CM-P8-G9-01, Lessons, BAU Transitions, Final Open Items, Post-Closure State, Project Record, Signature",
+    "Decision Reference: GATE-G9-2026-09-11 (closure minute signed and frozen)",
     "Baseline: SRS v1.1 (CR-01 Trilingual: Amharic, English, Afan Oromo)",
-    "Gate: G8 - Give the Go-Live Order (Wave 1: Bole Sub-city)",
     "Date: September 2026",
   ],
   footerLeft: "Rent Control and Administration System Project",
-  footerRight: "Phase 8 Report",
+  footerRight: "Project Closure Minute (Signed)",
   palette: { bg: P.bg, accent: P.accent, cover: P.cover },
 };
 
@@ -45,7 +46,7 @@ function docHeader() {
       alignment: AlignmentType.CENTER,
       spacing: { after: 0 },
       children: [new TextRun({
-        text: "Rent Control and Administration System - Phase 8 Report: Go-Live, Operations and Continuous Improvement",
+        text: "Rent Control and Administration System - Project Closure Minute (Signed) - GATE-G9-2026-09-11",
         size: 18, color: "808080", font: FONT,
       })],
     })],
@@ -78,33 +79,25 @@ const body = [
   ...A.chapter3(),
   ...A.chapter4(),
   ...A.chapter5(),
-  ...B.chapter6(),
+  ...A.chapter6(),
   ...B.chapter7(),
   ...B.chapter8(),
-  ...B.chapter9(),
-  ...B.chapter10(),
 ];
 
 const doc = new Document({
   creator: "Rent Control and Administration System Project",
-  title: "Residential House Rent Control and Administration System - Phase 8 Report",
+  title: "Project Closure Minute (Signed) - GATE-G9-2026-09-11",
+  description: "Final gate record: the owner's Gate G9 decision executed, closure minute CM-P8-G9-01 signed and frozen, project closed.",
   styles: {
     default: {
-      document: {
-        run: { font: { ascii: "Times New Roman", eastAsia: "SimSun" }, size: 24, color: "000000" },
-        paragraph: { spacing: { line: 312 } },
-      },
+      document: { run: { font: FONT, size: 22, color: P.primary } },
       heading1: {
-        run: { font: { ascii: "Times New Roman", eastAsia: "SimHei" }, size: 32, bold: true, color: P.primary },
-        paragraph: { spacing: { before: 360, after: 160, line: 312 } },
+        run: { font: HFONT, size: 30, bold: true, color: P.accent },
+        paragraph: { spacing: { before: 360, after: 180 }, outlineLevel: 0 },
       },
       heading2: {
-        run: { font: { ascii: "Times New Roman", eastAsia: "SimHei" }, size: 28, bold: true, color: P.primary },
-        paragraph: { spacing: { before: 240, after: 120, line: 312 } },
-      },
-      heading3: {
-        run: { font: { ascii: "Times New Roman", eastAsia: "SimHei" }, size: 24, bold: true, color: P.primary },
-        paragraph: { spacing: { before: 200, after: 100, line: 312 } },
+        run: { font: HFONT, size: 25, bold: true, color: P.primary },
+        paragraph: { spacing: { before: 280, after: 140 }, outlineLevel: 1 },
       },
     },
   },

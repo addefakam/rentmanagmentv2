@@ -209,3 +209,23 @@ Stage Summary:
 - G9 exit criteria evidenced: go-live order executed (Wave 1 live); hypercare operated 28/28 with zero SEV-1 and 96.4% SLA; hypercare closed with signed handover; first annual cycle recorded end to end through the real Art. 8 services; referrals + court recovery operating (3 concluded, 1 live, 87,000 ETB recovered); Ministry feed publishing hash-verified; Wave 2 prepared under its sequencing gates (order pending with operations); 90-day PIR conducted with 6 dispositioned findings; closure minute drafted with 6 lessons; audit chain intact, no open defects at any severity.
 - Open items final: O-1 closed by disposition (configurable parameters; residual risk accepted), O-8 handed over (glossary workshop; fallback active), DEF-08-01 closed into manual v1.1. BAU transitions: Wave 2 order with operations, production switch at physical cutover, backlog BL-01..03, monthly feed cadence.
 - Next: awaiting owner Gate G9 decision (sign closure minute CM-P8-G9-01 under a written G9 reference) - the project's final gate. On approval the platform freezes the closure state; the standing service continues under runbook v1.1 (Wave 2 cutover, monthly feed, annual 2027 cycle workspace).
+
+---
+Task ID: 10 (Gate G9 approved - project closed)
+Agent: Main agent (Super Z)
+Task: Record the owner's Gate G9 decision ("approve" on the Gate G9 Closure Report, delivered via IM gateway zai-web); execute the closure on the platform; produce the final deliverable (signed Project Closure Minute); close the program.
+
+Work Log:
+- Read worklog tail and verified true state: P7, P8 and the Gate G9 closure package were complete; the last open action was the owner's G9 decision (sign closure minute CM-P8-G9-01 under a written G9 reference).
+- Verified pre-decision state live: minute CM-P8-G9-01 DRAFT (6 lessons), g9Check READY 10/10, audit chain intact, Wave 1 LIVE under GATE-G8-2026-09-10.
+- Wrote scripts/p9/execute-g9.ts (idempotent closure executor): signs the minute over the live HTTP API (POST /api/phase8 kind=minute-sign, capability golive:order, actor STF-0005) under written decision reference GATE-G9-2026-09-11 (convention: GATE-G7/G8-2026-09-10), signedBy Owner; verifies post-state; proves the freeze (re-signature refused: "Closure minute already signed."); dumps scripts/g9_closure_evidence.json (decision record, post-closure g9Check 10/10, audit chain 814/814 intact, operational snapshot).
+- Executed the decision: CM-P8-G9-01 now SIGNED under GATE-G9-2026-09-11 by Owner at 2026-09-10T17:05:22Z; platform closure state frozen.
+- Generated download/Rent_Control_System_Project_Closure_Minute.docx (11 pages, 8 chapters: owner decision record, signature executed w/ freeze proof, 6 lessons verbatim, 6 BAU transitions, final open-item register, post-closure platform state w/ 10/10 check table, project record w/ gate ledger G0-G9 + verification totals + deliverable index, signature block). Pipeline: generate_closure_docx.js + closure_content.js/b.js -> add_toc_placeholders.py --auto (11 headings, exit 0) -> postprocess_footers.py (explicit path; footer1 ROMAN / footer2 arabic) -> postcheck.py: 0 errors, 2 series-consistent warnings -> LibreOffice render verified (11 pp, cover/body/signature tables clean).
+- Updated download/README.md: gate progress G0-G9 all approved/closed; final deliverable indexed.
+
+Stage Summary:
+- GATE G9 CLOSED - the program is complete: 9 phases, 10 gates, every gate carrying the owner's decision. Written gate references: GATE-G7-2026-09-10 (pilot), GATE-G8-2026-09-10 (go-live), GATE-G9-2026-09-11 (closure).
+- Final deliverable: download/Rent_Control_System_Project_Closure_Minute.docx. Evidence: scripts/g9_closure_evidence.json. Executor: scripts/p9/execute-g9.ts.
+- Program verification totals: battery 176/0 across 7 suites; e2e golden 31/31, P7 20/20, P8 34/34, G9 28/28; UAT 50/50; legal matrix 47 rows (45 CONFIRMED + 2 CONFIRMED_W_DISPOSITION + 0 deviations); migration reconciled w/ Dir. Art. 8(2); audit chain 814/814 intact.
+- Standing service BAU (accepted by owner): Wave 2 cutover order with city operations (checklist green, sequencing gates satisfied); production auth switch at each physical cutover; monthly Ministry feed under runbook v1.1; 2027 annual cycle workspace; backlog BL-01..03 monthly review; O-1 official Amharic figures land as data update; O-8 glossary workshop with culture bureau.
+- No open items at any severity. Project team released. End of program.
