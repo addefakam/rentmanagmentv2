@@ -267,3 +267,23 @@ Work Log:
 Stage Summary:
 - Vercel redeploy from commit 11e360a builds clean; owner needs: DATABASE_URL env (Neon string), then run db:push:pg + db:seed against Neon once from a local checkout.
 - Local SQLite workflow preserved unchanged; two schema files must stay model-identical (documented).
+
+---
+Task ID: 13 (Neon provisioning done on owner's behalf)
+Agent: Main agent (Super Z)
+Task: Owner provided the Neon connection string; provision the deployment database end to end, push everything to GitHub.
+
+Work Log:
+- Pushed Prisma schema to Neon (db push, 55 tables). Row-by-row seed over WAN stalled (pooler kills idle-in-transaction; ~1 commit/s) - first seed run timed out, detached retry reaped by sandbox with partial data; force-reset for a clean slate.
+- Built scripts/etl-sqlite-to-neon.ts: bulk copy from the authoritative local SQLite state using batched createMany (400/batch), model order computed from Prisma dmmf relation graph, AuditEvent.seq sequence realigned via setval (817).
+- Two ETL false starts diagnosed: (a) Prisma CLI --output flag removed in 6.19 (used temp schema with generator output for the pg client at node_modules/.prisma-pg); (b) db push --force-reset auto-regenerates @prisma/client as postgres, breaking the sqlite source reads - regenerate sqlite client before ETL runs.
+- Final ETL: 0 errors, 1,932 rows across 55 tables (OrgUnit 131, Party 56, Property 28, GoLiveWave 4, HypercareReport 28, AuditEvent 814, ClosureMinute SIGNED GATE-G9-2026-09-11...).
+- Verified ON NEON: state counts via scripts/check-neon.ts (pg client at .prisma-pg); audit chain via the platform's real verifyAuditChain: 814/814 intact.
+- Restored local sqlite client. Found and fixed .env.example silently ignored by template .env* pattern (negated in .gitignore, now tracked).
+- Docs: DEPLOYMENT.md marked Neon provisioning DONE (2026-09-11) + pooler/direct endpoint guidance (pgbouncer=true for app runtime; direct for migrations/seed) + ETL path documented; .env.example Neon example.
+- Credential scan before commit: clean (no Neon password in tracked files). Committed 05a9c30 + f0c9fe4, pushed to GitHub.
+
+Stage Summary:
+- Neon database is deployment-ready with the full frozen closure state.
+- Only remaining owner step: set DATABASE_URL on Vercel (pooled endpoint + pgbouncer=true) and redeploy.
+- Security notes delivered: rotate Neon password (pasted in chat), revoke GitHub PAT (used for pushes).
