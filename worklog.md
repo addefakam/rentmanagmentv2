@@ -247,3 +247,23 @@ Stage Summary:
 - Project published: https://github.com/addefakam/rentmanagmentv2 (public, branch main, 16 commits, 242 files).
 - Token not stored anywhere in the repo or config; owner advised to revoke it after use.
 - Note: history contains the earlier tracked .env (local file path only, no secrets) and db/custom.db (synthetic demo data) removed in 5cd283f - no sensitive content published; history rewrite unnecessary.
+
+---
+Task ID: 12 (Vercel + Neon deployment fix)
+Agent: Main agent (Super Z)
+Task: Diagnose and fix the owner's failed Vercel deployment with Neon database (404 NOT_FOUND, fra1::...).
+
+Work Log:
+- Diagnosed: Vercel 404 NOT_FOUND = no successful deployment behind the domain; root causes found in repo - Prisma provider "sqlite" vs Neon PostgreSQL-only; no prisma generate in build path; next.config forced output:"standalone" with self-hosting cp steps in build script.
+- Added prisma/schema.postgres.prisma (PostgreSQL twin; validated + generate tested).
+- Added scripts/build.mjs database-aware wrapper: picks schema from DATABASE_URL scheme (file: -> sqlite, postgres:// -> postgres), runs prisma generate then next build; npm run build now works unchanged on Vercel and locally.
+- next.config.ts: standalone only behind BUILD_STANDALONE=1; packaging moved to build:standalone script; db.ts query logging silenced in production.
+- package.json: build wrapper, build:standalone, db:push:pg, db:seed (bunx tsx prisma/seed.ts) + prisma.seed convention (deprecation warning accepted).
+- Local validation: prisma validate + generate on postgres schema (dummy Neon URL) PASS; full build wrapper run locally PASS (all routes dynamic, no standalone).
+- Wrote DEPLOYMENT.md (Neon setup, Vercel env config, db:push:pg + db:seed bootstrap, verification, troubleshooting incl. 404 explanation).
+- README quick start corrected to prisma/seed.ts entrypoint.
+- Committed 11e360a and pushed to GitHub (token reused; revocation reminder repeated).
+
+Stage Summary:
+- Vercel redeploy from commit 11e360a builds clean; owner needs: DATABASE_URL env (Neon string), then run db:push:pg + db:seed against Neon once from a local checkout.
+- Local SQLite workflow preserved unchanged; two schema files must stay model-identical (documented).
