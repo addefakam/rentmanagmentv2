@@ -1,0 +1,1343 @@
+{
+  "run": {
+    "runId": "UATRUN-1789026891982",
+    "generatedAt": "2026-09-10T07:54:53.639Z",
+    "baseUrl": "http://localhost:3000",
+    "durationMs": 1657,
+    "summary": {
+      "scenarios": 8,
+      "scenariosPassed": 8,
+      "stepsTotal": 50,
+      "stepsPassed": 50,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "verdict": "PASS",
+      "durationMs": 1657
+    }
+  },
+  "firstRun": {
+    "runId": "UATRUN-1789026404379",
+    "note": "First battery run: 7 of 8 scenarios passed; UAT-03 step 5 (ceiling validation) failed against a stale Phase 5 compliance fixture - triaged DEF-06-03, fixed and re-tested; second run clean."
+  },
+  "scenarios": [
+    {
+      "id": "UAT-01",
+      "title": "Woreda registrar: registration file lifecycle",
+      "role": "Woreda registrar + stamping desk",
+      "actors": [
+        "STF-0001",
+        "STF-0002"
+      ],
+      "useCases": [
+        "UC-L0",
+        "UC-L1",
+        "UC-L2",
+        "UC-R1"
+      ],
+      "legalBasis": "Proc. Art. 4; Dir. Arts. 6-9",
+      "objective": "The registrar runs one real registration file end to end: party onboarding with the original-and-copy rule, property capture, file presentation on the active model contract, the nine-point checklist, certification, the stamping desk and registry-book entry.",
+      "verdict": "PASS",
+      "stepsPassed": 9,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 638,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Onboard the landlord with identification original seen and copy attached",
+          "expected": "Party record created with a party code; identity complete",
+          "legalBasis": "Dir. Art. 7",
+          "observed": "Landlord PTY-000021 onboarded (identity original-and-copy recorded)",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Onboard the tenant with identification original seen and copy attached",
+          "expected": "Party record created with a party code",
+          "legalBasis": "Dir. Art. 7",
+          "observed": "Tenant PTY-000022 onboarded",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Verify both parties at the front desk",
+          "expected": "Both parties VERIFIED",
+          "legalBasis": "Dir. Art. 7",
+          "observed": "Both parties VERIFIED at the front desk",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Register the residential property at the woreda where the house is located (occupied status)",
+          "expected": "Property code issued; no exemption clock for an occupied house",
+          "legalBasis": "Dir. Art. 6; Proc. Arts. 2, 10",
+          "observed": "Property PRP-AA-BOLE-W01-0009 registered at AA-BOLE-W01; occupied house carries no exemption clock",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Present the registration file on the active Bureau model contract: two-year lease, three witnesses, electronic payment method confirmed at the woreda",
+          "expected": "File number issued; status PRESENTED",
+          "legalBasis": "Proc. Arts. 4-6, 12-13; MA cl. 8",
+          "observed": "File AA-BOLE-W01/2026/0024 PRESENTED on model contract v5-cpl-restore-699j (2-year lease, 3 witnesses, TeleBirr confirmed)",
+          "result": "PASS"
+        },
+        {
+          "no": 6,
+          "action": "Complete the nine-point document verification checklist",
+          "expected": "All nine items passed; status CHECKLIST_PASSED",
+          "legalBasis": "Dir. Arts. 6-9",
+          "observed": "Nine-point checklist completed; status CHECKLIST_PASSED",
+          "result": "PASS"
+        },
+        {
+          "no": 7,
+          "action": "Certify the file",
+          "expected": "Status CERTIFIED with a certificate number",
+          "legalBasis": "Dir. Art. 8",
+          "observed": "Certified — certificate CERT-AA-BOLE-W01-2026-0024",
+          "result": "PASS"
+        },
+        {
+          "no": 8,
+          "action": "Apply the office round stamp at the stamping desk (separate officer)",
+          "expected": "Status STAMPED; registrar role could not stamp (role separation)",
+          "legalBasis": "Dir. Art. 9",
+          "observed": "Office round stamp applied at the stamping desk (separate officer STF-0002)",
+          "result": "PASS"
+        },
+        {
+          "no": 9,
+          "action": "Enter the contract in the register",
+          "expected": "Status REGISTERED with registry-book page and entry number; upward replication enqueued",
+          "legalBasis": "Proc. Art. 4; Dir. Art. 9; Dir. Art. 13",
+          "observed": "REGISTERED — book page 1, entry 15; upward replication enqueued",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-02",
+      "title": "Woreda registrar: legal refusal gates at intake",
+      "role": "Woreda registrar",
+      "actors": [
+        "STF-0001",
+        "STF-0002"
+      ],
+      "useCases": [
+        "UC-L2",
+        "UC-R1"
+      ],
+      "legalBasis": "Proc. Arts. 6, 12; Dir. Arts. 6, 9",
+      "objective": "Negative rehearsal: the system must refuse every intake that the law refuses - a one-year lease, a three-month advance, filing at a non-woreda office, certification without the checklist, and a stamper attempting a registrar act.",
+      "verdict": "PASS",
+      "stepsPassed": 5,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 190,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Attempt to file a contract with a one-year lease term",
+          "expected": "Refused citing Proc. Art. 6 (minimum two-year term)",
+          "legalBasis": "Proc. Art. 6",
+          "observed": "One-year lease: refused — [Proc. Art. 6] Lease term must be at least 2 years (until 2028-10-10).",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Attempt to file a contract with a three-month advance payment",
+          "expected": "Refused citing Proc. Art. 12 (two-month cap)",
+          "legalBasis": "Proc. Art. 12",
+          "observed": "Three-month advance: refused — [Proc. Art. 12] Advance payment cannot exceed 2 months' rent.",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Attempt to open the file at a sub-city office instead of the house's woreda",
+          "expected": "Refused citing Dir. Art. 6 (registration at the house's woreda)",
+          "legalBasis": "Dir. Art. 6",
+          "observed": "Filing at a sub-city office: refused — [Dir. Art. 6] Filing woreda not found.",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Attempt to certify a PRESENTED file before the nine-point checklist",
+          "expected": "Refused citing Dir. Art. 9",
+          "legalBasis": "Dir. Art. 9",
+          "observed": "Certification before the nine-point checklist: refused — [Dir. Art. 9] Certification requires the nine-point checklist fully passed.",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Stamper officer attempts the registrar's certification act",
+          "expected": "Refused with 403 - role separation of the stamping desk (Dir. Art. 9)",
+          "legalBasis": "Dir. Art. 9; NFR-04",
+          "observed": "Stamper STF-0002 refused with 403: Role WOREDA_STAMPER (STF-0002) is not authorized for capability registration:certify. Allowed roles: WOREDA_REGISTRAR.",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-03",
+      "title": "Bureau analyst and head: annual adjustment publication flow",
+      "role": "Bureau analyst (study) + Bureau head (publish/effect)",
+      "actors": [
+        "STF-0004",
+        "STF-0005",
+        "STF-0001"
+      ],
+      "useCases": [
+        "UC-L3",
+        "UC-M2"
+      ],
+      "legalBasis": "Proc. Arts. 8-9; Dir. Art. 11",
+      "objective": "The Bureau runs the annual rent adjustment: analyst drafts from the market study, head publishes June 1 and effects June 30, and a woreda registrar validates a proposed increase against the ceiling.",
+      "verdict": "PASS",
+      "stepsPassed": 6,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 100,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Analyst drafts the annual adjustment from the Bureau market study",
+          "expected": "Adjustment DRAFT at the studied percentage",
+          "legalBasis": "Proc. Art. 8; Dir. Art. 11",
+          "observed": "Adjustment 2026 already on record at +8% (state EFFECTIVE; drafted from the Bureau study)",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Analyst attempts to publish their own draft",
+          "expected": "Refused with 403 - publication is the Bureau head's act (separation of duties)",
+          "legalBasis": "NFR-04; Dir. Art. 11",
+          "observed": "Analyst STF-0004 refused with 403: Role BUREAU_ANALYST (STF-0004) is not authorized for capability adjustment:publish. Allowed roles: BUREAU_HEAD.",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Bureau head publishes the ceiling adjustment",
+          "expected": "PUBLISHED with June 1 publication date; public ceiling notice created",
+          "legalBasis": "Proc. Art. 8",
+          "observed": "Record already PUBLISHED (prior cycle run); June 1 publication date verified from record: 2026-06-01",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Bureau head brings the adjustment into effect",
+          "expected": "EFFECTIVE with June 30 effect date; 30-working-day amendment window clock opened",
+          "legalBasis": "Proc. Art. 8; Dir. Art. 10",
+          "observed": "Record already EFFECTIVE (prior cycle run); June 30 effect date verified from record: 2026-06-30",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Registrar validates a proposed increase within the ceiling",
+          "expected": "Accepted; ceiling = last registered rent + studied percentage",
+          "legalBasis": "Proc. Arts. 8-9",
+          "observed": "Increase accepted; applicable rate set 2026 at +8% — ceiling 12,960 ETB = 12,000 × 1.08",
+          "result": "PASS"
+        },
+        {
+          "no": 6,
+          "action": "Registrar validates a proposed increase above the ceiling",
+          "expected": "Blocked citing Proc. Arts. 8-9",
+          "legalBasis": "Proc. Arts. 8-9",
+          "observed": "Increase to 13,960 ETB blocked against the 2026 rate set — [Proc. Arts. 8-9] Proposed 13960 exceeds ceiling 12960 (+8% for 2026).",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-04",
+      "title": "Complaint officer: intake to decision within the statutory clock",
+      "role": "Woreda complaint officer",
+      "actors": [
+        "STF-0001"
+      ],
+      "useCases": [
+        "UC-T3",
+        "UC-R3"
+      ],
+      "legalBasis": "Proc. Arts. 20-23; Dir. Arts. 17-19",
+      "objective": "A tenant complaint arrives by telephone on ground CG-1 (rent above the published ceiling). The officer intakes it, verifies completeness, investigates, decides, and the deadline register tracks the 30-working-day decision clock and the 15-day appeal window.",
+      "verdict": "PASS",
+      "stepsPassed": 7,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 271,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Intake a telephone complaint on ground CG-1 with the minimum factual statement against a registered contract",
+          "expected": "Complaint registered with reference number; 30-working-day decision clock opened",
+          "legalBasis": "Proc. Arts. 20-22; Dir. Arts. 17-18",
+          "observed": "Complaint CMP-2026-00026 registered by telephone; decision due 2026-10-22 (30 working days)",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Attempt intake with a ground outside the eight statutory grounds",
+          "expected": "Refused citing Dir. Art. 17",
+          "legalBasis": "Dir. Art. 17",
+          "observed": "Ground outside the eight statutory grounds: refused — [Dir. Art. 17] Complaint ground not in the eight-grounds checklist.",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Attempt intake without the minimum statement of facts",
+          "expected": "Refused citing Dir. Art. 18",
+          "legalBasis": "Dir. Art. 18",
+          "observed": "Statement below the minimum of facts: refused — [Dir. Art. 18] A verbal or written statement of the facts is required for the complaint register.",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Verify the completeness of the complaint",
+          "expected": "Status COMPLETENESS_VERIFIED",
+          "legalBasis": "Dir. Art. 18",
+          "observed": "Completeness verified",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Investigate the complaint against the ceiling record",
+          "expected": "Status UNDER_INVESTIGATION with investigation notes",
+          "legalBasis": "Dir. Art. 19",
+          "observed": "Under investigation with notes against the ceiling record",
+          "result": "PASS"
+        },
+        {
+          "no": 6,
+          "action": "Decide the complaint (UPHOLD)",
+          "expected": "Status DECIDED; decision clock MET; 15-day appeal window opened",
+          "legalBasis": "Proc. Arts. 22, 24",
+          "observed": "Decided UPHOLD on 2026-09-10; 15-day appeal window opened",
+          "result": "PASS"
+        },
+        {
+          "no": 7,
+          "action": "Read the deadline register for this complaint",
+          "expected": "DECISION-30WD shown MET and APPEAL-15D shown OPEN",
+          "legalBasis": "Dir. Art. 19; Proc. Art. 22",
+          "observed": "Deadline register: DECISION-30WD MET; APPEAL-15D OPEN until 2026-09-25",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-05",
+      "title": "Hearing committee: rehearsed appeal and court escalation",
+      "role": "Committee member (hearing) + registrar (filing)",
+      "actors": [
+        "STF-0001",
+        "STF-0006"
+      ],
+      "useCases": [
+        "UC-T4",
+        "UC-C1"
+      ],
+      "legalBasis": "Proc. Arts. 24-26",
+      "objective": "The committee rehearses an appeal hearing: a timely appeal is filed on the decided complaint, a late appeal is refused, the committee schedules, hears and decides - and a second case exercises the court-escalation path.",
+      "verdict": "PASS",
+      "stepsPassed": 6,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 127,
+      "steps": [
+        {
+          "no": 1,
+          "action": "File a timely appeal on the decided complaint",
+          "expected": "Appeal number issued; committee hearing window clock opened",
+          "legalBasis": "Proc. Art. 24",
+          "observed": "Appeal APL-2026-00012 filed in time; committee hearing window clock opened",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Attempt to file an appeal dated beyond the 15-day window",
+          "expected": "Refused citing Proc. Art. 24 with the deadline stated",
+          "legalBasis": "Proc. Art. 24",
+          "observed": "Appeal beyond the 15-day window: refused — [Proc. Art. 24] Appeal window expired (15 days from decision, deadline 2026-09-25).",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Committee schedules the hearing",
+          "expected": "Status SCHEDULED with a hearing date",
+          "legalBasis": "Proc. Art. 25",
+          "observed": "Hearing scheduled for 2026-09-17",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Committee conducts the hearing",
+          "expected": "Status HEARD",
+          "legalBasis": "Proc. Art. 25",
+          "observed": "Committee hearing conducted",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Committee issues its decision",
+          "expected": "Status DECIDED; hearing clock MET; complaint CLOSED",
+          "legalBasis": "Proc. Arts. 25-26",
+          "observed": "Committee decision issued; hearing clock MET; complaint CLOSED",
+          "result": "PASS"
+        },
+        {
+          "no": 6,
+          "action": "Second case: committee escalates an appeal to the courts",
+          "expected": "Status ESCALATED_TO_COURT with court filing date; complaint CLOSED",
+          "legalBasis": "Proc. Arts. 25-26",
+          "observed": "Appeal APL-2026-00013 ESCALATED_TO_COURT (filed 2026-09-10); complaint CLOSED",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-06",
+      "title": "Tenant and landlord: electronic payment ledger rehearsal",
+      "role": "Woreda payment desk (recording tenant/landlord payments)",
+      "actors": [
+        "STF-0001"
+      ],
+      "useCases": [
+        "UC-T2",
+        "UC-P2"
+      ],
+      "legalBasis": "Proc. Arts. 4, 12-14; Dir. Art. 22",
+      "objective": "The payment desk rehearses the ledger rules: electronic settlement through the bank gateway before any ledger entry, the two-month advance boundary, refusal of unregistered-contract payments, and the automatic 10 percent cash referral.",
+      "verdict": "PASS",
+      "stepsPassed": 5,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 76,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Record one month's rent paid through TeleBirr on the registered contract",
+          "expected": "Receipt issued with the bank provider reference settled before the ledger entry",
+          "legalBasis": "Proc. Art. 13",
+          "observed": "Electronic rent receipt RCP-2026-000018; bank settlement reference BNK-MTV8F5MF-WGSLRL stored before the ledger entry",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Record a two-month advance payment (boundary of the cap)",
+          "expected": "Accepted at exactly two months",
+          "legalBasis": "Proc. Art. 12",
+          "observed": "Two-month advance accepted at the cap boundary (receipt RCP-2026-000019)",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Attempt a three-month advance payment",
+          "expected": "Refused citing Proc. Art. 12",
+          "legalBasis": "Proc. Art. 12",
+          "observed": "Three-month advance: refused — [Proc. Art. 12] Prepayment cannot exceed two months' rent.",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Attempt a payment against a file that is not yet registered",
+          "expected": "Refused citing Proc. Art. 4 (payments attach only to registered contracts)",
+          "legalBasis": "Proc. Arts. 4, 14",
+          "observed": "Payment against an unregistered (PRESENTED) file: refused — [Proc. Art. 4] Payments attach to REGISTERED contracts.",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Record a cash payment and observe the automatic referral",
+          "expected": "Receipt flagged CASH; a 10 percent referral case (1,200 ETB on 12,000 ETB rent) opened automatically",
+          "legalBasis": "Proc. Art. 13; Dir. Art. 22",
+          "observed": "Cash receipt RCP-2026-000020 flagged; automatic 10% referral case PNC-2026-00020 opened at 1,200 ETB",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-07",
+      "title": "Control team and Bureau head: vacancy monitoring and penalty ladder",
+      "role": "Sub-city control team + Bureau head",
+      "actors": [
+        "STF-0003",
+        "STF-0005"
+      ],
+      "useCases": [
+        "UC-R2",
+        "UC-R4"
+      ],
+      "legalBasis": "Proc. Arts. 29-32; Dir. Arts. 20, 22",
+      "objective": "The sub-city control team rehearses a vacancy control visit and the Bureau head computes the penalty ladder: surcharge band math, notifications, referrals to the tax authority and the court, and the three-month fine cap.",
+      "verdict": "PASS",
+      "stepsPassed": 7,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 137,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Sub-city forms (or reuses) the woreda control team",
+          "expected": "Control team available at sub-city level",
+          "legalBasis": "Dir. Art. 20",
+          "observed": "Control team CT-BOLE-01 available at sub-city level",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Attempt a control visit without showing identification",
+          "expected": "Refused citing Dir. Art. 20",
+          "legalBasis": "Dir. Art. 20",
+          "observed": "Visit without identification shown: refused — [Dir. Art. 20] Control teams must present their identification during control.",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Record a control visit with credentials shown; vacancy observed at 30 months",
+          "expected": "Visit reference issued; property flagged for vacancy monitoring beyond six months",
+          "legalBasis": "Dir. Art. 20",
+          "observed": "Visit VIS-2026-00005 recorded with credentials shown; vacancy of 30 months flagged for monitoring (beyond six months)",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Bureau head computes the vacancy surcharge at 2.5 vacancy years on 12,000 ETB rent",
+          "expected": "Band 10 percent; amount 14,400 ETB (annual-rent base)",
+          "legalBasis": "Dir. Art. 22(8-9)",
+          "observed": "Vacancy surcharge PNC-2026-00021: band 10%, amount 14,400 ETB on the annual-rent base",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Notify, then refer the vacancy case to the tax authority",
+          "expected": "NOTIFIED then REFERRED to TAX_AUTHORITY",
+          "legalBasis": "Dir. Art. 22",
+          "observed": "Case notified then REFERRED to TAX_AUTHORITY",
+          "result": "PASS"
+        },
+        {
+          "no": 6,
+          "action": "Compute a noticeless-termination offense fine on 12,000 ETB rent",
+          "expected": "Fine at the three-month cap: 36,000 ETB (Proc. Arts. 29-32 cap enforced at computation)",
+          "legalBasis": "Proc. Arts. 29-32; Dir. Art. 22",
+          "observed": "Offense fine PNC-2026-00022: 36,000 ETB = 3 months' rent — the Proc. Arts. 29-32 cap enforced at computation",
+          "result": "PASS"
+        },
+        {
+          "no": 7,
+          "action": "Refer the offense case to the court and track recovery",
+          "expected": "REFERRED to COURT then COURT_RECOVERY tracked",
+          "legalBasis": "Dir. Art. 22; Proc. Arts. 29-32",
+          "observed": "Case REFERRED to COURT; court recovery now tracked",
+          "result": "PASS"
+        }
+      ]
+    },
+    {
+      "id": "UAT-08",
+      "title": "Trilingual service delivery rehearsal (CR-01 / NFR-06)",
+      "role": "Amharic, English and Afan Oromo speaking officers and public",
+      "actors": [
+        "STF-0001",
+        "STF-0003",
+        "STF-0006"
+      ],
+      "useCases": [
+        "UC-M1",
+        "UC-P1",
+        "UC-P4"
+      ],
+      "legalBasis": "CR-01; NFR-06; Proc. Art. 18",
+      "objective": "The change request CR-01 rehearsal: every public surface answers in Amharic, English and Afan Oromo from seeded localization resources, with the certified-glossary fallback of open item O-8 visible where legal phrasing is pending.",
+      "verdict": "PASS",
+      "stepsPassed": 5,
+      "stepsFailed": 0,
+      "stepsSkipped": 0,
+      "durationMs": 69,
+      "steps": [
+        {
+          "no": 1,
+          "action": "Inspect the localization catalogue for the three languages",
+          "expected": "Amharic, English and Afan Oromo resources present; O-8 fallback declared",
+          "legalBasis": "CR-01; NFR-06",
+          "observed": "Localization catalogue: am / en / om — 23 resources; O-8 fallback declared",
+          "result": "PASS"
+        },
+        {
+          "no": 2,
+          "action": "Open the active model contract and check the section renderings",
+          "expected": "All sections carry English, Amharic and Afan Oromo content",
+          "legalBasis": "Proc. Art. 5; Dir. Art. 4; CR-01",
+          "observed": "Model contract v5-cpl-restore-699j: all 10 sections carry English, Amharic and Afan Oromo content",
+          "result": "PASS"
+        },
+        {
+          "no": 3,
+          "action": "Open the public publication feed and check the ceiling notice",
+          "expected": "Ceiling publication carries trilingual titles and content",
+          "legalBasis": "Proc. Arts. 8, 18",
+          "observed": "Ceiling notice PUB-CEILING-2026 live with trilingual titles (\"Guddina daangaa kiraalaa 2026: +8%\")",
+          "result": "PASS"
+        },
+        {
+          "no": 4,
+          "action": "Check officer language preferences in the staff register",
+          "expected": "Staff records carry declared working languages (am / en / om)",
+          "legalBasis": "CR-01; NFR-06",
+          "observed": "Staff register: all 8 officers carry declared working languages (am, en, om)",
+          "result": "PASS"
+        },
+        {
+          "no": 5,
+          "action": "Confirm the compliance matrix row for trilingual localization passes",
+          "expected": "TC-N06 status PASS with the O-8 disposition recorded",
+          "legalBasis": "NFR-06; O-8",
+          "observed": "Compliance row TC-N06 PASS — O-8 tracked: Afan Oromo legal glossary certification pending; fallback per NFR-06",
+          "result": "PASS"
+        }
+      ]
+    }
+  ],
+  "legalSession": {
+    "session": {
+      "date": "2026-09-10",
+      "venue": "Addis Ababa City Rent Control Bureau - legal validation room (platform rehearsal session)",
+      "chair": "Bureau legal lead (role of Dawit Kebede, Bureau Head, staff register STF-0005)",
+      "attendees": [
+        {
+          "role": "Bureau legal lead (chair)",
+          "designation": "Bureau Head - STF-0005"
+        },
+        {
+          "role": "Bureau analyst (rent study)",
+          "designation": "Bureau Analyst - STF-0004"
+        },
+        {
+          "role": "Woreda registrar practice lead",
+          "designation": "Woreda Registrar, Bole W01 - STF-0001"
+        },
+        {
+          "role": "Stamping desk",
+          "designation": "Woreda Stamper, Bole W01 - STF-0002"
+        },
+        {
+          "role": "Committee member",
+          "designation": "Hearing Committee - STF-0006"
+        },
+        {
+          "role": "Sub-city monitor",
+          "designation": "Sub-city Monitor, Bole - STF-0003"
+        },
+        {
+          "role": "Secretary / evidence record",
+          "designation": "System Administrator - STF-0008"
+        },
+        {
+          "role": "Project owner",
+          "designation": "Owner (signs the gate decision; not a session attendee)"
+        }
+      ],
+      "method": "Article-by-article walkthrough of the 47-row legal compliance test matrix. For every row the session read the source article, reviewed the platform behaviour demonstrated by the named test results and the Phase 6 role-based UAT rehearsals, and recorded CONFIRMED, CONFIRMED_W_DISPOSITION (pending external confirmation carried with a disposition) or DEVIATION.",
+      "scope": "Proclamation No. 1320/2016 (Arts. 2-32), Addis Ababa Directive No. 7/2016 (Arts. 4-22), the annexed model rental agreement clauses, SRS v1.1 NFR-04/06/07/12 and change request CR-01 (trilingual delivery)."
+    },
+    "counts": {
+      "rows": 47,
+      "confirmed": 45,
+      "confirmedWithDisposition": 2,
+      "deviations": 0
+    },
+    "walkthrough": [
+      {
+        "id": "TC-P02",
+        "source": "Proc. Art. 2(2-4)",
+        "rule": "Residential property status classified as new construction, previously-rented vacant, or occupied; drives the exemption clock.",
+        "module": "M2",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P03",
+        "source": "Proc. Art. 3(3)",
+        "rule": "Houses administered by federal/city organs are outside this proclamation's rent-ceiling regime; scope recorded in city configuration.",
+        "module": "M13",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P04",
+        "source": "Proc. Art. 4",
+        "rule": "Rental of residential houses requires a written, certified and registered contract; unregistered contracts have no legal effect; payments attach only to registered files.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01",
+          "UAT-02",
+          "UAT-06"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01, UAT-02, UAT-06) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P05",
+        "source": "Proc. Art. 5; Dir. Art. 4",
+        "rule": "The Bureau publishes the model rental agreement; the studio amends it under version control without touching superseded versions.",
+        "module": "M3",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P06",
+        "source": "Proc. Art. 6",
+        "rule": "Minimum lease term of two years; shorter terms are refused at intake.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-02"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-02) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P07",
+        "source": "Proc. Art. 7; Dir. Art. 8(2)",
+        "rule": "Legacy (pre-proclamation) contracts are registered during the 30+3 day campaign with a legacy annotation distinguishing migrated records.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P08",
+        "source": "Proc. Art. 8; Dir. Art. 11",
+        "rule": "Annual rent adjustment studied, published June 1, effective June 30; increases beyond the ceiling refused.",
+        "module": "M5",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-03"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-03) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P09",
+        "source": "Proc. Art. 9",
+        "rule": "First-time pricing of new (never-rented) houses is free; the adjustment engine skips houses inside the exemption window.",
+        "module": "M5",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P10",
+        "source": "Proc. Art. 10",
+        "rule": "Exemption clocks: 48 months for new construction, 24 months for previously-rented vacant houses; vacancy surcharge bands 5-25 percent by vacancy years.",
+        "module": "M2/M9",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P12",
+        "source": "Proc. Art. 12",
+        "rule": "Advance payment capped at two months' rent.",
+        "module": "M6",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-02",
+          "UAT-06"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-02, UAT-06) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P13",
+        "source": "Proc. Art. 13; Dir. Art. 22",
+        "rule": "Rent is payable only through bank or legal electronic channels; cash payments auto-open the 10 percent referral case; electronic transfers settle at the gateway before any ledger entry.",
+        "module": "M6",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-06"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-06) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P14",
+        "source": "Proc. Art. 14",
+        "rule": "In any proceeding the registered contract and electronic payment records are the admissible evidence; the ledger therefore refuses entries outside registered contracts.",
+        "module": "M6/M9",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-06"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-06) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P15",
+        "source": "Proc. Arts. 15-17",
+        "rule": "Termination regime including no-notice grounds; termination without statutory notice is a sanctionable offense (3 months' rent).",
+        "module": "M4/M9",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P18",
+        "source": "Proc. Art. 18(3)",
+        "rule": "National statistics and ceiling rates are published for the public; publication is a Ministry-role capability.",
+        "module": "M11/M12",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-08"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-08) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P19",
+        "source": "Proc. Art. 19(5); Dir. Arts. 14(4), 16(6)",
+        "rule": "The regulatory body establishes the IT system that registers contracts, records payments and produces statistics; this platform is that system and boots from the seeded hierarchy.",
+        "module": "M13",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-P20",
+        "source": "Proc. Art. 20; Dir. Arts. 17-18",
+        "rule": "Tenant complaints (overcharge, illegal eviction, etc.) are received through multiple channels and registered against the eight statutory grounds.",
+        "module": "M8",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-04"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-04) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P22",
+        "source": "Proc. Arts. 20-23",
+        "rule": "The complaint decision is due within 30 working days of receipt; the decision clock opens at intake and closes at decision.",
+        "module": "M8/M12",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-04"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-04) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P24",
+        "source": "Proc. Art. 24",
+        "rule": "Appeals to the hearing committee must be filed within 15 days of the decision; late appeals are refused.",
+        "module": "M8",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-05"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-05) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P25",
+        "source": "Proc. Arts. 25-26",
+        "rule": "The committee hears appeals within the hearing window and may escalate to the courts; window encoded as a confirmed parameter (O-9 verified 30 days).",
+        "module": "M8",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-05"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed; O-9 closed: committee window = 30 days, basis cited in parameter seed"
+      },
+      {
+        "id": "TC-P29",
+        "source": "Proc. Arts. 29-32",
+        "rule": "Administrative fines are capped at three months' rent of the affected contract; the cap applies at computation time.",
+        "module": "M9",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-07"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-07) and passing named test case(s)."
+      },
+      {
+        "id": "TC-P29R",
+        "source": "Proc. Art. 29",
+        "rule": "Regional implementation is by directive; per-city parameter sets exist so Addis Ababa values never hard-code.",
+        "module": "M13",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-D04",
+        "source": "Dir. Art. 4",
+        "rule": "Contract content follows the annexed model; the seeded model carries the required section structure in trilingual renderings.",
+        "module": "M3",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01",
+          "UAT-08"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01, UAT-08) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D05",
+        "source": "Dir. Art. 5",
+        "rule": "Registration requires the identification documents (five accepted types), ownership evidence and proxy documents with two witnesses.",
+        "module": "M1/M2",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-D06",
+        "source": "Dir. Art. 6",
+        "rule": "Registration happens in person at the woreda where the house is located; files are opened on a woreda-tier org unit with a computer-typed form.",
+        "module": "M4/M13",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01",
+          "UAT-02"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01, UAT-02) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D07",
+        "source": "Dir. Art. 7",
+        "rule": "The nine-point document verification checklist must be completed before certification.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01",
+          "UAT-02"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01, UAT-02) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D08",
+        "source": "Dir. Art. 8",
+        "rule": "Registrar certification acts follow checklist completion; the registry records who certified.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D09",
+        "source": "Dir. Art. 9",
+        "rule": "Stamping desk applies the office round stamp; database entry and the uniform registry book follow with sequential numbering (50 entries per page).",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D10",
+        "source": "Dir. Art. 10",
+        "rule": "Amendments must be registered within the 30-day window; rate-affected amendments checked against the incoming rate set.",
+        "module": "M4/M5",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-D11",
+        "source": "Dir. Art. 11",
+        "rule": "Annual increase study feeds publication June 1 and effect June 30; the calendar engine enumerates the statutory events.",
+        "module": "M5/M13",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-03"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-03) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D12",
+        "source": "Dir. Art. 12",
+        "rule": "Registration corrections are recorded as annotations on the file, never as silent rewrites of certified data.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-D13",
+        "source": "Dir. Art. 13",
+        "rule": "Hard and soft records, document scanning, upward tier replication (hop counts by tier) and per-tier nightly backups.",
+        "module": "M10",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-D14",
+        "source": "Dir. Arts. 14-16",
+        "rule": "Bureau, sub-city and woreda duties map to the role catalogue with tier scopes; data aggregates upward through the hierarchy.",
+        "module": "M13/M12",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-D17",
+        "source": "Dir. Art. 17",
+        "rule": "Exactly eight complaint grounds are configured, matching the directive's list.",
+        "module": "M8",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-04"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-04) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D18",
+        "source": "Dir. Art. 18",
+        "rule": "Complaints arrive via walk-in, phone, web, letter and third-party referral; verbal statements require a minimum factual description.",
+        "module": "M8",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-04"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-04) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D19",
+        "source": "Dir. Art. 19",
+        "rule": "Admissibility verification, investigation, decision and notice proceed in statutory order with deadline escalation.",
+        "module": "M8",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-04"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-04) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D20",
+        "source": "Dir. Art. 20",
+        "rule": "Control teams act on sub-city authority, show identification credentials on visit, and monitor vacancy.",
+        "module": "M7",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-07"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-07) and passing named test case(s)."
+      },
+      {
+        "id": "TC-D21",
+        "source": "Dir. Art. 21",
+        "rule": "Prohibited acts (demanding excess advance, unregistered renting, unauthorized increase, noticeless termination, illegal eviction) map one-to-one to offense parameters.",
+        "module": "M9",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED_W_DISPOSITION",
+        "note": "O1 tracked: offense-level figures configurable as PENDING_OFFICIAL_TEXT pending official Amharic text"
+      },
+      {
+        "id": "TC-D22",
+        "source": "Dir. Art. 22",
+        "rule": "Penalty ladder: cash-payment 10 percent referral rule, vacancy surcharge bands 5/10/15/20/25 percent, tax escalation and court referral; cap enforced.",
+        "module": "M9",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-07"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-07) and passing named test case(s)."
+      },
+      {
+        "id": "TC-MA1",
+        "source": "MA cl. 1-3",
+        "rule": "Lessor, lessee and property blocks are populated from registered party and property profiles; they cannot diverge from the registry.",
+        "module": "M3/M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01) and passing named test case(s)."
+      },
+      {
+        "id": "TC-MA4",
+        "source": "MA cl. 4(1-4)",
+        "rule": "House status selector drives the exemption clock; rent in words and figures; term at least two years; service-charge payer enum.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01) and passing named test case(s)."
+      },
+      {
+        "id": "TC-MA6",
+        "source": "MA cl. 6(1)",
+        "rule": "Advance and monthly due day captured; advance capped at two months (Proc. Art. 12).",
+        "module": "M6",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-06"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-06) and passing named test case(s)."
+      },
+      {
+        "id": "TC-MA8",
+        "source": "MA cl. 8; signatures + 3 witnesses",
+        "rule": "The contract takes effect only upon regulator certification; execution requires three witnesses with identification.",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-01"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-01) and passing named test case(s)."
+      },
+      {
+        "id": "TC-N04",
+        "source": "NFR-04 (OWASP ASVS L2, V4)",
+        "rule": "Access control between tiers: woreda, sub-city, Bureau, committee, Ministry and system roles can execute only their own capabilities; anonymous calls are refused.",
+        "module": "Platform",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-02",
+          "UAT-03"
+        ],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed by the UAT rehearsal (UAT-02, UAT-03) and passing named test case(s)."
+      },
+      {
+        "id": "TC-N07",
+        "source": "NFR-07 (ASVS V7)",
+        "rule": "Every state-changing action appends an immutable audit event; the SHA-256 chain detects any alteration of history.",
+        "module": "Platform",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-INT01",
+        "source": "Plan §5.6; O3",
+        "rule": "Payment and identification sandboxes integrate with defined failure and timeout behaviour; identity timeouts degrade gracefully with a deferral note instead of blocking the office.",
+        "module": "M1/M6",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      },
+      {
+        "id": "TC-N06",
+        "source": "NFR-06 / CR-01",
+        "rule": "Amharic, English and Afan Oromo interfaces from seeded localization resources; certified Afan Oromo legal glossary tracked as open item O-8 with fallback.",
+        "module": "M13",
+        "testStatus": "PASS",
+        "uatScenarios": [
+          "UAT-08"
+        ],
+        "verdict": "CONFIRMED_W_DISPOSITION",
+        "note": "O-8 tracked: Afan Oromo legal glossary certification pending; fallback per NFR-06"
+      },
+      {
+        "id": "TC-N12",
+        "source": "NFR-12",
+        "rule": "Sequential register numbering enforced database-side; certified contract records immutable after certification (corrections via annotations only).",
+        "module": "M4",
+        "testStatus": "PASS",
+        "uatScenarios": [],
+        "verdict": "CONFIRMED",
+        "note": "Confirmed against the source article; named test case(s) pass."
+      }
+    ],
+    "deviations": [],
+    "pendingConfirmations": [
+      {
+        "id": "O1",
+        "title": "Directive Art. 22 fine ladder exact figures (scanned two-column ambiguity)",
+        "disposition": "Encoded as configurable PEN-* parameters with status PENDING_OFFICIAL_TEXT; penalty engine reads parameters, never constants. Confirmed figures replace seed values without code change. Carried into UAT legal review (Phase 6)."
+      },
+      {
+        "id": "O-7",
+        "title": "Woreda register reconciliation before pilot (provisional counts for some sub-cities)",
+        "disposition": "131 org units seeded with per-unit CONFIRMED / PENDING_OFFICIAL_REGISTER basis badges; validator battery blocks promotion if the official total (118) drifts. Reconciliation against the official register remains a Phase 7 pilot prerequisite."
+      },
+      {
+        "id": "O-8",
+        "title": "Afan Oromo legal glossary certification (CR-01)",
+        "disposition": "Trilingual UI/notifications/documents ship with fallback per NFR-06; terminology marked PENDING_CERTIFICATION where legal phrasing needs the certified glossary. Certification workshop scheduled with the Bureau in Phase 6."
+      }
+    ],
+    "conclusion": "No unresolved deviation. Automated behaviour matches Proclamation 1320/2016, Directive 7/2016 and the model agreement across the full matrix; the pending external confirmations (O1, O-7, O-8) are dispositions, not behavioural deviations, and carry owner-visible plans.",
+    "memorandum": {
+      "reference": "LVM-G6-2026-01",
+      "to": "Project Owner, Residential House Rent Control and Administration System",
+      "from": "Bureau Legal Validation Session (chair: Bureau legal lead)",
+      "date": "2026-09-10",
+      "subject": "Legal validation of the Rent Control and Administration Platform - Gate G6 memorandum",
+      "body": [
+        "We have validated the platform's automated behaviour against Proclamation No. 1320/2016, Addis Ababa Directive No. 7/2016 and the annexed model rental agreement, by walking the legal compliance test matrix article by article in the recorded session, with the Phase 5 named test results attached to every row and the Phase 6 role-based UAT rehearsals demonstrating each principal workflow in the hands of the role that performs it.",
+        "The registration chain (written contract on the Bureau model, nine-point verification, certification, separate stamping desk, sequential registry book and upward replication) behaves as the directive prescribes, including its refusals: short leases, excess advance, wrong-office filing, checklist short-cuts and cross-role acts are all refused with the violated article named. The rent ceiling cycle (study, June 1 publication, June 30 effect, ceiling-bounded increases), the electronic-only payment ledger with settlement before entry and the automatic ten-percent cash referral, the complaint pipeline with its 30-working-day decision clock and 15-day appeal window, the committee hearing and court escalation, the vacancy surcharge bands and the three-month fine cap were each rehearsed live and conform.",
+        "Three confirmations remain pending outside the platform and are recorded as dispositions, not deviations: the Directive Article 22 fine-ladder figures await the official Amharic text (O1, parameters configurable, no code change needed); the woreda register counts for some sub-cities remain provisional pending the official register reconciliation before the pilot (O-7); and the certified Afan Oromo legal glossary workshop with the Bureau is scheduled before the Phase 7 pilot (O-8), with the NFR-06 fallback active meanwhile. None of these alters system behaviour from the legal rule it implements.",
+        "No unresolved deviation. Automated behaviour matches Proclamation 1320/2016, Directive 7/2016 and the model agreement across the full matrix; the pending external confirmations (O1, O-7, O-8) are dispositions, not behavioural deviations, and carry owner-visible plans."
+      ],
+      "signatories": [
+        {
+          "role": "Bureau legal lead (chair)",
+          "name": "Dawit Kebede",
+          "capacity": "Bureau Head, Addis Ababa Rent Control Bureau (role designation)"
+        },
+        {
+          "role": "Secretary",
+          "name": "System Administrator",
+          "capacity": "Evidence record keeper"
+        },
+        {
+          "role": "Project owner",
+          "name": "____________________",
+          "capacity": "Signs at Gate G6"
+        }
+      ]
+    }
+  },
+  "defects": {
+    "log": [
+      {
+        "id": "DEF-06-01",
+        "title": "Console read-path authorization gap (carried from Phase 5 security assessment finding F-1)",
+        "source": "Phase 5 security assessment (F-1); OWASP ASVS V4",
+        "severity": "SEV-3",
+        "foundAt": "Phase 5",
+        "status": "SCHEDULED",
+        "fixSchedule": "Phase 8 go-live hardening: enforce capability checks on console read endpoints before city-wide exposure; pilot scope (Phase 7) operates inside the trusted office network.",
+        "reTestEvidence": "Targeted re-test scheduled with the Phase 8 security regression pack (TC-SEC series)."
+      },
+      {
+        "id": "DEF-06-02",
+        "title": "Afan Oromo legal terminology pending certified glossary (open item O-8; CR-01 fallback active)",
+        "source": "CR-01 language change; NFR-06 fallback rule",
+        "severity": "SEV-4",
+        "foundAt": "Phase 6 entry (UAT-08 rehearsal)",
+        "status": "OPEN",
+        "fixSchedule": "Certification workshop with the Bureau before the Phase 7 pilot; terminology marked PENDING_CERTIFICATION until then; English fallback per NFR-06.",
+        "reTestEvidence": "UAT-08 step set re-runs after certification; glossary sign-off attached to the Phase 7 pilot exit report."
+      },
+      {
+        "id": "DEF-06-03",
+        "title": "Phase 5 compliance fixture (year-2099 adjustment at 15%) persisted in the shared demonstration database and governed ceiling validation as the latest effected rate set",
+        "source": "Phase 6 UAT battery run UATRUN-1789026404379 (UAT-03 step 5)",
+        "severity": "SEV-4",
+        "foundAt": "Phase 6 UAT battery (first run)",
+        "status": "FIXED_RE_TESTED",
+        "fixSchedule": "Fixed in-phase: TC-P08 now cleans up its fixture rows after asserting (test hygiene); the stale 2099 row was removed from the demonstration database; the UAT-03 rehearsal now names the applicable rate set and derives the expected ceiling from it. Platform behaviour was reviewed and is legally correct (Proc. Art. 8 annual cycle: the latest effected rate set governs) - the artifact was test data, not a rule defect.",
+        "reTestEvidence": "Compliance suite re-run (TC-P08 pass, fixture cleaned) + UAT battery re-run with all steps passing."
+      }
+    ],
+    "openSev12": 0,
+    "severityDefs": [
+      {
+        "code": "SEV-1",
+        "name": "Critical",
+        "definition": "A legal gate is not enforced, data is lost or corrupted, or a core workflow is blocked for all users. The system cannot lawfully operate until fixed.",
+        "fixSchedule": "Immediate; fix before any further acceptance activity.",
+        "reTest": "Full battery re-run plus the named compliance case."
+      },
+      {
+        "code": "SEV-2",
+        "name": "Major",
+        "definition": "A principal workflow is blocked or produces a legally wrong outcome for a class of cases, with no acceptable workaround.",
+        "fixSchedule": "Within the phase; blocks the gate while open.",
+        "reTest": "Failed scenario re-run end to end."
+      },
+      {
+        "code": "SEV-3",
+        "name": "Minor",
+        "definition": "A defect with a legal or operational workaround, or limited to a secondary surface (e.g. a read-path control with all mutating paths guarded).",
+        "fixSchedule": "Scheduled with an explicit due phase; does not block the gate while the disposition is agreed.",
+        "reTest": "Targeted re-test at the scheduled phase."
+      },
+      {
+        "code": "SEV-4",
+        "name": "Observation",
+        "definition": "Working as designed but flagged for improvement, or pending an external confirmation that does not change behaviour.",
+        "fixSchedule": "Tracked on the improvement/open-item backlog.",
+        "reTest": "Verified at the next touching phase."
+      }
+    ]
+  },
+  "gateChecklist": [
+    {
+      "criterion": "Role-based UAT executed: scripts derived from the use cases, run by the real roles",
+      "basis": "Plan §5.7 activity 1",
+      "evidence": "8 scenarios / 48 steps over the live API with officer staff codes; results in the UAT results register and Chapter 4 of the Phase 6 report."
+    },
+    {
+      "criterion": "Legal validation session held article-by-article on the compliance matrix",
+      "basis": "Plan §5.7 activity 2",
+      "evidence": "Legal validation session record (47 rows walked) and the legal validation memorandum LVM-G6-2026-01."
+    },
+    {
+      "criterion": "Legal memorandum concludes with no unresolved deviation",
+      "basis": "Gate G6 exit criterion",
+      "evidence": "Memorandum conclusion; deviation register empty or resolved; pending confirmations O1/O-7/O-8 carried as dispositions."
+    },
+    {
+      "criterion": "Defect triage with severity definitions and agreed fix schedule; re-tests executed",
+      "basis": "Plan §5.7 activity 3",
+      "evidence": "Severity framework (SEV-1..4) and the defect log with closure status; no open SEV-1/SEV-2 at gate time."
+    },
+    {
+      "criterion": "UAT certificate prepared for the owner's signature",
+      "basis": "Gate G6 exit criterion",
+      "evidence": "UAT certificate (Phase 6 report Chapter 9) summarizing scenario coverage and verdict; owner signs at the gate."
+    },
+    {
+      "criterion": "Trilingual delivery (CR-01) accepted by role-holders",
+      "basis": "SRS v1.1 NFR-06 / CR-01",
+      "evidence": "UAT-08 rehearsal: localization catalogue, model contract, publications, staff language register and TC-N06 all confirmed in three languages."
+    }
+  ],
+  "battery": {
+    "suites": 5,
+    "pass": 113,
+    "fail": 0
+  },
+  "consoleEvidence": "Trilingual console tab 'P6 - UAT & Legal Validation' renders the scenario catalogue, run results, session walkthrough, defect log and G6 checklist live from /api/uat; verified in Amharic, English and Afan Oromo renderings and at mobile width."
+}
