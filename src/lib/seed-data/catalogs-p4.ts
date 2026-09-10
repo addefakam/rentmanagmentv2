@@ -41,14 +41,14 @@ export const CITY_CONFIGS = [
 // Password-less demo accounts: production deployment binds these to the
 // national identity provider during Phase 5 integration testing.
 export const DEMO_STAFF = [
-  { fullName: "Alem Tadesse", roleCode: "WOREDA_REGISTRAR", orgUnitCode: "AA-BOLE-W01", language: "am" },
-  { fullName: "Sara Bekele", roleCode: "WOREDA_STAMPER", orgUnitCode: "AA-BOLE-W01", language: "am" },
-  { fullName: "Mulugeta Worku", roleCode: "SUBCITY_MONITOR", orgUnitCode: "AA-BOLE", language: "en" },
-  { fullName: "Hanna Girma", roleCode: "BUREAU_ANALYST", orgUnitCode: "AA-BUREAU", language: "en" },
-  { fullName: "Dawit Kebede", roleCode: "BUREAU_HEAD", orgUnitCode: "AA-BUREAU", language: "am" },
-  { fullName: "Kebede Ayele", roleCode: "COMMITTEE_MEMBER", orgUnitCode: "AA-BUREAU", language: "om" },
-  { fullName: "Lensa Gemeda", roleCode: "MINISTRY_ANALYST", orgUnitCode: "FED-MINISTRY", language: "en" },
-  { fullName: "System Admin", roleCode: "SYSTEM_ADMIN", orgUnitCode: "FED-MINISTRY", language: "en" },
+  { staffCode: "STF-0001", fullName: "Alem Tadesse", roleCode: "WOREDA_REGISTRAR", orgUnitCode: "AA-BOLE-W01", language: "am" },
+  { staffCode: "STF-0002", fullName: "Sara Bekele", roleCode: "WOREDA_STAMPER", orgUnitCode: "AA-BOLE-W01", language: "am" },
+  { staffCode: "STF-0003", fullName: "Mulugeta Worku", roleCode: "SUBCITY_MONITOR", orgUnitCode: "AA-BOLE", language: "en" },
+  { staffCode: "STF-0004", fullName: "Hanna Girma", roleCode: "BUREAU_ANALYST", orgUnitCode: "AA-BUREAU", language: "en" },
+  { staffCode: "STF-0005", fullName: "Dawit Kebede", roleCode: "BUREAU_HEAD", orgUnitCode: "AA-BUREAU", language: "am" },
+  { staffCode: "STF-0006", fullName: "Kebede Ayele", roleCode: "COMMITTEE_MEMBER", orgUnitCode: "AA-BUREAU", language: "om" },
+  { staffCode: "STF-0007", fullName: "Lensa Gemeda", roleCode: "MINISTRY_ANALYST", orgUnitCode: "FED-MINISTRY", language: "en" },
+  { staffCode: "STF-0008", fullName: "System Admin", roleCode: "SYSTEM_ADMIN", orgUnitCode: "FED-MINISTRY", language: "en" },
 ];
 
 // Public awareness publications — Proc. Arts. 14, 16, 18 (M11)

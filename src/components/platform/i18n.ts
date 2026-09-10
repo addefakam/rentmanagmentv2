@@ -22,6 +22,7 @@ const D: Dict = {
   "nav.enforcement": ["S6 · Control & Penalties (M7, M9)", "S6 · ቁጥጥር እና ቅጣት (M7, M9)", "S6 · To'annaa fi Adabbii (M7, M9)"],
   "nav.data": ["S7 · Data & Reports (M10, M11)", "S7 · ዳታ እና ሪፖርት (M10, M11)", "S7 · Daataa fi Gabaasa (M10, M11)"],
   "nav.evidence": ["Evidence & Gates", "ማስረጃዎች እና ጌቶች", "Ragaafi fi Dalaloota"],
+  "nav.p5": ["P5 · Testing & Compliance", "P5 · ሙከራ እና ሕጋዊነት", "P5 · Qormaata fi Seera-qabeenya"],
   // common
   "act.create": ["Create", "መዝግብ", "Uumi"],
   "act.save": ["Save", "አስቀምጥ", "Olkaa'i"],

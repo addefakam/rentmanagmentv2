@@ -2,6 +2,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { enqueueReplication } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +18,12 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
-    const rows = await enqueueReplication(
-      `REP-${Date.now()}`,
-      String(input.fromOrgUnitId), String(input.recordType), String(input.recordRef),
-      input.summary ? String(input.summary) : undefined,
-    );
-    return ok(rows);
+    return await withGuard(req, "replication:run",
+      { action: "REPLICATION_ENQUEUE", entity: "ReplicationLog", ref: () => String(input.recordRef ?? "") },
+      () => enqueueReplication(
+        `REP-${Date.now()}`,
+        String(input.fromOrgUnitId), String(input.recordType), String(input.recordRef),
+        input.summary ? String(input.summary) : undefined,
+      ));
   } catch (err) { return fail(err); }
 }

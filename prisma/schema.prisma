@@ -265,6 +265,7 @@ model ValidationCheck {
 // ---------------------------------------------------------------------------
 model SystemUser {
   id          String   @id @default(cuid())
+  staffCode   String   @unique // STF-xxxx acting-officer identity (Phase 5 RBAC)
   fullName    String
   roleCode    String
   role        Role     @relation(fields: [roleCode], references: [code])
@@ -516,6 +517,7 @@ model Payment {
   cashFlag             Boolean  @default(false) // Art. 13 violation -> Dir. Art. 22 10% referral
   paidAt               DateTime
   recordedByOrgUnitId  String
+  providerRef          String? // Phase 5: bank/payment sandbox settlement reference
   createdAt            DateTime @default(now())
 
   @@index([fileId])
@@ -740,4 +742,28 @@ model PublicationItem {
   publishedAt        DateTime @default(now())
   publishedByOrgUnitId String
   isActive           Boolean  @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// Phase 5 / NFR-04 + NFR-07 — Immutable audit trail with hash-chain integrity
+// (OWASP ASVS V7: every state-changing action logged; tamper-evident chain so
+// any alteration of a logged event invalidates every subsequent hash).
+// ---------------------------------------------------------------------------
+model AuditEvent {
+  seq         Int      @id @default(autoincrement()) // chain order
+  eventId     String   @unique @default(cuid()) // external reference
+  at          DateTime @default(now())
+  actorCode   String // staff code (STF-xxxx) or SYSTEM / PUBLIC / INTEGRATION
+  actorRole   String // role code at time of action
+  orgUnitCode String?
+  action      String // e.g. PARTY_CREATE, FILE_CERTIFY, ADJUSTMENT_PUBLISH
+  entity      String // model or domain object name
+  entityRef   String? // business reference (party code, file number, ...)
+  summary     String?
+  prevHash    String // SHA-256 of the previous event (genesis: 64 zeros)
+  hash        String   @unique // SHA-256 over prevHash + payload
+
+  @@index([entity, entityRef])
+  @@index([actorCode])
+  @@index([at])
 }

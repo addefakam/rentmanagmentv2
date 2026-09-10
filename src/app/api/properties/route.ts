@@ -2,6 +2,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createProperty } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -18,17 +19,18 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
-    const property = await createProperty({
-      woredaId: String(input.woredaId), landlordId: String(input.landlordId),
-      kebele: input.kebele ? String(input.kebele) : undefined,
-      houseNo: input.houseNo ? String(input.houseNo) : undefined,
-      addressNote: input.addressNote ? String(input.addressNote) : undefined,
-      ownershipEvidence: String(input.ownershipEvidence),
-      evidenceRef: String(input.evidenceRef),
-      statusTypeId: String(input.statusTypeId),
-      rooms: Number(input.rooms ?? 1), areaSqm: input.areaSqm ? Number(input.areaSqm) : undefined,
-      statusSetAt: new Date(String(input.statusSetAt)),
-    });
-    return ok(property);
+    return await withGuard(req, "property:write",
+      { action: "PROPERTY_CREATE", entity: "Property", ref: (d: { propertyCode: string }) => d.propertyCode },
+      () => createProperty({
+        woredaId: String(input.woredaId), landlordId: String(input.landlordId),
+        kebele: input.kebele ? String(input.kebele) : undefined,
+        houseNo: input.houseNo ? String(input.houseNo) : undefined,
+        addressNote: input.addressNote ? String(input.addressNote) : undefined,
+        ownershipEvidence: String(input.ownershipEvidence),
+        evidenceRef: String(input.evidenceRef),
+        statusTypeId: String(input.statusTypeId),
+        rooms: Number(input.rooms ?? 1), areaSqm: input.areaSqm ? Number(input.areaSqm) : undefined,
+        statusSetAt: new Date(String(input.statusSetAt)),
+      }));
   } catch (err) { return fail(err); }
 }

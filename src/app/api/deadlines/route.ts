@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ok, fail } from "@/lib/api";
 import { sweepDeadlines } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,10 @@ export async function GET() {
   } catch (err) { return fail(err); }
 }
 
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    return ok(await sweepDeadlines());
+    return await withGuard(req, "deadline:sweep",
+      { action: "DEADLINE_SWEEP", entity: "DeadlineTrack", ref: () => null },
+      () => sweepDeadlines());
   } catch (err) { return fail(err); }
 }

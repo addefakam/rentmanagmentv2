@@ -126,7 +126,7 @@ async function seedDemoStaff() {
     const org = await prisma.orgUnit.findUnique({ where: { code: s.orgUnitCode } });
     if (!org) throw new Error(`Demo staff org unit not found: ${s.orgUnitCode}`);
     await prisma.systemUser.create({
-      data: { fullName: s.fullName, roleCode: s.roleCode, orgUnitId: org.id, language: s.language },
+      data: { staffCode: s.staffCode, fullName: s.fullName, roleCode: s.roleCode, orgUnitId: org.id, language: s.language },
     });
   }
 }

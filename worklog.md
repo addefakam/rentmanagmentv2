@@ -95,3 +95,26 @@ Stage Summary:
 - G4 exit criteria evidenced: 7 increments demonstrated (console tabs), functional completeness vs SRS v1.1 (traceability closure), no open sev-1/2 defects (2 defects found were fixed in-phase), lint clean.
 - Open items carried: O1, O-7, O-8, plus new O-9 (committee window parameter) - none blocks Phase 5.
 - Next: awaiting owner Gate G4 approval to start Phase 5 (Integration, Security and Compliance Testing).
+
+---
+Task ID: 5 (Gate G4 approved -> Phase 5 complete - Gate G5 package)
+Agent: Main agent (Super Z)
+Task: Record owner Gate G4 approval; execute Phase 5 (Integration, Security and Compliance Testing) per plan section 5.6; assemble the Gate G5 package.
+
+Work Log:
+- Recorded Gate G4 approval (owner "approve") and entered Phase 5 per plan section 5.6.
+- Schema additions: AuditEvent (hash-chained, seq PK, SHA-256 over prevHash+timestamp+actor+action+entity+ref+summary), SystemUser.staffCode (STF-0001..0008 seeded), Payment.providerRef; db push + reseed.
+- Security layer: src/lib/security/audit.ts (recordAudit with retry-on-tip-move, verifyAuditChain full recompute), src/lib/security/authz.ts (26-capability matrix over 13 roles mapped to directive tier duties, resolveActor via x-staff-code, withGuard authorize-execute-audit). Guards wired into every mutating API route incl. per-action capabilities for registrar acts (stamp separated from certify per Dir. Art. 9) and adjustments (analyst drafts, head publishes/effects).
+- Integration adapters (open item O3): MockBankGateway + MockIdService with NORMAL/DECLINE/TIMEOUT and NORMAL/NO_MATCH/TIMEOUT modes, env-overridable per call; wired into recordPayment (settle-before-ledger, providerRef stored) and createParty (optional verifyIdentityOnline with DEFERRED graceful degradation). api.ts maps SecurityError->403, IntegrationError->424/504.
+- Legal compliance matrix: src/lib/compliance/matrix.ts - 47 rows covering Proc. Arts. 2-32, Dir. Arts. 4-22, model agreement clauses, NFR-04/06/07/12 + CR-01, each with named executable case(s) and open-item dispositions (O-9 closed).
+- Test suites: tests/integration.test.ts (6), tests/security.test.ts (13 incl. tamper detection), tests/compliance-legal.test.ts (43 named TC cases over live DB fixtures). Battery total 113 pass / 0 fail (5 suites). Console call() + e2e-demo.ts updated to act as the correct officer per capability; e2e 33/33 under RBAC after reseed.
+- Defects found & fixed in-phase (all battery-green after): D-1 audit hash omitted summary (tamper drill caught; payload hashed in full, chain reset); D-2 publications GET regression caught by perf error-rate breakdown (14% errors -> 0%); D-3 e2e lacking actor headers; D-4 compliance fixture staleness after versioning probe.
+- Performance: scripts/load/perf.ts (WOREDA 25VU / CITY_PEAK 60VU / REG_E2E). Final: p95 358ms / 672ms / 64ms, 0% errors, vs NFR-01 targets 3000ms/5000ms; projection to 500 VUs documented with 3 explicit caveats + staging re-run standing item.
+- Quality runner scripts/quality/run-all.ts attaches per-case results to matrix (results.json); dump-evidence.ts bundles matrix+results+perf+live audit verdict into scripts/p5_evidence.json.
+- /api/quality serves matrix w/ results, live audit chain verdict (87 events intact), perf, capability matrix, sandbox inventory; new trilingual console tab "P5 - Testing & Compliance" (47/47 matrix, battery, audit INTACT, perf vs targets, ASVS controls, open item dispositions). Agent Browser verified: renders, am/en/om switch, mobile 390px, no errors.
+- Generated download/Rent_Control_System_Phase5_Report.docx (26 pp, 10 chapters: test plan, integration report w/ failure drills, system & regression, security assessment (ASVS L2, finding F-1 read-path disposed to P8), performance, full 47-row compliance matrix w/ results, open item dispositions, defect log, G5 approval block). add_toc_placeholders (10 headings) -> postprocess_footers (ROMAN/arabic) -> postcheck: 0 errors, 1 acceptable warning. LibreOffice render verified: cover/body/matrix/approval clean.
+
+Stage Summary:
+- Deliverables: Phase 5 security+integration layer in the platform, 113-test battery, 47-row executed compliance matrix (no failed legal rule), perf evidence vs NFR-01, download/Rent_Control_System_Phase5_Report.docx (Gate G5 package).
+- G5 exit criteria evidenced: all critical tests pass; compliance matrix shows no failed rule. Open items: O1, O-7, O-8 carried w/ dispositions; O-9 closed. Finding F-1 (console read-path authz) disposed to Phase 8 go-live hardening.
+- Next: awaiting owner Gate G5 approval to start Phase 6 (User Acceptance and Legal Validation: role-based UAT, legal validation memorandum, defect triage).

@@ -2,6 +2,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createRegistrationFile } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -23,23 +24,24 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
-    const file = await createRegistrationFile({
-      woredaId: String(input.woredaId), propertyId: String(input.propertyId),
-      landlordId: String(input.landlordId), tenantId: String(input.tenantId),
-      agentId: input.agentId ? String(input.agentId) : undefined,
-      modelContractId: String(input.modelContractId),
-      monthlyRent: Number(input.monthlyRent),
-      leaseStart: new Date(String(input.leaseStart)),
-      leaseEnd: new Date(String(input.leaseEnd)),
-      prepaymentMonths: Number(input.prepaymentMonths ?? 0),
-      paymentMethod: String(input.paymentMethod),
-      paymentMethodConfirmed: Boolean(input.paymentMethodConfirmed),
-      interpreterUsed: Boolean(input.interpreterUsed),
-      interpreterName: input.interpreterName ? String(input.interpreterName) : undefined,
-      isLegacy: Boolean(input.isLegacy),
-      witnesses: Array.isArray(input.witnesses) ? (input.witnesses as WitnessInput[]) : [],
-      enteredByOrgUnitId: String(input.woredaId),
-    });
-    return ok(file);
+    return await withGuard(req, "registration:file",
+      { action: "FILE_OPEN", entity: "RegistrationFile", ref: (d: { fileNumber: string }) => d.fileNumber },
+      () => createRegistrationFile({
+        woredaId: String(input.woredaId), propertyId: String(input.propertyId),
+        landlordId: String(input.landlordId), tenantId: String(input.tenantId),
+        agentId: input.agentId ? String(input.agentId) : undefined,
+        modelContractId: String(input.modelContractId),
+        monthlyRent: Number(input.monthlyRent),
+        leaseStart: new Date(String(input.leaseStart)),
+        leaseEnd: new Date(String(input.leaseEnd)),
+        prepaymentMonths: Number(input.prepaymentMonths ?? 0),
+        paymentMethod: String(input.paymentMethod),
+        paymentMethodConfirmed: Boolean(input.paymentMethodConfirmed),
+        interpreterUsed: Boolean(input.interpreterUsed),
+        interpreterName: input.interpreterName ? String(input.interpreterName) : undefined,
+        isLegacy: Boolean(input.isLegacy),
+        witnesses: Array.isArray(input.witnesses) ? (input.witnesses as WitnessInput[]) : [],
+        enteredByOrgUnitId: String(input.woredaId),
+      }));
   } catch (err) { return fail(err); }
 }

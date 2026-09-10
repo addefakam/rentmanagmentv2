@@ -1,0 +1,44 @@
+{
+  "generatedAt": "2026-09-10T06:15:41.709Z",
+  "base": "http://localhost:3000",
+  "nfrTargets": {
+    "interactiveP95Ms": 3000,
+    "registrationE2EMs": 5000,
+    "cityLoadVUs": 500
+  },
+  "profiles": [
+    {
+      "profile": "WOREDA",
+      "virtualUsers": 25,
+      "durationMs": 15000,
+      "requests": 2054,
+      "throughputRps": 135.9,
+      "errorRatePct": 0,
+      "p50": 168,
+      "p95": 358,
+      "p99": 521,
+      "max": 1437
+    },
+    {
+      "profile": "CITY_PEAK",
+      "virtualUsers": 60,
+      "durationMs": 20000,
+      "requests": 3039,
+      "throughputRps": 149.8,
+      "errorRatePct": 0,
+      "p50": 357,
+      "p95": 672,
+      "p99": 792,
+      "max": 4327
+    },
+    {
+      "profile": "REG_E2E",
+      "samples": 20,
+      "failures": 0,
+      "p50": 43,
+      "p95": 64,
+      "max": 64,
+      "targetMs": 5000
+    }
+  ]
+}

@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createControlTeam, recordControlVisit } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -20,20 +21,24 @@ export async function POST(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
     if (input.kind === "team") {
-      return ok(await createControlTeam({
-        teamCode: String(input.teamCode), subCityId: String(input.subCityId),
-        members: String(input.members),
-      }));
+      return await withGuard(req, "control:manage",
+        { action: "CONTROL_TEAM_CREATE", entity: "ControlTeam", ref: (d: { teamCode: string }) => d.teamCode },
+        () => createControlTeam({
+          teamCode: String(input.teamCode), subCityId: String(input.subCityId),
+          members: String(input.members),
+        }));
     }
     if (input.kind === "visit") {
-      return ok(await recordControlVisit({
-        teamId: String(input.teamId), propertyId: String(input.propertyId),
-        origin: String(input.origin), visitedAt: new Date(String(input.visitedAt ?? new Date().toISOString())),
-        identificationShown: Boolean(input.identificationShown),
-        findings: input.findings ? String(input.findings) : undefined,
-        violations: input.violations ? String(input.violations) : undefined,
-        vacancyMonths: input.vacancyMonths != null && input.vacancyMonths !== "" ? Number(input.vacancyMonths) : undefined,
-      }));
+      return await withGuard(req, "control:manage",
+        { action: "CONTROL_VISIT", entity: "ControlVisit", ref: (d: { id: string }) => d.id },
+        () => recordControlVisit({
+          teamId: String(input.teamId), propertyId: String(input.propertyId),
+          origin: String(input.origin), visitedAt: new Date(String(input.visitedAt ?? new Date().toISOString())),
+          identificationShown: Boolean(input.identificationShown),
+          findings: input.findings ? String(input.findings) : undefined,
+          violations: input.violations ? String(input.violations) : undefined,
+          vacancyMonths: input.vacancyMonths != null && input.vacancyMonths !== "" ? Number(input.vacancyMonths) : undefined,
+        }));
     }
     return fail(new Error("Unknown control payload kind"));
   } catch (err) { return fail(err); }

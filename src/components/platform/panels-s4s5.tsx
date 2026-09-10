@@ -26,7 +26,7 @@ export function RentPanel({ boot, lang, refresh }: PanelProps) {
     if (data) { toast.success(`Adjustment ${data.year} drafted (+${data.percentage}%)`); await refresh(); }
   };
   const adjAct = async (id: string, action: string) => {
-    const data = await call("/api/adjustments", "PATCH", { id, action });
+    const data = await call("/api/adjustments", "PATCH", { id, action }, action === "draft" ? undefined : "STF-0005");
     if (data) {
       toast.success(action === "publish"
         ? `Published June 1 · pre-effect check window opened (Dir. Art. 11)`
@@ -154,11 +154,11 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
     if (data) { toast.success(`${data.appealNumber} filed — committee hearing window opened`); await refresh(); }
   };
   const aAct = async (id: string, action: string) => {
-    const data = await call("/api/appeals", "PATCH", { id, action, decision: action === "decide" ? "COMMITTEE_UPHOLDS_DECISION" : undefined });
+    const data = await call("/api/appeals", "PATCH", { id, action, decision: action === "decide" ? "COMMITTEE_UPHOLDS_DECISION" : undefined }, "STF-0006");
     if (data) { toast.success(`${data.appealNumber} → ${data.status}`); await refresh(); }
   };
   const sweep = async () => {
-    const data = await call("/api/deadlines", "POST", {});
+    const data = await call("/api/deadlines", "POST", {}, "STF-0008");
     if (data) { toast.success(`${data.swept} overdue clock(s) escalated; ${data.openRemaining} open`); await refresh(); }
   };
 

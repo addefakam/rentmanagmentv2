@@ -30,11 +30,11 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
     if (data) { toast.success(`${data.visitRef} recorded${(data.vacancyMonths ?? 0) > 6 ? " — vacancy beyond 6 months flagged (Dir. Art. 20)" : ""}`); await refresh(); }
   };
   const computePenalty = async () => {
-    const data = await call("/api/penalties", "POST", { ...pen, subjectType: pen.offenseCode.startsWith("PEN-VAC") ? "VACANCY_SURCHARGE" : "UNREGISTERED_CONTRACT", monthlyRentRef: pen.monthlyRentRef ? Number(pen.monthlyRentRef) : undefined, vacancyYears: pen.vacancyYears ? Number(pen.vacancyYears) : undefined, basisRef: "Dir. Art. 22; Proc. Arts. 29-32" });
+    const data = await call("/api/penalties", "POST", { ...pen, subjectType: pen.offenseCode.startsWith("PEN-VAC") ? "VACANCY_SURCHARGE" : "UNREGISTERED_CONTRACT", monthlyRentRef: pen.monthlyRentRef ? Number(pen.monthlyRentRef) : undefined, vacancyYears: pen.vacancyYears ? Number(pen.vacancyYears) : undefined, basisRef: "Dir. Art. 22; Proc. Arts. 29-32" }, "STF-0005");
     if (data) { toast.success(`${data.caseNumber}: ${data.computedAmount.toLocaleString()} ETB${data.capApplied ? " (capped at 3 months, Proc. Arts. 29-32)" : ""}`); await refresh(); }
   };
   const pAct = async (id: string, action: string, targetBody?: string) => {
-    const data = await call("/api/penalties", "PATCH", { id, action, targetBody });
+    const data = await call("/api/penalties", "PATCH", { id, action, targetBody }, "STF-0005");
     if (data) {
       toast.success(action === "refer" ? `${data.caseNumber} referred to ${targetBody}` : `${data.caseNumber} → ${data.status}`);
       await refresh();
@@ -146,19 +146,19 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
   const [pub, setPub] = useState({ code: "", category: "STATISTICS", titleEn: "", titleAm: "", titleOm: "", contentEn: "" });
 
   const replicate = async () => {
-    const rows = await call("/api/replication", "POST", rep);
+    const rows = await call("/api/replication", "POST", rep, "STF-0003");
     if (rows) { toast.success(`${rows.length} hop(s) propagated upward (Dir. Art. 13)`); await refresh(); }
   };
   const computeSnap = async () => {
-    const data = await call("/api/analytics", "POST", { orgUnitId: snap.orgUnitId || orgs[0]?.id, period: snap.period });
+    const data = await call("/api/analytics", "POST", { orgUnitId: snap.orgUnitId || orgs[0]?.id, period: snap.period }, "STF-0004");
     if (data) { toast.success(`${data.orgUnit.code} ${data.period}: ${data.contractsRegistered} registered, ${data.complaintsReceived} complaints`); await refresh(); }
   };
   const runBackupNow = async (environmentId: string, type: string) => {
-    const data = await call("/api/backups", "POST", { environmentId, type, location: "tier-local vault" });
+    const data = await call("/api/backups", "POST", { environmentId, type, location: "tier-local vault" }, "STF-0008");
     if (data) { toast.success(`${data.environment.stage} ${type} backup succeeded`); await refresh(); }
   };
   const createPub = async () => {
-    const data = await call("/api/publications", "POST", pub);
+    const data = await call("/api/publications", "POST", pub, "STF-0007");
     if (data) { toast.success(`${data.code} published to the public feed (Proc. Art. 18)`); await refresh(); }
   };
 

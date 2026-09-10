@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { amendModelContract } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -22,10 +23,11 @@ export async function POST(req: Request) {
     const changes = Array.isArray(input.changes)
       ? (input.changes as { sectionCode: string; contentEn?: string; contentAm?: string; contentOm?: string }[])
       : [];
-    const next = await amendModelContract({
-      baseContractId: String(input.baseContractId), newVersion: String(input.newVersion),
-      note: String(input.note ?? ""), changes,
-    });
-    return ok(next);
+    return await withGuard(req, "modelcontract:amend",
+      { action: "MODEL_CONTRACT_AMEND", entity: "ModelContract", ref: (d: { version: string }) => d.version },
+      () => amendModelContract({
+        baseContractId: String(input.baseContractId), newVersion: String(input.newVersion),
+        note: String(input.note ?? ""), changes,
+      }));
   } catch (err) { return fail(err); }
 }

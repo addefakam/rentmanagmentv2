@@ -2,6 +2,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { fileAppeal, progressAppeal } from "@/lib/domain/service";
+import { withGuard } from "@/lib/security/authz";
 
 export const dynamic = "force-dynamic";
 
@@ -17,22 +18,24 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
-    const appeal = await fileAppeal({
-      complaintId: String(input.complaintId), appellantName: String(input.appellantName),
-      filedAt: new Date(String(input.filedAt ?? new Date().toISOString())),
-    });
-    return ok(appeal);
+    return await withGuard(req, "appeal:file",
+      { action: "APPEAL_FILE", entity: "Appeal", ref: (d: { appealNumber: string }) => d.appealNumber },
+      () => fileAppeal({
+        complaintId: String(input.complaintId), appellantName: String(input.appellantName),
+        filedAt: new Date(String(input.filedAt ?? new Date().toISOString())),
+      }));
   } catch (err) { return fail(err); }
 }
 
 export async function PATCH(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
-    const appeal = await progressAppeal(String(input.id), String(input.action), {
-      hearingAt: input.hearingAt ? new Date(String(input.hearingAt)) : undefined,
-      decision: input.decision ? String(input.decision) : undefined,
-      courtFiledAt: input.courtFiledAt ? new Date(String(input.courtFiledAt)) : undefined,
-    });
-    return ok(appeal);
+    return await withGuard(req, "appeal:progress",
+      { action: `APPEAL_${String(input.action).toUpperCase()}`, entity: "Appeal", ref: (d: { appealNumber: string }) => d.appealNumber },
+      () => progressAppeal(String(input.id), String(input.action), {
+        hearingAt: input.hearingAt ? new Date(String(input.hearingAt)) : undefined,
+        decision: input.decision ? String(input.decision) : undefined,
+        courtFiledAt: input.courtFiledAt ? new Date(String(input.courtFiledAt)) : undefined,
+      }));
   } catch (err) { return fail(err); }
 }

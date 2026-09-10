@@ -17,9 +17,15 @@ type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> 
 const orgName = (o: { nameEn: string; nameAm: string; nameOm: string }, lang: Lang) =>
   lang === "am" ? o.nameAm : lang === "om" ? o.nameOm || o.nameEn : o.nameEn;
 
-export async function call(url: string, method: string, payload: unknown) {
+// Phase 5 RBAC: every mutating call carries the acting officer's staff code.
+// Default is the woreda registrar; privileged panels pass an explicit actor
+// (see STF map in types.ts) so the console demonstrates role separation.
+export const DEFAULT_ACTOR = "STF-0001";
+export async function call(url: string, method: string, payload: unknown, actor?: string) {
   const res = await fetch(url, {
-    method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload),
+    method,
+    headers: { "Content-Type": "application/json", "x-staff-code": actor ?? DEFAULT_ACTOR },
+    body: JSON.stringify(payload),
   });
   const json = await res.json();
   if (!json.ok) {

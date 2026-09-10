@@ -40,7 +40,7 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
   const promote = async () => {
     setRunning(true);
     try {
-      const res = await fetch("/api/promotion", { method: "POST" });
+      const res = await fetch("/api/promotion", { method: "POST", headers: { "x-staff-code": "STF-0008" } });
       const json = await res.json();
       if (json.ok) toast.success(`Promotion ${json.outcome?.tag ?? ""}: ${json.outcome?.status ?? "completed"}`);
       else toast.error(String(json.error ?? "Promotion failed"));

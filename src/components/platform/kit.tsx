@@ -89,7 +89,8 @@ export function StatusBadge({ value }: { value: string }) {
   const tone: Record<string, string> = {
     REGISTERED: "bg-emerald-100 text-emerald-800", VERIFIED: "bg-emerald-100 text-emerald-800", EFFECTIVE: "bg-emerald-100 text-emerald-800", PAID: "bg-emerald-100 text-emerald-800", MET: "bg-emerald-100 text-emerald-800", SUCCEEDED: "bg-emerald-100 text-emerald-800", PROPAGATED: "bg-emerald-100 text-emerald-800", CLOSED: "bg-slate-200 text-slate-700", ACTIVE: "bg-emerald-100 text-emerald-800",
     CERTIFIED: "bg-amber-100 text-amber-800", STAMPED: "bg-amber-100 text-amber-800", CHECKLIST_PASSED: "bg-amber-100 text-amber-800", PUBLISHED: "bg-amber-100 text-amber-800", DECIDED: "bg-amber-100 text-amber-800", NOTIFIED: "bg-amber-100 text-amber-800", HEARD: "bg-amber-100 text-amber-800", REFERRED: "bg-amber-100 text-amber-800", PENDING: "bg-amber-100 text-amber-800", FILED: "bg-amber-100 text-amber-800", SCHEDULED: "bg-amber-100 text-amber-800",
-    OVERDUE: "bg-red-100 text-red-800", REJECTED: "bg-red-100 text-red-800", REJECTED_INCOMPLETE: "bg-red-100 text-red-800", CASH: "bg-red-100 text-red-800", ESCALATED_TO_COURT: "bg-red-100 text-red-800",
+    OVERDUE: "bg-red-100 text-red-800", REJECTED: "bg-red-100 text-red-800", REJECTED_INCOMPLETE: "bg-red-100 text-red-800", CASH: "bg-red-100 text-red-800", ESCALATED_TO_COURT: "bg-red-100 text-red-800", FAIL: "bg-red-100 text-red-800",
+    INCOMPLETE: "bg-amber-100 text-amber-800", CARRIED: "bg-violet-100 text-violet-800",
     PRESENTED: "bg-sky-100 text-sky-800", INTAKE: "bg-sky-100 text-sky-800", DRAFT: "bg-sky-100 text-sky-800", COMPLETENESS_VERIFIED: "bg-sky-100 text-sky-800", UNDER_INVESTIGATION: "bg-sky-100 text-sky-800", COMPUTED: "bg-sky-100 text-sky-800",
   };
   return <span className={`inline-flex rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${tone[value] ?? "bg-slate-100 text-slate-700"}`}>{value.replace(/_/g, " ")}</span>;

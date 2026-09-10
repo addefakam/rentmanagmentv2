@@ -14,6 +14,8 @@ import {
   registryBookPosition, validateLease, validateWitnesses,
   vacancySurchargeAmount, amendmentWindowEndsAt, committeeHearingDue,
 } from "./law";
+import { bankGateway } from "@/lib/integration/bank";
+import { idService } from "@/lib/integration/idcheck";
 
 export class LegalError extends Error {
   rule: string;
@@ -39,12 +41,25 @@ export async function createParty(input: {
   phone?: string; address?: string; isDeaf?: boolean; usesSignLanguage?: boolean;
   proxyName?: string; proxyIdNumber?: string; proxyWitness1Name?: string; proxyWitness2Name?: string;
   registeredAtOrgUnitId: string;
+  verifyIdentityOnline?: boolean; // Phase 5: national ID service check (Dir. Art. 7)
 }) {
   requireTrue(input.idOriginalSeen && input.idCopyAttached, "Dir. Art. 7",
     "Identification original must be presented and a copy attached (original-and-copy rule).");
   if (input.type === "AGENT") {
     requireTrue(isProxyDocumentationComplete(input), "Dir. Art. 7",
       "Agent acting by proxy needs proxy identification and two witness names on the proxy documents.");
+  }
+  // Phase 5 integration: optional online identity verification. The service
+  // answers MATCH / NO_MATCH / DEFERRED; a DEFERRED outcome degrades
+  // gracefully (registration continues, manual follow-up flag), per the plan's
+  // failure-behaviour requirement.
+  let idCheckNote: string | null = null;
+  if (input.verifyIdentityOnline) {
+    const idType = await db.identificationType.findUnique({ where: { id: input.idTypeId } });
+    const verdict = await idService.verify({
+      idTypeCode: idType?.code ?? "UNKNOWN", idNumber: input.idNumber, fullName: input.fullName,
+    });
+    idCheckNote = `${verdict.status}: ${verdict.note} (${verdict.providerRef})`;
   }
   const seq = (await db.party.count()) + 1;
   const party = await db.party.create({
@@ -63,7 +78,7 @@ export async function createParty(input: {
         : undefined,
     },
   });
-  return party;
+  return { ...party, idCheckNote };
 }
 
 export async function verifyParty(partyId: string, decision: "VERIFIED" | "REJECTED") {
@@ -393,6 +408,21 @@ export async function recordPayment(input: {
       "Prepayment cannot exceed two months' rent.");
   }
   requireTrue(!input.isCash || input.method === "CASH", "Proc. Art. 13", "Inconsistent payment channel flags.");
+  // Phase 5 integration (Proc. Art. 13; open item O3): electronic payments
+  // settle through the bank/payment gateway BEFORE the ledger entry is
+  // written. A decline or timeout raises IntegrationError -> HTTP 424/504 and
+  // no receipt is recorded, so the ledger can never diverge from the bank.
+  let providerRef: string | null = null;
+  if (!input.isCash) {
+    const settlement = await bankGateway.initiateTransfer({
+      debtorRef: `TENANT-${file!.landlordId.slice(-6)}`, // instrument refs bind at UAT
+      creditorRef: "BUREAU-COLLECTION-01",
+      amountETB: input.amount,
+      reference: `${file!.fileNumber}-${yearOf(input.paidAt)}`,
+      method: input.method,
+    });
+    providerRef = settlement.providerRef;
+  }
   const seq = (await db.payment.count()) + 1;
   const payment = await db.payment.create({
     data: {
@@ -400,6 +430,7 @@ export async function recordPayment(input: {
       fileId: input.fileId, amount: input.amount, kind: input.kind,
       monthsCovered: input.monthsCovered, method: input.method,
       isElectronic: !input.isCash, cashFlag: input.isCash,
+      providerRef,
       paidAt: input.paidAt, recordedByOrgUnitId: input.recordedByOrgUnitId,
     },
   });

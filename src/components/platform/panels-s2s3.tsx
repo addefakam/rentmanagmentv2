@@ -40,10 +40,10 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
   const [amend, setAmend] = useState({ newVersion: "v1.1", sectionCode: "", contentEn: "", contentAm: "", contentOm: "" });
   const amendContract = async () => {
     if (!boot.activeContract) return;
-    const data = await call("/api/model-contracts", "POST", {
+    const data = await call("/api/model-contracts", "POST", ({
       baseContractId: boot.activeContract.id, newVersion: amend.newVersion,
       changes: [{ sectionCode: amend.sectionCode, contentEn: amend.contentEn, contentAm: amend.contentAm, contentOm: amend.contentOm }],
-    });
+    }), "STF-0005");
     if (data) {
       toast.success(`Model contract ${data.version} issued; previous version superseded`);
       await refresh();
