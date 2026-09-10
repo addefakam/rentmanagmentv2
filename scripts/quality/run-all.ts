@@ -14,6 +14,7 @@ const files = [
   "tests/security.test.ts",
   "tests/compliance-legal.test.ts",
   "tests/phase7.test.ts",
+  "tests/phase8.test.ts",
 ];
 
 // Suites run ONE FILE PER PROCESS, sequentially: the suites share a single

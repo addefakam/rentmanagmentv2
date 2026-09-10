@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-09-10T12:12:49.531Z",
+  "base": "http://localhost:3000",
+  "note": "Phase 8 staging re-run with raised concurrency (Phase 5 standing checklist item).",
+  "nfrTargets": {
+    "interactiveP95Ms": 3000,
+    "registrationE2EMs": 5000,
+    "cityLoadVUs": 500
+  },
+  "profiles": [
+    {
+      "profile": "WOREDA",
+      "virtualUsers": 40,
+      "durationMs": 20000,
+      "requests": 1824,
+      "throughputRps": 89.8,
+      "errorRatePct": 0,
+      "p50": 360,
+      "p95": 1157,
+      "p99": 1486,
+      "max": 3450
+    },
+    {
+      "profile": "CITY_PEAK",
+      "virtualUsers": 90,
+      "durationMs": 25000,
+      "requests": 2512,
+      "throughputRps": 97.5,
+      "errorRatePct": 0,
+      "p50": 747,
+      "p95": 2499,
+      "p99": 4231,
+      "max": 10999
+    },
+    {
+      "profile": "REG_E2E",
+      "samples": 25,
+      "failures": 0,
+      "p50": 68,
+      "p95": 90,
+      "max": 367,
+      "targetMs": 5000
+    }
+  ]
+}

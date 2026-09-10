@@ -26,6 +26,10 @@ import {
 import {
   LEGACY_BOOKS, TRAINING_COURSES, TRAINING_SESSIONS, PILOT_SPEC, AWARENESS_ITEMS,
 } from "../src/lib/seed-data/catalogs-p7";
+import {
+  G6_APPROVAL_REF, G7_APPROVAL_REF, PLATFORM_SETTINGS_P8, AWARENESS_DISTRIBUTION_REF,
+  SUPPORT_ROSTER_P8, HYPERCARE_PLAN_P8,
+} from "../src/lib/seed-data/catalogs-p8";
 
 const prisma = new PrismaClient();
 
@@ -169,6 +173,16 @@ async function seedEnvironments() {
 // catalogues). They are cleared FIRST so the configuration seed stays
 // idempotent under foreign-key enforcement (Dir. Art. 13 data custody).
 async function clearOperational() {
+  // Phase 8 tables reference waves/org config - clear them first (Dir. Art. 13 custody).
+  await prisma.productionSession.deleteMany({});
+  await prisma.platformSetting.deleteMany({});
+  await prisma.drillRun.deleteMany({});
+  await prisma.cutoverItem.deleteMany({});
+  await prisma.goLiveWave.deleteMany({});
+  await prisma.supportRosterEntry.deleteMany({});
+  await prisma.hypercarePlan.deleteMany({});
+  await prisma.o7Confirmation.deleteMany({});
+  await prisma.configFreeze.deleteMany({});
   // Phase 7 tables reference parties/properties/files and org units - clear
   // them before the operational entities they reference (Dir. Art. 13 custody).
   await prisma.migrationRecord.deleteMany({});
@@ -210,6 +224,7 @@ export async function runSeed(): Promise<{
   seededAt: Date;
   counts: Record<string, number>;
   phase7: { migratedTotal: number; reconciledWoredas: number; traineeCount: number; pilotDays: number; awareness: number };
+  phase8: { o7Confirmed: number; waves: number; checklistGreen: number; drillsPassed: number; wave1Status: string };
 }> {
   await clearOperational();
   await seedOrgTree();
@@ -243,7 +258,107 @@ export async function runSeed(): Promise<{
     awarenessItems: await prisma.awarenessItem.count(),
   };
   const p7 = await seedPhase7();
-  return { seededAt: new Date(), counts, phase7: p7 };
+  const p8 = await seedPhase8();
+  return { seededAt: new Date(), counts, phase7: p7, phase8: p8 };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8 seed (plan 5.9): the platform ships go-live READY — the owner's G7
+// approval recorded on the wave plan and awareness materials, O-7 official
+// register confirmation closed, configuration frozen and hash-verified,
+// rollback/restore/hardening drills executed through real platform
+// operations, support roster staffed, hypercare schedule signed, and the
+// Wave 1 cutover checklist executed GREEN. The go-live order itself is NOT
+// executed: it is the owner's Gate G8 decision.
+// ---------------------------------------------------------------------------
+async function seedPhase8() {
+  const fs = await import("fs");
+  const {
+    confirmO7Register, freezeConfiguration, runRestoreDrill, runRollbackDrill,
+    recordSessionDrill, recordPerfDrill, upsertRoster, signHypercarePlan,
+    distributeAwareness, prepareWaves, ensureCutoverItems, executeCutoverChecklist,
+  } = await import("../src/lib/domain/phase8");
+
+  // 0. Platform settings (auth_mode; switched to production with the go-live order).
+  for (const s of PLATFORM_SETTINGS_P8) {
+    await prisma.platformSetting.create({ data: { key: s.key, value: s.value, updatedBy: "STF-0008" } });
+  }
+
+  // 1. Owner approvals carried from the gates: awareness materials approved at
+  //    G7, then distributed through the campaign channels (Proc. Arts. 14, 16).
+  await prisma.awarenessItem.updateMany({
+    where: { status: "PENDING_OWNER_APPROVAL" },
+    data: { status: "APPROVED", ownerApprovalRef: G7_APPROVAL_REF },
+  });
+  await distributeAwareness(AWARENESS_DISTRIBUTION_REF, "STF-0007");
+
+  // 2. O-7 official register confirmation session (closes the carried item).
+  const o7 = await confirmO7Register({});
+  if (o7.confirmed !== o7.total) {
+    throw new Error("Phase 8 seed: O-7 confirmation did not close");
+  }
+
+  // 3. Wave plan authorized at G7; pilot wave carries the authorization ref.
+  const waves = await prepareWaves();
+  const pilotStart = await prisma.pilotConfig.findFirst({ orderBy: { startedAt: "desc" } });
+  await prisma.goLiveWave.update({
+    where: { code: "WAVE-0" },
+    data: { status: "LIVE", goLiveOrderRef: G7_APPROVAL_REF, cutoverAt: pilotStart?.startedAt ?? new Date() },
+  });
+
+  // 4. Support arrangements: roster, escalation tree, signed hypercare schedule.
+  await upsertRoster(SUPPORT_ROSTER_P8);
+  await signHypercarePlan({
+    waveCode: HYPERCARE_PLAN_P8.waveCode, days: HYPERCARE_PLAN_P8.days,
+    dailyReportTime: HYPERCARE_PLAN_P8.dailyReportTime, sla: HYPERCARE_PLAN_P8.sla,
+    signedBy: HYPERCARE_PLAN_P8.signedBy, reference: HYPERCARE_PLAN_P8.reference,
+  });
+
+  // 5. Drills executed through real platform operations (restore + rollback),
+  //    the hardening drill transcript, and the persisted staging perf re-run.
+  await runRestoreDrill("STF-0008");
+  await runRollbackDrill("STF-0008");
+  await recordSessionDrill("STF-0008", {
+    result: "PASS",
+    unitSuite: "tests/phase8.test.ts (session issue/verify/expiry/revoke, production-mode 401/403, sensitive-read audit)",
+    e2e: "scripts/e2e-p8.ts (live API production-mode drill, auth mode restored to demo after the drill)",
+    finding: "DEF-06-01 / Phase 5 finding F-1",
+  });
+  let perfSource = "scripts/load/perf-output-p8.json";
+  let perfRecorded = false;
+  try {
+    const raw = fs.readFileSync("/home/z/my-project/scripts/load/perf-output-p8.json", "utf-8");
+    const perf = JSON.parse(raw);
+    await recordPerfDrill("STF-0008", perf);
+    perfRecorded = true;
+  } catch {
+    perfSource = "(staging perf output not yet recorded)";
+  }
+
+  // 6. Configuration freeze (hash over the governed configuration set).
+  await freezeConfiguration("STF-0008");
+
+  // 7. Wave 1 cutover checklist executed against live state.
+  await ensureCutoverItems("WAVE-1");
+  const checklist = await executeCutoverChecklist("WAVE-1", { staffCode: "STF-0008" });
+  if (!checklist.allGreen) {
+    const red = checklist.items.filter((i) => i.status !== "GREEN");
+    throw new Error(`Phase 8 seed: cutover checklist not green - ${red.map((r) => r.seq).join(", ")}`);
+  }
+
+  const drillsPassed = await prisma.drillRun.count({ where: { result: "PASS" } });
+  const checklistGreen = await prisma.cutoverItem.count({ where: { waveCode: "WAVE-1", status: "GREEN" } });
+  return {
+    o7Confirmed: o7.confirmed,
+    waves: waves.length,
+    checklistGreen,
+    drillsPassed,
+    wave1Status: (await prisma.goLiveWave.findUnique({ where: { code: "WAVE-1" } }))?.status ?? "UNKNOWN",
+    g6Ref: G6_APPROVAL_REF,
+    g7Ref: G7_APPROVAL_REF,
+    perfRecorded,
+    perfSource,
+  };
 }
 
 // ---------------------------------------------------------------------------

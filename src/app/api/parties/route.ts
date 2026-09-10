@@ -4,11 +4,14 @@ import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createParty } from "@/lib/domain/service";
 import { withGuard } from "@/lib/security/authz";
+import { withReadGuard } from "@/lib/security/session";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    // Phase 8 hardening (DEF-06-01): identity data is a sensitive read (NFR-07).
+    await withReadGuard(req, { capability: "read:parties", sensitive: true, entity: "Party register" });
     const parties = await db.party.findMany({
       include: { idType: true }, orderBy: { createdAt: "desc" }, take: 200,
     });

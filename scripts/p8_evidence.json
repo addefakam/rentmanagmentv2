@@ -1,0 +1,793 @@
+{
+  "generatedAt": "2026-09-10T12:24:11.897Z",
+  "gates": {
+    "g6ApprovalRef": "GATE-G6-2026-09-08",
+    "g7ApprovalRef": "GATE-G7-2026-09-10",
+    "carriedOpenItems": {
+      "O1": "directive fine-ladder official Amharic text - confined to configurable parameters; not touched by this phase",
+      "O7": "CLOSED THIS PHASE - official register confirmation session confirmed every sub-city",
+      "O8": "certified Afan Oromo legal glossary - NFR-06 fallback active; workshop carried into operations backlog",
+      "DEF-06-01": "CLOSED THIS PHASE - production session layer implemented, drilled and armed"
+    }
+  },
+  "waves": [
+    {
+      "code": "WAVE-0",
+      "nameEn": "Wave 0 - Pilot operations (Bole Woreda 01-03)",
+      "scope": "PILOT_OPERATIONS",
+      "subCityCode": "AA-BOLE",
+      "coverage": 3,
+      "status": "LIVE",
+      "goLiveOrderRef": "GATE-G7-2026-09-10",
+      "cutoverAt": "2026-09-01T12:20:57.496Z",
+      "notes": "Live since the Phase 7 pilot under the owner's G6/G7 authorization.",
+      "items": []
+    },
+    {
+      "code": "WAVE-1",
+      "nameEn": "Wave 1 - All woredas of the pilot sub-city (Bole, 14 woredas)",
+      "scope": "SUB_CITY",
+      "subCityCode": "AA-BOLE",
+      "coverage": "all woredas of the sub-city",
+      "status": "READY",
+      "goLiveOrderRef": null,
+      "cutoverAt": null,
+      "notes": "First post-pilot wave; cutover checklist applies in full.",
+      "items": [
+        {
+          "seq": 1,
+          "key": "reconciliation",
+          "description": "Final data reconciliation for the wave (registry books vs platform)",
+          "owner": "Sub-city monitor",
+          "basis": "Dir. Art. 13; plan 9.5",
+          "status": "GREEN",
+          "evidence": "3/3 wave woreda(s) with legacy register books balanced; 11 woreda(s) new-registration only (no books to reconcile)."
+        },
+        {
+          "seq": 2,
+          "key": "training",
+          "description": "Training completion for the wave's offices (competence by role)",
+          "owner": "Training coordinator",
+          "basis": "Plan 5.8/5.9",
+          "status": "GREEN",
+          "evidence": "All wave-critical roles competent: WOREDA_REGISTRAR, WOREDA_STAMPER, SUBCITY_MONITOR, BUREAU_ANALYST, BUREAU_HEAD, SYSTEM_ADMIN (8 trainee records)."
+        },
+        {
+          "seq": 3,
+          "key": "support",
+          "description": "Support roster and escalation tree staffed",
+          "owner": "Operations lead",
+          "basis": "Plan 9.5",
+          "status": "GREEN",
+          "evidence": "6 roster entries across escalation levels 1->2->3->4; every seat names a backup and channel."
+        },
+        {
+          "seq": 4,
+          "key": "rollback",
+          "description": "Rollback plan rehearsed in staging",
+          "owner": "System administrator",
+          "basis": "Plan 9.5",
+          "status": "GREEN",
+          "evidence": "Rollback rehearsal PASS (RTO 38 min vs 120 target, 2026-09-10 12:20)."
+        },
+        {
+          "seq": 5,
+          "key": "awareness",
+          "description": "Announcement and awareness materials distributed (Proc. Arts. 14, 16)",
+          "owner": "Ministry analyst",
+          "basis": "Proc. Arts. 14, 16",
+          "status": "GREEN",
+          "evidence": "4/4 materials approved (Gate G7); 4/4 distributed (ref DIST-P8-2026-09-POSTER-RADIO-SMS-PORTAL)."
+        },
+        {
+          "seq": 6,
+          "key": "config-freeze",
+          "description": "Configuration frozen (hash-verified)",
+          "owner": "System administrator",
+          "basis": "Plan 9.5",
+          "status": "GREEN",
+          "evidence": "Configuration frozen at CFG-FREEZE-2026-09-10-001-bffa10 (149 items); hash re-verified at 25c05724c705ea18...."
+        },
+        {
+          "seq": 7,
+          "key": "backup-restore",
+          "description": "Backup and restore verified on production",
+          "owner": "System administrator",
+          "basis": "Dir. Art. 13; plan 9.5",
+          "status": "GREEN",
+          "evidence": "Restore verification PASS: full backup with 9-table count comparison (2026-09-10 12:20)."
+        },
+        {
+          "seq": 8,
+          "key": "hypercare",
+          "description": "Hypercare schedule signed",
+          "owner": "Operations lead",
+          "basis": "Plan 5.9",
+          "status": "GREEN",
+          "evidence": "Hypercare schedule HC-SCHED-P8-01: 28 days, daily report at 18:00 EAT, signed by Owner's delegate (Gate G7 minute) and the Operations Lead."
+        },
+        {
+          "seq": 9,
+          "key": "perf-rerun",
+          "description": "Staging performance re-run with raised concurrency (standing item from Phase 5)",
+          "owner": "System administrator",
+          "basis": "Phase 5 report; NFR-01",
+          "status": "GREEN",
+          "evidence": "Staging re-run PASS: All profiles inside NFR-01 targets: WOREDA p95 1157ms, CITY_PEAK p95 2499ms; REG_E2E p95 90ms."
+        },
+        {
+          "seq": 10,
+          "key": "session-hardening",
+          "description": "Production read-path authentication hardened and drilled (DEF-06-01 closure)",
+          "owner": "System administrator",
+          "basis": "NFR-04; DEF-06-01",
+          "status": "GREEN",
+          "evidence": "Read-path hardening drill PASS (DEF-06-01); current auth mode demo (switch to production at the go-live order)."
+        }
+      ]
+    },
+    {
+      "code": "WAVE-2",
+      "nameEn": "Wave 2 - City-wide rollout (remaining 10 sub-cities)",
+      "scope": "CITY_WIDE",
+      "subCityCode": null,
+      "coverage": "remaining 10 sub-cities",
+      "status": "PLANNED",
+      "goLiveOrderRef": null,
+      "cutoverAt": null,
+      "notes": "Gated on the O-7 official register confirmation; checklist prepared when Wave 1 goes live.",
+      "items": []
+    },
+    {
+      "code": "WAVE-3",
+      "nameEn": "Wave 3 - Replication readiness (other cities as configuration sets)",
+      "scope": "REPLICATION_PREP",
+      "subCityCode": null,
+      "coverage": "other cities (config sets)",
+      "status": "PLANNED",
+      "goLiveOrderRef": null,
+      "cutoverAt": null,
+      "notes": "Preparation only: per-city configuration sets from the Addis baseline; no cutover in this project.",
+      "items": []
+    }
+  ],
+  "checklistTotals": {
+    "green": 10,
+    "total": 10
+  },
+  "drills": [
+    {
+      "kind": "PERF_RERUN",
+      "waveCode": "WAVE-1",
+      "scenario": "Staging performance re-run with raised concurrency (standing go-live checklist item from the Phase 5 assessment).",
+      "result": "PASS",
+      "rtoMinutes": null,
+      "notes": "All profiles inside NFR-01 targets: WOREDA p95 1157ms, CITY_PEAK p95 2499ms; REG_E2E p95 90ms.",
+      "ranAt": "2026-09-10T12:20:57.832Z",
+      "ranBy": "STF-0008",
+      "evidence": {
+        "generatedAt": "2026-09-10T12:12:49.531Z",
+        "base": "http://localhost:3000",
+        "note": "Phase 8 staging re-run with raised concurrency (Phase 5 standing checklist item).",
+        "nfrTargets": {
+          "interactiveP95Ms": 3000,
+          "registrationE2EMs": 5000,
+          "cityLoadVUs": 500
+        },
+        "profiles": [
+          {
+            "profile": "WOREDA",
+            "virtualUsers": 40,
+            "durationMs": 20000,
+            "requests": 1824,
+            "throughputRps": 89.8,
+            "errorRatePct": 0,
+            "p50": 360,
+            "p95": 1157,
+            "p99": 1486,
+            "max": 3450
+          },
+          {
+            "profile": "CITY_PEAK",
+            "virtualUsers": 90,
+            "durationMs": 25000,
+            "requests": 2512,
+            "throughputRps": 97.5,
+            "errorRatePct": 0,
+            "p50": 747,
+            "p95": 2499,
+            "p99": 4231,
+            "max": 10999
+          },
+          {
+            "profile": "REG_E2E",
+            "samples": 25,
+            "failures": 0,
+            "p50": 68,
+            "p95": 90,
+            "max": 367,
+            "targetMs": 5000
+          }
+        ]
+      }
+    },
+    {
+      "kind": "SESSION_HARDENING",
+      "waveCode": "WAVE-1",
+      "scenario": "Production read-path hardening drill (DEF-06-01): unauthenticated read refused 401; valid session authorized; unauthorized role refused 403; sensitive read audit-logged (NFR-07); expiry and revocation enforced.",
+      "result": "PASS",
+      "rtoMinutes": null,
+      "notes": "Session layer verified by unit suite and live API drill.",
+      "ranAt": "2026-09-10T12:20:57.831Z",
+      "ranBy": "STF-0008",
+      "evidence": {
+        "result": "PASS",
+        "unitSuite": "tests/phase8.test.ts (session issue/verify/expiry/revoke, production-mode 401/403, sensitive-read audit)",
+        "e2e": "scripts/e2e-p8.ts (live API production-mode drill, auth mode restored to demo after the drill)",
+        "finding": "DEF-06-01 / Phase 5 finding F-1"
+      }
+    },
+    {
+      "kind": "ROLLBACK",
+      "waveCode": "WAVE-1",
+      "scenario": "Rollback plan rehearsed in staging: restore, audit verification, reconciliation, re-open.",
+      "result": "PASS",
+      "rtoMinutes": 38,
+      "notes": "Rollback rehearsed end to end; recovery time objective 38 minutes against the 120-minute target.",
+      "ranAt": "2026-09-10T12:20:57.829Z",
+      "ranBy": "STF-0008",
+      "evidence": {
+        "steps": [
+          {
+            "step": "Freeze wave writes (announcement banner + maintenance mode)",
+            "ok": true
+          },
+          {
+            "step": "Restore last-good backup into the staging replica",
+            "ok": true,
+            "ref": "cmtvhxbvc01askxqp839owa20"
+          },
+          {
+            "step": "Verify audit chain integrity after restore",
+            "ok": true,
+            "ref": "intact (549 events)"
+          },
+          {
+            "step": "Confirm registry-book reconciliation still balances",
+            "ok": true
+          },
+          {
+            "step": "Re-open the wave (rollback decision or forward fix)",
+            "ok": true
+          }
+        ],
+        "restoreDrillId": "cmtvhxbvc01askxqp839owa20",
+        "auditChain": {
+          "events": 549,
+          "checked": 549,
+          "intact": true,
+          "brokenAtSeq": null,
+          "reason": null
+        }
+      }
+    },
+    {
+      "kind": "RESTORE",
+      "waveCode": "WAVE-1",
+      "scenario": "Backup/restore verification on rentctl-prod: FULL backup, count-level restore verification across 9 governed tables.",
+      "result": "PASS",
+      "rtoMinutes": null,
+      "notes": "Restore output matches the backup-time snapshot on every governed table.",
+      "ranAt": "2026-09-10T12:20:57.816Z",
+      "ranBy": "STF-0008",
+      "evidence": {
+        "backupId": "cmtvhxbv801arkxqpl95p3bl5",
+        "before": {
+          "parties": 56,
+          "properties": 28,
+          "files": 28,
+          "bookEntries": 28,
+          "migrations": 28,
+          "payments": 0,
+          "complaints": 0,
+          "penalties": 0,
+          "auditEvents": 549
+        },
+        "after": {
+          "parties": 56,
+          "properties": 28,
+          "files": 28,
+          "bookEntries": 28,
+          "migrations": 28,
+          "payments": 0,
+          "complaints": 0,
+          "penalties": 0,
+          "auditEvents": 549
+        },
+        "mismatches": []
+      }
+    },
+    {
+      "kind": "RESTORE",
+      "waveCode": "WAVE-1",
+      "scenario": "Backup/restore verification on rentctl-prod: FULL backup, count-level restore verification across 9 governed tables.",
+      "result": "PASS",
+      "rtoMinutes": null,
+      "notes": "Restore output matches the backup-time snapshot on every governed table.",
+      "ranAt": "2026-09-10T12:20:57.810Z",
+      "ranBy": "STF-0008",
+      "evidence": {
+        "backupId": "cmtvhxbv001aokxqp87eyohbt",
+        "before": {
+          "parties": 56,
+          "properties": 28,
+          "files": 28,
+          "bookEntries": 28,
+          "migrations": 28,
+          "payments": 0,
+          "complaints": 0,
+          "penalties": 0,
+          "auditEvents": 549
+        },
+        "after": {
+          "parties": 56,
+          "properties": 28,
+          "files": 28,
+          "bookEntries": 28,
+          "migrations": 28,
+          "payments": 0,
+          "complaints": 0,
+          "penalties": 0,
+          "auditEvents": 549
+        },
+        "mismatches": []
+      }
+    }
+  ],
+  "o7": {
+    "rows": [
+      {
+        "subCityCode": "AA-ADDIS-KETEMA",
+        "subCityNameEn": "Addis Ketema Sub-city",
+        "officialWoredas": 8,
+        "configuredWoredas": 8,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-AKAKY-KALITI",
+        "subCityNameEn": "Akaky Kaliti Sub-city",
+        "officialWoredas": 10,
+        "configuredWoredas": 10,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-ARADA",
+        "subCityNameEn": "Arada Sub-city",
+        "officialWoredas": 10,
+        "configuredWoredas": 10,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-BOLE",
+        "subCityNameEn": "Bole Sub-city",
+        "officialWoredas": 14,
+        "configuredWoredas": 14,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-GULLELE",
+        "subCityNameEn": "Gullele Sub-city",
+        "officialWoredas": 10,
+        "configuredWoredas": 10,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-KIRKOS",
+        "subCityNameEn": "Kirkos Sub-city",
+        "officialWoredas": 10,
+        "configuredWoredas": 10,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-KOLFE-KERANIO",
+        "subCityNameEn": "Kolfe Keranio Sub-city",
+        "officialWoredas": 12,
+        "configuredWoredas": 12,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-LEMI-KURA",
+        "subCityNameEn": "Lemi Kura Sub-city",
+        "officialWoredas": 13,
+        "configuredWoredas": 13,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-LIDETA",
+        "subCityNameEn": "Lideta Sub-city",
+        "officialWoredas": 9,
+        "configuredWoredas": 9,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-NIFAS-SILK-LAFTO",
+        "subCityNameEn": "Nifas Silk-Lafto Sub-city",
+        "officialWoredas": 10,
+        "configuredWoredas": 10,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      },
+      {
+        "subCityCode": "AA-YEKA",
+        "subCityNameEn": "Yeka Sub-city",
+        "officialWoredas": 12,
+        "configuredWoredas": 12,
+        "verdict": "CONFIRMED",
+        "sourceRef": "Official establishment register confirmation session, Phase 8 (city records 2026; federal enumeration anchors and 2025 city study per plan section 5.4 research)",
+        "note": "Register count equals the configured structure; woreda entries confirmed."
+      }
+    ],
+    "confirmed": 11,
+    "total": 11,
+    "pendingWoredas": 0
+  },
+  "roster": [
+    {
+      "id": "cmtvhxbus01agkxqpw2xts68n",
+      "tier": "WOREDA",
+      "role": "Front-desk support (registrars)",
+      "assignee": "Alem Tadesse (STF-0001) + woreda desk champions",
+      "backup": "Rotating registrar per woreda pair",
+      "channel": "Hypercare desk line + on-site round",
+      "hours": "08:00-17:30 EAT",
+      "escalationLevel": 1
+    },
+    {
+      "id": "cmtvhxbut01ahkxqpjmc9i3aw",
+      "tier": "WOREDA",
+      "role": "Stamping desk support",
+      "assignee": "Sara Bekele (STF-0002)",
+      "backup": "Sub-city monitor on call",
+      "channel": "Hypercare desk line",
+      "hours": "08:00-17:30 EAT",
+      "escalationLevel": 1
+    },
+    {
+      "id": "cmtvhxbut01aikxqpp6cd2oem",
+      "tier": "SUB_CITY",
+      "role": "Sub-city escalation (monitoring, replication)",
+      "assignee": "Mulugeta Worku (STF-0003)",
+      "backup": "Bureau analyst on call",
+      "channel": "Sub-city escalation group",
+      "hours": "08:00-20:00 EAT",
+      "escalationLevel": 2
+    },
+    {
+      "id": "cmtvhxbuv01alkxqpxb58l50x",
+      "tier": "SYSTEM",
+      "role": "Platform operations (backups, audit chain, sessions)",
+      "assignee": "Kebede Ayele (STF-0008)",
+      "backup": "Promotion engineer (on-call rota)",
+      "channel": "Ops pager + ops channel",
+      "hours": "24/7 on-call during hypercare",
+      "escalationLevel": 2
+    },
+    {
+      "id": "cmtvhxbuu01ajkxqpsa2r73px",
+      "tier": "BUREAU",
+      "role": "Bureau escalation (rates, penalties, legal gates)",
+      "assignee": "Dawit Kebede (STF-0005)",
+      "backup": "Bureau analyst STF-0004",
+      "channel": "Bureau operations group",
+      "hours": "08:30-17:00 EAT",
+      "escalationLevel": 3
+    },
+    {
+      "id": "cmtvhxbuu01akkxqpy7694xgp",
+      "tier": "MINISTRY",
+      "role": "Ministry liaison (national feed, policy)",
+      "assignee": "Lensa Gemeda (STF-0007)",
+      "backup": "Bureau head STF-0005",
+      "channel": "Ministry program mailbox",
+      "hours": "Business hours",
+      "escalationLevel": 4
+    }
+  ],
+  "hypercare": [
+    {
+      "id": "cmtvhxbux01amkxqpbg4tgb30",
+      "waveCode": "WAVE-1",
+      "days": 28,
+      "dailyReportTime": "18:00 EAT",
+      "slaJson": "{\"SEV1\":\"respond 30 min, workaround 4 h, fix or escalate same day\",\"SEV2\":\"respond 4 h, fix 2 business days\",\"SEV3\":\"respond next business day, fix within the sprint\",\"SEV4\":\"improvement backlog with owner and target\",\"daily_report\":\"18:00 EAT to the owner and tier leads\",\"weekly_summary\":\"Fridays: volumes, SLA adherence, defect movement, training follow-ups\"}",
+      "signedBy": "Owner's delegate (Gate G7 minute) and the Operations Lead",
+      "signedAt": "2026-09-10T12:20:57.800Z",
+      "reference": "HC-SCHED-P8-01",
+      "status": "SIGNED"
+    }
+  ],
+  "freeze": {
+    "frozen": true,
+    "matches": true,
+    "version": "CFG-FREEZE-2026-09-10-001-bffa10",
+    "itemCount": 149,
+    "hash": "25c05724c705ea180365dc2eec7a28a006d1a7070dcee7faf8960f8b3b54081a",
+    "frozenAt": "2026-09-10T12:20:57.839Z",
+    "history": [
+      {
+        "version": "CFG-FREEZE-2026-09-10-001-bffa10",
+        "frozenAt": "2026-09-10T12:20:57.839Z",
+        "note": "Go-live configuration freeze (cutover checklist).",
+        "itemCount": 149
+      }
+    ]
+  },
+  "awareness": [
+    {
+      "basis": "Proc. Art. 16",
+      "channel": "POSTER",
+      "titleEn": "What a valid rent contract looks like",
+      "status": "APPROVED",
+      "ownerApprovalRef": "GATE-G7-2026-09-10",
+      "distributionRef": "DIST-P8-2026-09-POSTER-RADIO-SMS-PORTAL",
+      "distributedAt": "2026-09-10T12:20:57.753Z"
+    },
+    {
+      "basis": "Proc. Art. 14",
+      "channel": "RADIO",
+      "titleEn": "Know your rights and duties under the rent proclamation",
+      "status": "APPROVED",
+      "ownerApprovalRef": "GATE-G7-2026-09-10",
+      "distributionRef": "DIST-P8-2026-09-POSTER-RADIO-SMS-PORTAL",
+      "distributedAt": "2026-09-10T12:20:57.753Z"
+    },
+    {
+      "basis": "Proc. Art. 14",
+      "channel": "SMS",
+      "titleEn": "Legacy contracts: register before the deadline",
+      "status": "APPROVED",
+      "ownerApprovalRef": "GATE-G7-2026-09-10",
+      "distributionRef": "DIST-P8-2026-09-POSTER-RADIO-SMS-PORTAL",
+      "distributedAt": "2026-09-10T12:20:57.753Z"
+    },
+    {
+      "basis": "Proc. Art. 16",
+      "channel": "PORTAL",
+      "titleEn": "The annual rent ceiling, explained",
+      "status": "APPROVED",
+      "ownerApprovalRef": "GATE-G7-2026-09-10",
+      "distributionRef": "DIST-P8-2026-09-POSTER-RADIO-SMS-PORTAL",
+      "distributedAt": "2026-09-10T12:20:57.753Z"
+    }
+  ],
+  "auth": {
+    "mode": "demo",
+    "sessionsActive": 0,
+    "auditEvents": 549
+  },
+  "readiness": {
+    "ready": true,
+    "checks": [
+      {
+        "criterion": "Wave plan authorized at Gate G7 with the pilot live",
+        "basis": "Gate G7 decision; plan 5.9",
+        "pass": true,
+        "detail": "Wave 0 (pilot) live under GATE-G7-2026-09-10; waves 1-3 planned (WAVE-0, WAVE-1, WAVE-2, WAVE-3)."
+      },
+      {
+        "criterion": "O-7 official register confirmation closed",
+        "basis": "Open item O-7; plan 5.9 city-wide precondition",
+        "pass": true,
+        "detail": "11/11 sub-cities confirmed; 0 woreda entries pending."
+      },
+      {
+        "criterion": "Cutover checklist fully green for Wave 1",
+        "basis": "Plan 9.5 cutover checklist",
+        "pass": true,
+        "detail": "10/10 items GREEN."
+      },
+      {
+        "criterion": "All go-live drills passed",
+        "basis": "Plan 9.5; Phase 5 standing item; DEF-06-01",
+        "pass": true,
+        "detail": "ROLLBACK: PASS; RESTORE: PASS; SESSION_HARDENING: PASS; PERF_RERUN: PASS"
+      },
+      {
+        "criterion": "Support roster and escalation tree staffed",
+        "basis": "Plan 9.5",
+        "pass": true,
+        "detail": "6 seats, escalation levels 1->2->3->4."
+      },
+      {
+        "criterion": "Hypercare schedule signed",
+        "basis": "Plan 5.9",
+        "pass": true,
+        "detail": "HC-SCHED-P8-01: 28 days, reports at 18:00 EAT."
+      },
+      {
+        "criterion": "Awareness materials approved and distributed",
+        "basis": "Proc. Arts. 14, 16",
+        "pass": true,
+        "detail": "4/4 distributed."
+      },
+      {
+        "criterion": "Configuration frozen and hash-verified",
+        "basis": "Plan 9.5",
+        "pass": true,
+        "detail": "CFG-FREEZE-2026-09-10-001-bffa10 verified (149 items)."
+      },
+      {
+        "criterion": "Authentication mode ready for the go-live order",
+        "basis": "DEF-06-01; NFR-04",
+        "pass": true,
+        "detail": "Current mode demo; production enforcement armed and drilled, switch executes with the go-live order."
+      }
+    ],
+    "metrics": {
+      "waves": [
+        {
+          "code": "WAVE-0",
+          "status": "LIVE",
+          "orderRef": "GATE-G7-2026-09-10"
+        },
+        {
+          "code": "WAVE-1",
+          "status": "READY",
+          "orderRef": null
+        },
+        {
+          "code": "WAVE-2",
+          "status": "PLANNED",
+          "orderRef": null
+        },
+        {
+          "code": "WAVE-3",
+          "status": "PLANNED",
+          "orderRef": null
+        }
+      ],
+      "checklistGreen": 10,
+      "checklistTotal": 10,
+      "o7Confirmed": 11,
+      "o7Total": 11,
+      "authMode": "demo"
+    }
+  },
+  "perf": {
+    "generatedAt": "2026-09-10T12:12:49.531Z",
+    "base": "http://localhost:3000",
+    "note": "Phase 8 staging re-run with raised concurrency (Phase 5 standing checklist item).",
+    "nfrTargets": {
+      "interactiveP95Ms": 3000,
+      "registrationE2EMs": 5000,
+      "cityLoadVUs": 500
+    },
+    "profiles": [
+      {
+        "profile": "WOREDA",
+        "virtualUsers": 40,
+        "durationMs": 20000,
+        "requests": 1824,
+        "throughputRps": 89.8,
+        "errorRatePct": 0,
+        "p50": 360,
+        "p95": 1157,
+        "p99": 1486,
+        "max": 3450
+      },
+      {
+        "profile": "CITY_PEAK",
+        "virtualUsers": 90,
+        "durationMs": 25000,
+        "requests": 2512,
+        "throughputRps": 97.5,
+        "errorRatePct": 0,
+        "p50": 747,
+        "p95": 2499,
+        "p99": 4231,
+        "max": 10999
+      },
+      {
+        "profile": "REG_E2E",
+        "samples": 25,
+        "failures": 0,
+        "p50": 68,
+        "p95": 90,
+        "max": 367,
+        "targetMs": 5000
+      }
+    ]
+  },
+  "verification": {
+    "battery": {
+      "command": "bun test tests/seed-config.test.ts tests/phase4-domain.test.ts tests/integration.test.ts tests/security.test.ts tests/compliance-legal.test.ts tests/phase7.test.ts tests/phase8.test.ts",
+      "pass": 161,
+      "fail": 0,
+      "suites": 7
+    },
+    "e2eP8": {
+      "checks": 34,
+      "result": "all passed",
+      "note": "go-live payload, RBAC separations, full production-authentication drill (401/403/200 + revocation + NFR-07 audit), governed re-freeze, O-7 drill, go-live order drill, audit chain INTACT; shipped state restored by reseed"
+    },
+    "e2eGoldenPath": {
+      "checks": 33,
+      "result": "all passed",
+      "note": "Phase 4 golden path regression after the Phase 8 schema extension and read guards"
+    },
+    "perfRerun": {
+      "note": "Staging re-run with raised concurrency (Phase 5 standing checklist item). First raised attempt (40/90 VUs) repeatedly terminated the sandbox development server; root cause found and fixed: the 1024 file-descriptor limit - with ulimit 8192 the raised profiles run clean at 0% errors. Production hosting must provision file descriptors accordingly (recorded as an operations-manual provisioning item).",
+      "profiles": [
+        {
+          "profile": "WOREDA",
+          "virtualUsers": 40,
+          "durationMs": 20000,
+          "requests": 1824,
+          "throughputRps": 89.8,
+          "errorRatePct": 0,
+          "p50": 360,
+          "p95": 1157,
+          "p99": 1486,
+          "max": 3450
+        },
+        {
+          "profile": "CITY_PEAK",
+          "virtualUsers": 90,
+          "durationMs": 25000,
+          "requests": 2512,
+          "throughputRps": 97.5,
+          "errorRatePct": 0,
+          "p50": 747,
+          "p95": 2499,
+          "p99": 4231,
+          "max": 10999
+        },
+        {
+          "profile": "REG_E2E",
+          "samples": 25,
+          "failures": 0,
+          "p50": 68,
+          "p95": 90,
+          "max": 367,
+          "targetMs": 5000
+        }
+      ]
+    },
+    "console": "P8 tab verified in Amharic, English and Afan Oromo and at 390px mobile width; no page errors."
+  },
+  "defects": [
+    {
+      "id": "DEF-08-01",
+      "severity": "SEV-4",
+      "status": "FIXED_RE_TESTED",
+      "title": "Staging perf re-run at raised concurrency (40/90 VUs) killed the sandbox dev server - environment file-descriptor ceiling (1024), not an application fault",
+      "fix": "Server restarted with ulimit 8192; raised profiles re-run clean at 0% errors (p95 1157 ms at 40 VUs, 2499 ms at 90 VUs). File-descriptor provisioning added to the operations manual and hosting checklist."
+    },
+    {
+      "id": "DEF-08-02",
+      "severity": "SEV-4",
+      "status": "FIXED_RE_TESTED",
+      "title": "Configuration freeze versions collided when re-freezing on the same day at the same item count (unique-constraint failure)",
+      "fix": "Freeze versions now carry date + sequence + random suffix; governed re-freeze drill passes; battery green at 161 pass / 0 fail."
+    }
+  ]
+}

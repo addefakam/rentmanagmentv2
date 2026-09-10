@@ -3,11 +3,14 @@ import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { recordPayment } from "@/lib/domain/service";
 import { withGuard } from "@/lib/security/authz";
+import { withReadGuard } from "@/lib/security/session";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    // Phase 8 hardening (DEF-06-01): financial ledger read.
+    await withReadGuard(req, { capability: "read:payments", sensitive: true, entity: "Payment ledger" });
     const payments = await db.payment.findMany({
       include: { file: true }, orderBy: { createdAt: "desc" }, take: 200,
     });

@@ -56,6 +56,20 @@ export const CAPABILITIES: Record<string, string[]> = {
   "training:record": ["SYSTEM_ADMIN", "BUREAU_HEAD"], // plan 5.8 training records
   "pilot:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // plan 5.8 pilot operation
   "awareness:manage": ["MINISTRY_ANALYST", "BUREAU_HEAD"], // Proc. Arts. 14, 16
+  // Phase 8 — go-live hardening, waves, cutover, drills, session layer
+  "session:issue": [
+    "WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST",
+    "BUREAU_HEAD", "COMMITTEE_MEMBER", "MINISTRY_ANALYST", "SYSTEM_ADMIN",
+  ], // officer sign-in (any active staff role)
+  "phase8:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // cutover, drills, O-7, freeze, roster, hypercare
+  "golive:order": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // executes the owner's written go-live order (G8)
+  "setting:manage": ["SYSTEM_ADMIN"], // platform settings incl. auth_mode switch
+  // Read capabilities enforced when auth_mode = production (DEF-06-01)
+  "read:parties": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
+  "read:registration": ["WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"],
+  "read:payments": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
+  "read:phase7": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
+  "read:phase8": ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
 };
 
 export type Actor = {

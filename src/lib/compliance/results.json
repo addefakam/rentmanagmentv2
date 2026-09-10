@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-10T10:39:47.773Z",
-  "command": "bun test tests/seed-config.test.ts tests/phase4-domain.test.ts tests/integration.test.ts tests/security.test.ts tests/compliance-legal.test.ts tests/phase7.test.ts",
+  "generatedAt": "2026-09-10T12:18:22.916Z",
+  "command": "bun test tests/seed-config.test.ts tests/phase4-domain.test.ts tests/integration.test.ts tests/security.test.ts tests/compliance-legal.test.ts tests/phase7.test.ts tests/phase8.test.ts",
   "totals": {
-    "pass": 131,
+    "pass": 161,
     "fail": 0
   },
   "byTest": {
@@ -136,6 +136,36 @@
     "refuses day logs for non-pilot woredas and pre-start dates": "pass",
     "seeded four trilingual items covering both legal bases": "pass",
     "refuses an awareness item without trilingual titles (CR-01; NFR-06)": "pass",
-    "approval records the owner's reference": "pass"
+    "approval records the owner's reference": "pass",
+    "seeded the four-wave rollout with the pilot live under the G7 authorization": "pass",
+    "executed the Wave 1 cutover checklist fully GREEN with evidence": "pass",
+    "closed O-7: every sub-city confirmed and all 118 woreda entries confirmed": "pass",
+    "froze the configuration with a verifiable hash": "pass",
+    "passed the restore, rollback, hardening and perf drills": "pass",
+    "signed the hypercare schedule and staffed the escalation tree": "pass",
+    "approved and distributed every awareness material under the G7 reference": "pass",
+    "the Gate G8 readiness check passes on the shipped state": "pass",
+    "issues a session bound to the identity provider and stores only the hash": "pass",
+    "verifies a valid session back to the officer context": "pass",
+    "refuses an expired session": "pass",
+    "refuses a revoked session (sign-out)": "pass",
+    "refuses issuance when the identity provider times out": "pass",
+    "refuses issuance for an unknown or inactive officer": "pass",
+    "extracts bearer and header tokens uniformly": "pass",
+    "keeps the console review surface open in demo mode": "pass",
+    "refuses an unauthenticated read with 401 semantics in production mode": "pass",
+    "authorizes a valid session through the capability matrix and audit-logs the sensitive read": "pass",
+    "refuses an unauthorized role (capability matrix applies to reads too)": "pass",
+    "treats a non-sensitive read as authorized without the sensitive marker": "pass",
+    "O-7 records an ADJUSTED verdict when the register disagrees, then restores": "pass",
+    "detects a governed configuration change after the freeze (hash mismatch)": "pass",
+    "fails the restore drill when the restored state disagrees with the backup snapshot": "pass",
+    "rehearses the rollback plan end to end inside the RTO": "pass",
+    "re-executes the checklist idempotently and stays green": "pass",
+    "refuses the go-live order without the owner's written reference": "pass",
+    "blocks the go-live order while any cutover item is not GREEN, then executes on green": "pass",
+    "sequences the city-wide wave behind Wave 1 (and keeps O-7 as its precondition)": "pass",
+    "refuses a go-live order on the replication-preparation wave": "pass",
+    "ends the phase with the Gate G8 readiness check green": "pass"
   }
 }

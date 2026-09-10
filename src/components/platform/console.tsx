@@ -21,6 +21,7 @@ import { EvidencePanel } from "./panels-evidence";
 import { QualityPanel } from "./panels-p5";
 import { UatPanel } from "./panels-p6";
 import { PilotPanel } from "./panels-p7";
+import { GoLivePanel } from "./panels-p8";
 import { Stat, RuleNote } from "./kit";
 
 const TABS = [
@@ -37,6 +38,7 @@ const TABS = [
   ["p5", "nav.p5"],
   ["p6", "nav.p6"],
   ["p7", "nav.p7"],
+  ["p8", "nav.p8"],
 ] as const;
 
 type TabKey = (typeof TABS)[number][0];
@@ -123,6 +125,7 @@ export default function PlatformConsole() {
             {tab === "p5" && <QualityPanel lang={lang} refresh={refresh} />}
             {tab === "p6" && <UatPanel lang={lang} refresh={refresh} />}
             {tab === "p7" && <PilotPanel lang={lang} refresh={refresh} />}
+            {tab === "p8" && <GoLivePanel lang={lang} refresh={refresh} />}
           </>
         )}
       </main>

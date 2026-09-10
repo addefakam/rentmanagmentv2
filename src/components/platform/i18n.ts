@@ -25,6 +25,7 @@ const D: Dict = {
   "nav.p5": ["P5 · Testing & Compliance", "P5 · ሙከራ እና ሕጋዊነት", "P5 · Qormaata fi Seera-qabeenya"],
   "nav.p6": ["P6 · UAT & Legal Validation", "P6 · የተጠቃሚ ተቀባይነት እና ሕጋዊ ማረጋገጫ", "P6 · Simannaa Fayyadamaa fi Mirkaneessa Seeraa"],
   "nav.p7": ["P7 · Migration, Training & Pilot", "P7 · ወደ ስርዓቱ ዝውውር፣ ሥልጠና እና የሙከራ አፈጻጸም", "P7 · Godaansa, Qajeelfama fi Hojjetaa Muuxannoo"],
+  "nav.p8": ["P8 · Go-Live & Operations", "P8 · መጀመሪያ አፈጻጸም እና አሠራር", "P8 · Jalqaba Hojii fi Bulchiinsa"],
   // common
   "act.create": ["Create", "መዝግብ", "Uumi"],
   "act.save": ["Save", "አስቀምጥ", "Olkaa'i"],

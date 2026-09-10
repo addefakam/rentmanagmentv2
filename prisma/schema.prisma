@@ -939,5 +939,164 @@ model AwarenessItem {
   bodyEn           String
   status           String   @default("PENDING_OWNER_APPROVAL")
   ownerApprovalRef String?
+  distributedAt    DateTime?
+  distributionRef  String?
   createdAt        DateTime @default(now())
+}
+
+// ============================================================================
+// PHASE 8 — GO-LIVE, OPERATIONS AND CONTINUOUS IMPROVEMENT (plan section 5.9)
+// Gates: G8 approves go-live on the cutover checklist; G9 closes the project
+// on the ninety-day review.
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// Platform-level operational settings. auth_mode ("demo" | "production") is
+// the switch the cutover checklist throws at go-live: in production mode the
+// console read paths require a session bound to the national identity
+// provider (finding F-1 / DEF-06-01 closure, NFR-04 ASVS V4).
+// ---------------------------------------------------------------------------
+model PlatformSetting {
+  key       String   @id
+  value     String
+  updatedBy String?
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+// ---------------------------------------------------------------------------
+// Production session (Phase 8 hardening): issued at officer sign-in against
+// the national identity provider integration; only the SHA-256 token hash is
+// stored. Read guards verify these sessions when auth_mode = production.
+// ---------------------------------------------------------------------------
+model ProductionSession {
+  id            String    @id @default(cuid())
+  tokenHash     String    @unique
+  staffCode     String
+  roleCode      String
+  idProviderRef String
+  issuedAt      DateTime  @default(now())
+  expiresAt     DateTime
+  revokedAt     DateTime?
+
+  @@index([staffCode])
+}
+
+// ---------------------------------------------------------------------------
+// Go-live wave rollout (plan 5.9): pilot operations, pilot sub-city, city-wide,
+// replication preparation as configuration sets. Each wave carries its own
+// cutover checklist; the go-live order is the Gate G8 decision.
+// ---------------------------------------------------------------------------
+model GoLiveWave {
+  id             String    @id @default(cuid())
+  code           String    @unique
+  nameEn         String
+  nameAm         String
+  nameOm         String
+  scope          String // PILOT_OPERATIONS | SUB_CITY | CITY_WIDE | REPLICATION_PREP
+  subCityCode    String?
+  woredaCodes    String? // comma-separated; null = sub-city wide / city-wide
+  plannedOrder   Int
+  status         String    @default("PLANNED") // PLANNED | READY | LIVE
+  goLiveOrderRef String?
+  cutoverAt      DateTime?
+  notes          String?
+  items          CutoverItem[]
+
+  @@index([status])
+}
+
+model CutoverItem {
+  id          String    @id @default(cuid())
+  waveCode    String
+  wave        GoLiveWave @relation(fields: [waveCode], references: [code])
+  seq         Int
+  key         String
+  description String
+  owner       String
+  basis       String
+  status      String    @default("PENDING") // PENDING | GREEN | RED
+  evidence    String?
+  checkedAt   DateTime?
+
+  @@unique([waveCode, seq])
+  @@index([waveCode])
+}
+
+// ---------------------------------------------------------------------------
+// Go-live drills: rollback rehearsal in staging, backup/restore verification,
+// production session-hardening drill, staging performance re-run (the standing
+// item carried from the Phase 5 assessment).
+// ---------------------------------------------------------------------------
+model DrillRun {
+  id           String   @id @default(cuid())
+  kind         String // ROLLBACK | RESTORE | SESSION_HARDENING | PERF_RERUN
+  waveCode     String?
+  scenario     String
+  result       String // PASS | FAIL
+  rtoMinutes   Int?
+  evidenceJson String?
+  notes        String?
+  ranAt        DateTime @default(now())
+  ranBy        String
+
+  @@index([kind])
+}
+
+// ---------------------------------------------------------------------------
+// Hypercare support arrangements (plan 5.9): roster and escalation tree plus
+// the signed daily-report schedule with agreed service levels.
+// ---------------------------------------------------------------------------
+model SupportRosterEntry {
+  id              String @id @default(cuid())
+  tier            String // WOREDA | SUB_CITY | BUREAU | MINISTRY | SYSTEM
+  role            String
+  assignee        String
+  backup          String
+  channel         String
+  hours           String
+  escalationLevel Int
+}
+
+model HypercarePlan {
+  id              String   @id @default(cuid())
+  waveCode        String
+  days            Int
+  dailyReportTime String
+  slaJson         String
+  signedBy        String
+  signedAt        DateTime
+  reference       String   @unique
+  status          String   @default("SIGNED") // SIGNED | CLOSED
+}
+
+// ---------------------------------------------------------------------------
+// O-7 closure — official register confirmation: per sub-city verdict of the
+// confirmation session against the official establishment register, feeding
+// the org-tree confirmation status ahead of the city-wide wave.
+// ---------------------------------------------------------------------------
+model O7Confirmation {
+  id                String   @id @default(cuid())
+  subCityCode       String   @unique
+  subCityNameEn     String
+  officialWoredas   Int
+  configuredWoredas Int
+  verdict           String // CONFIRMED | ADJUSTED | RESIDUAL
+  sourceRef         String
+  note              String?
+  confirmedAt       DateTime @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// Configuration freeze: SHA-256 over the governed configuration set (city
+// parameters, calendar, penalty parameters, model contract, org structure).
+// A hash mismatch after freezing blocks the cutover checklist.
+// ---------------------------------------------------------------------------
+model ConfigFreeze {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  frozenAt  DateTime @default(now())
+  frozenBy  String
+  configHash String
+  itemCount Int
+  note      String?
 }

@@ -9,6 +9,7 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { withGuard } from "@/lib/security/authz";
+import { withReadGuard } from "@/lib/security/session";
 import {
   migrateLegacyWoreda, reconcileWoreda, reconcileAllMigrated,
   createTrainingSession, addTrainee, openPilot, logPilotDay,
@@ -17,8 +18,10 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    // Phase 8 hardening (DEF-06-01): migration records carry party identity.
+    await withReadGuard(req, { capability: "read:phase7", sensitive: true, entity: "Phase 7 migration and pilot evidence" });
     const [books, migrations, reconciliations, courses, sessions, pilot, awareness] = await Promise.all([
       db.legacyBookEntry.findMany({ include: { woreda: true, migrationRecord: true }, orderBy: [{ woredaId: "asc" }, { pageNo: "asc" }, { entryNo: "asc" }] }),
       db.migrationRecord.findMany({ include: { woreda: true, file: true }, orderBy: { migratedAt: "asc" } }),

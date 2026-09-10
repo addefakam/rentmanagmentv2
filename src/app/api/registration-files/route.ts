@@ -3,13 +3,16 @@ import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createRegistrationFile } from "@/lib/domain/service";
 import { withGuard } from "@/lib/security/authz";
+import { withReadGuard } from "@/lib/security/session";
 
 export const dynamic = "force-dynamic";
 
 type WitnessInput = { fullName: string; idTypeId: string; idNumber: string };
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    // Phase 8 hardening (DEF-06-01): files carry identity + financial data.
+    await withReadGuard(req, { capability: "read:registration", sensitive: true, entity: "Registration files" });
     const files = await db.registrationFile.findMany({
       include: {
         woreda: true, property: true, landlord: true, tenant: true,

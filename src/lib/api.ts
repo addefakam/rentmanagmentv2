@@ -18,9 +18,16 @@ export function fail(err: unknown) {
   }
   if (err instanceof Error && err.name === "SecurityError") {
     const sec = err as Error & { missing?: string };
+    // Phase 8 hardening (DEF-06-01): session-layer failures authenticate as
+    // 401 so clients know to sign in; authorization failures stay 403.
+    const UNAUTHENTICATED = new Set([
+      "AUTH_SESSION_REQUIRED", "AUTH_SESSION_EXPIRED", "AUTH_SESSION_REVOKED",
+      "AUTH_SUBJECT", "IDP_TIMEOUT",
+    ]);
+    const status = sec.missing && UNAUTHENTICATED.has(sec.missing) ? 401 : 403;
     return NextResponse.json(
       { ok: false, error: err.message, rule: "NFR-04 access control (ASVS V4)", code: sec.missing ?? "AUTH_FORBIDDEN" },
-      { status: 403 },
+      { status },
     );
   }
   if (err instanceof Error && err.name === "IntegrationError") {
