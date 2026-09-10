@@ -28,6 +28,11 @@ model OrgUnit {
   parentId           String?
   parent             OrgUnit?  @relation("OrgTree", fields: [parentId], references: [id])
   children           OrgUnit[] @relation("OrgTree")
+  staff              SystemUser[]
+  properties         Property[]
+  registrations      RegistrationFile[]
+  controlTeams       ControlTeam[]
+  snapshots          AggregationSnapshot[]
   isActive           Boolean   @default(true)
   confirmationStatus String    @default("CONFIRMED") // CONFIRMED | PENDING_OFFICIAL_REGISTER
   sourceNote         String?
@@ -49,6 +54,7 @@ model Role {
   tierScope  String // PUBLIC | WOREDA | SUB_CITY | BUREAU | CITY_COMMITTEE | MINISTRY | SYSTEM
   legalNote  String?
   isActive   Boolean @default(true)
+  users      SystemUser[]
 }
 
 // ---------------------------------------------------------------------------
@@ -65,6 +71,8 @@ model IdentificationType {
   requiresCopy    Boolean @default(true)
   legalNote       String?
   isActive        Boolean @default(true)
+  parties         Party[]
+  witnesses       ContractWitness[]
 }
 
 // ---------------------------------------------------------------------------
@@ -80,6 +88,7 @@ model PropertyStatusType {
   exemptionMonths Int?
   legalBasis      String?
   isActive        Boolean @default(true)
+  properties      Property[]
 }
 
 // ---------------------------------------------------------------------------
@@ -95,6 +104,7 @@ model ModelContract {
   effectiveFrom  DateTime
   canonicalLang  String                 @default("am")
   sections       ModelContractSection[]
+  registrationFiles RegistrationFile[]
 }
 
 model ModelContractSection {
@@ -135,6 +145,7 @@ model PenaltyParameter {
   basisRef           String
   confirmationStatus String   @default("PENDING_OFFICIAL_TEXT") // CONFIRMED | PENDING_OFFICIAL_TEXT
   isActive           Boolean  @default(true)
+  penaltyCases       PenaltyCase[]
 }
 
 // ---------------------------------------------------------------------------
@@ -196,6 +207,7 @@ model Environment {
   restoreDrill     String?
   isActive         Boolean  @default(true)
   notes            String?
+  backupRuns       BackupRun[]
 }
 
 // ---------------------------------------------------------------------------
@@ -241,4 +253,491 @@ model ValidationCheck {
   checkedAt    DateTime    @default(now())
 
   @@index([stepId])
+}
+
+// ============================================================================
+// PHASE 4 — OPERATIONAL DOMAIN (Sprints S1-S7)
+// ============================================================================
+
+// ---------------------------------------------------------------------------
+// S1 / M13 — Staff users bound to the org hierarchy and role catalogue
+// (Dir. Art. 14: system administration; roles per SRS actor definitions)
+// ---------------------------------------------------------------------------
+model SystemUser {
+  id          String   @id @default(cuid())
+  fullName    String
+  roleCode    String
+  role        Role     @relation(fields: [roleCode], references: [code])
+  orgUnitId   String
+  orgUnit     OrgUnit  @relation(fields: [orgUnitId], references: [id])
+  language    String   @default("en") // am | en | om (CR-01)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  @@index([orgUnitId])
+  @@index([roleCode])
+}
+
+// ---------------------------------------------------------------------------
+// S1 / M13 — Per-city configuration set (Dir. Art. 14: per-city rule sets)
+// ---------------------------------------------------------------------------
+model CityConfig {
+  id            String  @id @default(cuid())
+  cityCode      String  @unique
+  nameEn        String
+  nameAm        String
+  nameOm        String
+  currency      String  @default("ETB")
+  workWeek      String  @default("MON-FRI") // working-day basis for statutory clocks
+  holidaysNote  String?
+  minLeaseYears Int     @default(2) // Proc. Art. 6
+  maxPrepayMonths Int   @default(2) // Proc. Art. 12
+  isActive      Boolean @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// S1 / M1 — Parties: landlord, tenant, agent/proxy onboarding (Proc. Arts. 4,
+// 7; Dir. Art. 7 identification original-and-copy rule; proxy + two witnesses;
+// deaf-party accessibility data feeds the interpreter flow, Dir. Art. 8)
+// ---------------------------------------------------------------------------
+model Party {
+  id                    String    @id @default(cuid())
+  partyCode             String    @unique
+  type                  String // LANDLORD | TENANT | AGENT
+  fullName              String
+  idTypeId              String
+  idType                IdentificationType @relation(fields: [idTypeId], references: [id])
+  idNumber              String
+  idOriginalSeen        Boolean   @default(false)
+  idCopyAttached        Boolean   @default(false)
+  verificationStatus    String    @default("PENDING") // PENDING | VERIFIED | REJECTED
+  verifiedAt            DateTime?
+  phone                 String?
+  address               String?
+  isDeaf                Boolean   @default(false)
+  usesSignLanguage      Boolean   @default(false)
+  proxyName             String? // Dir. Art. 7: proxy identification
+  proxyIdNumber         String?
+  proxyWitness1Name     String?
+  proxyWitness2Name     String?
+  registeredAtOrgUnitId String
+  documents             PartyDocument[]
+  landlordFiles         RegistrationFile[] @relation("FileLandlord")
+  tenantFiles           RegistrationFile[] @relation("FileTenant")
+  agentFiles            RegistrationFile[] @relation("FileAgent")
+  properties            Property[]
+  createdAt             DateTime  @default(now())
+
+  @@index([type])
+  @@index([registeredAtOrgUnitId])
+}
+
+model PartyDocument {
+  id            String   @id @default(cuid())
+  partyId       String
+  party         Party    @relation(fields: [partyId], references: [id])
+  docType       String // ID_COPY | OWNERSHIP_EVIDENCE | PROXY_LETTER | ASSOCIATION_LETTER
+  ref           String
+  originalSeen  Boolean  @default(false)
+  copyAttached  Boolean  @default(false)
+  uploadedAt    DateTime @default(now())
+
+  @@index([partyId])
+}
+
+// ---------------------------------------------------------------------------
+// S2 / M2 — Property registry with status classification and exemption clocks
+// (Proc. Arts. 2, 10; Dir. Art. 6 registration at house woreda; ownership
+// evidence types per Directive)
+// ---------------------------------------------------------------------------
+model Property {
+  id                   String   @id @default(cuid())
+  propertyCode         String   @unique
+  woredaId             String
+  woreda               OrgUnit  @relation(fields: [woredaId], references: [id])
+  landlordId           String
+  landlord             Party    @relation(fields: [landlordId], references: [id])
+  subCityId            String? // derived from woreda parent for tier queries
+  kebele               String?
+  houseNo              String?
+  addressNote          String?
+  ownershipEvidence    String // HOLDING_CERT | UNDOCUMENTED_CONFIRMATION | COURT_SALE | INHERITANCE_TRANSFER
+  evidenceRef          String
+  statusTypeId         String
+  statusType           PropertyStatusType @relation(fields: [statusTypeId], references: [id])
+  rooms                Int      @default(1)
+  areaSqm              Float?
+  statusSetAt          DateTime // exemption clock anchor (completion / vacancy date)
+  exemptionEndsAt      DateTime? // computed: 48 months new / 24 months vacant (Art. 10)
+  exemptionBasis       String?
+  vacantFrom           DateTime? // S6 vacancy monitoring (Dir. Art. 20)
+  files                RegistrationFile[]
+  visits               ControlVisit[]
+  penaltyCases         PenaltyCase[]
+  createdAt            DateTime @default(now())
+
+  @@index([woredaId])
+  @@index([landlordId])
+}
+
+// ---------------------------------------------------------------------------
+// S3 / M4 — Registration and certification workflow (Proc. Arts. 4, 7;
+// Dir. Arts. 6-9: nine-point checklist, registrar acts, interpreter flow,
+// stamping desk, numbering, registry book, database entry, legacy annotation)
+// ---------------------------------------------------------------------------
+model RegistrationFile {
+  id                     String    @id @default(cuid())
+  fileNumber             String    @unique // WOREDA-prefixed sequential number (Dir. Art. 9)
+  woredaId               String
+  woreda                 OrgUnit   @relation(fields: [woredaId], references: [id])
+  propertyId             String
+  property               Property  @relation(fields: [propertyId], references: [id])
+  landlordId             String
+  landlord               Party     @relation("FileLandlord", fields: [landlordId], references: [id])
+  tenantId               String
+  tenant                 Party     @relation("FileTenant", fields: [tenantId], references: [id])
+  agentId                String?
+  agent                  Party?    @relation("FileAgent", fields: [agentId], references: [id])
+  modelContractId        String
+  modelContract          ModelContract @relation(fields: [modelContractId], references: [id])
+  monthlyRent            Float
+  leaseStart             DateTime
+  leaseEnd               DateTime // >= leaseStart + 2 years (Proc. Art. 6)
+  prepaymentMonths       Float     @default(0) // <= 2 (Proc. Art. 12)
+  paymentMethod          String // electronic channel per Proc. Art. 13
+  paymentMethodConfirmed Boolean   @default(false)
+  interpreterUsed        Boolean   @default(false) // Dir. Art. 8(1) deaf-party flow
+  interpreterName        String?
+  isLegacy               Boolean   @default(false) // pre-proclamation contract (Proc. Art. 7; Dir. Art. 8(2))
+  status                 String    @default("PRESENTED") // PRESENTED | CHECKLIST_PASSED | CERTIFIED | STAMPED | REGISTERED | REJECTED
+  certificateNumber      String?
+  certifiedAt            DateTime?
+  stampedAt              DateTime?
+  registeredAt           DateTime?
+  checklist              RegistrationChecklistItem[]
+  witnesses              ContractWitness[]
+  annotations            FileAnnotation[]
+  bookEntries            RegistryBookEntry[]
+  payments               Payment[]
+  createdAt              DateTime  @default(now())
+
+  @@index([woredaId])
+  @@index([status])
+  @@index([propertyId])
+}
+
+model RegistrationChecklistItem {
+  id         String    @id @default(cuid())
+  fileId     String
+  file       RegistrationFile @relation(fields: [fileId], references: [id])
+  orderNo    Int
+  code       String // CL-1 .. CL-9 (Dir. Arts. 6-9 nine-point verification)
+  requirement String
+  passed     Boolean?
+  note       String?
+  checkedAt  DateTime  @default(now())
+
+  @@unique([fileId, orderNo])
+  @@index([fileId])
+}
+
+model ContractWitness {
+  id        String  @id @default(cuid())
+  fileId    String
+  file      RegistrationFile @relation(fields: [fileId], references: [id])
+  orderNo   Int // 1..3 (model agreement: three witnesses)
+  fullName  String
+  idTypeId  String
+  idType    IdentificationType @relation(fields: [idTypeId], references: [id])
+  idNumber  String
+
+  @@unique([fileId, orderNo])
+  @@index([fileId])
+}
+
+model FileAnnotation {
+  id                   String   @id @default(cuid())
+  fileId               String
+  file                 RegistrationFile @relation(fields: [fileId], references: [id])
+  code                 String // LEGACY_ART7 | AMENDMENT_ART7 | RENEWAL | TERMINATION | NOTE
+  text                 String
+  annotatedAt          DateTime @default(now())
+  annotatedByOrgUnitId String
+
+  @@index([fileId])
+}
+
+model RegistryBookEntry {
+  id               String   @id @default(cuid())
+  woredaId         String
+  pageNumber       Int
+  entryNumber      Int // sequential per woreda (Dir. Art. 9 numbering)
+  fileId           String
+  file             RegistrationFile @relation(fields: [fileId], references: [id])
+  enteredAt        DateTime @default(now())
+  enteredByName    String
+
+  @@unique([woredaId, entryNumber])
+  @@index([woredaId])
+}
+
+// ---------------------------------------------------------------------------
+// S4 / M5 — Annual rent adjustment engine (Proc. Arts. 8-11; Dir. Art. 11:
+// June 1 publication, June 30 effect, pre-effect amendment check)
+// ---------------------------------------------------------------------------
+model RentAdjustment {
+  id                  String    @id @default(cuid())
+  year                Int       @unique
+  percentage          Float // Bureau study result applied to ceiling baseline
+  status              String    @default("DRAFT") // DRAFT | PUBLISHED | EFFECTIVE
+  publishedAt         DateTime?
+  effectiveAt         DateTime?
+  basisStudy          String?
+  publishedByOrgUnitId String?
+  createdAt           DateTime  @default(now())
+}
+
+// ---------------------------------------------------------------------------
+// S4 / M6 — Electronic payment ledger (Proc. Arts. 12-14; Dir. Art. 16(4):
+// method confirmation duty; cash payments flag the ten-percent fine referral)
+// ---------------------------------------------------------------------------
+model Payment {
+  id                   String   @id @default(cuid())
+  receiptNumber        String   @unique
+  fileId               String
+  file                 RegistrationFile @relation(fields: [fileId], references: [id])
+  amount               Float
+  kind                 String // RENT | PREPAYMENT | PENALTY
+  monthsCovered        Float?
+  periodFrom           DateTime?
+  periodTo             DateTime?
+  method               String // CBE_BIRR | TELEBIRR | AMOLE | BANK_TRANSFER | M-PESA (electronic only)
+  isElectronic         Boolean  @default(true) // Proc. Art. 13: electronic only
+  cashFlag             Boolean  @default(false) // Art. 13 violation -> Dir. Art. 22 10% referral
+  paidAt               DateTime
+  recordedByOrgUnitId  String
+  createdAt            DateTime @default(now())
+
+  @@index([fileId])
+}
+
+// ---------------------------------------------------------------------------
+// S5 / M8 — Complaint, appeal and dispute management (Proc. Arts. 20-26;
+// Dir. Arts. 17-19: eight grounds, multichannel intake, completeness,
+// register; 30 working days decision, 15-day appeal window)
+// ---------------------------------------------------------------------------
+model ComplaintGroundType {
+  id         String  @id @default(cuid())
+  code       String  @unique
+  nameEn     String
+  nameAm     String
+  nameOm     String
+  legalBasis String
+  complaints Complaint[]
+}
+
+model Complaint {
+  id                  String    @id @default(cuid())
+  refNumber           String    @unique
+  channel             String // WRITTEN | VERBAL | TELEPHONE | ONLINE (Dir. Art. 17 multichannel)
+  groundCode          String
+  ground              ComplaintGroundType @relation(fields: [groundCode], references: [code])
+  complainantName     String? // may be anonymous
+  complainantPhone    String?
+  propertyId          String?
+  targetFileNumber    String?
+  description         String
+  receivedAt          DateTime
+  receivedAtOrgUnitId String
+  status              String    @default("INTAKE") // INTAKE | COMPLETENESS_VERIFIED | UNDER_INVESTIGATION | DECIDED | CLOSED | REJECTED_INCOMPLETE
+  decision            String? // UPHOLD | PARTIAL | REJECT
+  decisionSummary     String?
+  decidedAt           DateTime?
+  decisionDueAt       DateTime? // 30 working days from receipt (Proc. Art. 22)
+  investigationNotes  String?
+  appeals             Appeal[]
+
+  @@index([status])
+  @@index([groundCode])
+}
+
+model Appeal {
+  id                String    @id @default(cuid())
+  complaintId       String
+  complaint         Complaint @relation(fields: [complaintId], references: [id])
+  appealNumber      String    @unique
+  appellantName     String
+  filedAt           DateTime // within 15 days of decision (Proc. Art. 24)
+  status            String    @default("FILED") // FILED | SCHEDULED | HEARD | DECIDED | ESCALATED_TO_COURT
+  hearingAt         DateTime?
+  committeeDecision String?
+  decidedAt         DateTime?
+  courtFiledAt      DateTime? // Proc. Arts. 25-26: court escalation
+
+  @@index([complaintId])
+}
+
+// ---------------------------------------------------------------------------
+// S5 / M12 — Deadline engine: every statutory clock tracked and escalated
+// (Proc. Arts. 6, 7, 8, 22, 24-26; Dir. Arts. 10, 19)
+// ---------------------------------------------------------------------------
+model DeadlineTrack {
+  id           String    @id @default(cuid())
+  code         String // DECISION-30WD | APPEAL-15D | COMMITTEE-30D | AMENDMENT-30WD | LEGACY-33D | PRE-EFFECT-CHECK
+  subjectType  String // COMPLAINT | APPEAL | FILE | ADJUSTMENT
+  subjectRef   String // refNumber / fileNumber / year
+  name         String
+  dueAt        DateTime
+  isWorkingDays Boolean  @default(false)
+  status       String    @default("OPEN") // OPEN | MET | OVERDUE
+  escalated    Boolean   @default(false)
+  closedAt     DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@index([status])
+  @@index([subjectRef])
+}
+
+// ---------------------------------------------------------------------------
+// S6 / M7 — Compliance monitoring (Proc. Art. 20; Dir. Art. 20: team control
+// with identification; vacancy monitoring beyond six months)
+// ---------------------------------------------------------------------------
+model ControlTeam {
+  id         String  @id @default(cuid())
+  teamCode   String  @unique
+  subCityId  String
+  subCity    OrgUnit @relation(fields: [subCityId], references: [id])
+  members    String // comma-separated officer names
+  isActive   Boolean @default(true)
+  visits     ControlVisit[]
+}
+
+model ControlVisit {
+  id                   String   @id @default(cuid())
+  visitRef             String   @unique
+  teamId               String
+  team                 ControlTeam @relation(fields: [teamId], references: [id])
+  propertyId           String
+  property             Property @relation(fields: [propertyId], references: [id])
+  origin               String // OWN_INITIATIVE | COMPLAINT_REFERRAL (Proc. Art. 20)
+  visitedAt            DateTime
+  identificationShown  Boolean  @default(true) // Dir. Art. 20: team identification duty
+  findings             String?
+  violations           String? // comma-separated offense codes (PEN-*)
+  vacancyMonths        Int? // observed vacancy (Dir. Art. 20 monitoring)
+  followUpRef          String?
+  createdAt            DateTime @default(now())
+
+  @@index([propertyId])
+  @@index([teamId])
+}
+
+// ---------------------------------------------------------------------------
+// S6 / M9 — Penalty and enforcement (Proc. Arts. 29-32 global cap 3 months;
+// Dir. Art. 22 configurable ladder, vacancy surcharge bands 5-25 percent,
+// referrals to tax and enforcement bodies, court recovery)
+// ---------------------------------------------------------------------------
+model PenaltyCase {
+  id              String    @id @default(cuid())
+  caseNumber      String    @unique
+  offenseCode     String
+  offense         PenaltyParameter @relation(fields: [offenseCode], references: [code])
+  subjectType     String // UNREGISTERED_CONTRACT | CASH_PAYMENT | OVER_CEILING | VACANCY_SURCHARGE | OTHER
+  propertyId      String?
+  property        Property? @relation(fields: [propertyId], references: [id])
+  subjectRef      String? // fileNumber / payment receipt / visit ref
+  monthlyRentRef  Float? // rent base for the multiple computation
+  bandPercent     Float? // vacancy surcharge band percent (5-25)
+  computedAmount  Float
+  capApplied      Boolean   @default(false) // Proc. Arts. 29-32: 3-month cap
+  basisRef        String
+  status          String    @default("COMPUTED") // COMPUTED | NOTIFIED | PAID | REFERRED | COURT_RECOVERY | CLOSED
+  notifiedAt      DateTime?
+  paidAt          DateTime?
+  referrals       Referral[]
+  createdAt       DateTime  @default(now())
+
+  @@index([status])
+  @@index([offenseCode])
+}
+
+model Referral {
+  id             String   @id @default(cuid())
+  penaltyCaseId  String
+  penaltyCase    PenaltyCase @relation(fields: [penaltyCaseId], references: [id])
+  targetBody     String // TAX_AUTHORITY | ENFORCEMENT_BODY | COURT
+  referredAt     DateTime @default(now())
+  status         String   @default("SENT") // SENT | ACKNOWLEDGED | CLOSED
+  outcomeRef     String?
+
+  @@index([penaltyCaseId])
+}
+
+// ---------------------------------------------------------------------------
+// S7 / M10 — Data management: tier replication and backup (Dir. Art. 13:
+// woreda -> sub-city -> Bureau upward change propagation; Art. 13 backup)
+// ---------------------------------------------------------------------------
+model ReplicationLog {
+  id             String   @id @default(cuid())
+  batchRef       String
+  fromOrgUnitId  String
+  toOrgUnitId    String
+  hopOrder       Int // 1: woreda->sub-city, 2: sub-city->Bureau, 3: Bureau->Ministry
+  recordType     String // REGISTRY_ENTRY | COMPLAINT | PAYMENT | SNAPSHOT
+  recordRef      String
+  payloadSummary String?
+  propagatedAt   DateTime @default(now())
+  status         String   @default("PROPAGATED") // PENDING | PROPAGATED | FAILED
+
+  @@index([batchRef])
+  @@index([toOrgUnitId])
+}
+
+model BackupRun {
+  id             String    @id @default(cuid())
+  environmentId  String
+  environment    Environment @relation(fields: [environmentId], references: [id])
+  type           String // FULL | INCREMENTAL
+  startedAt      DateTime  @default(now())
+  completedAt    DateTime?
+  status         String    @default("RUNNING") // RUNNING | SUCCEEDED | FAILED
+  location       String
+  rpoMinutesMet  Boolean?
+  notes          String?
+}
+
+// ---------------------------------------------------------------------------
+// S7 / M11 — Reporting, aggregation and national publication (Proc. Art. 18;
+// Dir. Art. 13 sub-city aggregation duty; Bureau analytics; Ministry feed)
+// ---------------------------------------------------------------------------
+model AggregationSnapshot {
+  id                  String   @id @default(cuid())
+  orgUnitId           String
+  orgUnit             OrgUnit  @relation(fields: [orgUnitId], references: [id])
+  period              String // "YYYY-MM"
+  sourceTier          String // WOREDA | SUB_CITY | BUREAU | MINISTRY
+  contractsRegistered Int      @default(0)
+  activeFiles         Int      @default(0)
+  complaintsReceived  Int      @default(0)
+  complaintsDecided   Int      @default(0)
+  penaltiesImposed    Float    @default(0)
+  computedAt          DateTime @default(now())
+
+  @@unique([orgUnitId, period])
+  @@index([orgUnitId])
+}
+
+model PublicationItem {
+  id                 String   @id @default(cuid())
+  code               String   @unique
+  category           String // CEILING | CALENDAR | AWARENESS | STATISTICS (Proc. Art. 18 public data)
+  titleEn            String
+  titleAm            String
+  titleOm            String
+  contentEn          String?
+  contentAm          String?
+  contentOm          String?
+  publishedAt        DateTime @default(now())
+  publishedByOrgUnitId String
+  isActive           Boolean  @default(true)
 }

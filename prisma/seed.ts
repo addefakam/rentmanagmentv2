@@ -20,6 +20,9 @@ import {
 import {
   ENVIRONMENTS, LOCALIZATION_RESOURCES,
 } from "../src/lib/seed-data/environments";
+import {
+  COMPLAINT_GROUNDS, CITY_CONFIGS, DEMO_STAFF, PUBLICATIONS,
+} from "../src/lib/seed-data/catalogs-p4";
 
 const prisma = new PrismaClient();
 
@@ -94,6 +97,19 @@ async function seedCatalogs() {
   for (const ev of CALENDAR_EVENTS) {
     await prisma.calendarEvent.create({ data: ev });
   }
+  for (const cg of COMPLAINT_GROUNDS) {
+    await prisma.complaintGroundType.create({ data: cg });
+  }
+  for (const cc of CITY_CONFIGS) {
+    await prisma.cityConfig.create({ data: cc });
+  }
+  for (const pub of PUBLICATIONS) {
+    const bureau = await prisma.orgUnit.findUnique({ where: { code: "AA-BUREAU" } });
+    await prisma.publicationItem.create({
+      data: { ...pub, publishedByOrgUnitId: bureau!.id },
+    });
+  }
+  await seedDemoStaff();
   for (const res of LOCALIZATION_RESOURCES) {
     await prisma.localizationResource.create({
       data: {
@@ -101,6 +117,16 @@ async function seedCatalogs() {
         valueAm: res.am, valueEn: res.en, valueOm: res.om,
         certificationStatus: res.key === "lang.fallback_notice" ? "PENDING_CERTIFICATION" : "PENDING_CERTIFICATION",
       },
+    });
+  }
+}
+
+async function seedDemoStaff() {
+  for (const s of DEMO_STAFF) {
+    const org = await prisma.orgUnit.findUnique({ where: { code: s.orgUnitCode } });
+    if (!org) throw new Error(`Demo staff org unit not found: ${s.orgUnitCode}`);
+    await prisma.systemUser.create({
+      data: { fullName: s.fullName, roleCode: s.roleCode, orgUnitId: org.id, language: s.language },
     });
   }
 }
@@ -136,7 +162,38 @@ async function seedEnvironments() {
   }
 }
 
+// Operational tables reference the configuration tables (org tree, roles,
+// catalogues). They are cleared FIRST so the configuration seed stays
+// idempotent under foreign-key enforcement (Dir. Art. 13 data custody).
+async function clearOperational() {
+  await prisma.replicationLog.deleteMany({});
+  await prisma.backupRun.deleteMany({});
+  await prisma.aggregationSnapshot.deleteMany({});
+  await prisma.publicationItem.deleteMany({});
+  await prisma.referral.deleteMany({});
+  await prisma.penaltyCase.deleteMany({});
+  await prisma.controlVisit.deleteMany({});
+  await prisma.controlTeam.deleteMany({});
+  await prisma.deadlineTrack.deleteMany({});
+  await prisma.appeal.deleteMany({});
+  await prisma.complaint.deleteMany({});
+  await prisma.complaintGroundType.deleteMany({});
+  await prisma.payment.deleteMany({});
+  await prisma.rentAdjustment.deleteMany({});
+  await prisma.registryBookEntry.deleteMany({});
+  await prisma.fileAnnotation.deleteMany({});
+  await prisma.contractWitness.deleteMany({});
+  await prisma.registrationChecklistItem.deleteMany({});
+  await prisma.registrationFile.deleteMany({});
+  await prisma.property.deleteMany({});
+  await prisma.partyDocument.deleteMany({});
+  await prisma.party.deleteMany({});
+  await prisma.systemUser.deleteMany({});
+  await prisma.cityConfig.deleteMany({});
+}
+
 export async function runSeed(): Promise<{ seededAt: Date; counts: Record<string, number> }> {
+  await clearOperational();
   await seedOrgTree();
   await seedCatalogs();
   await seedModelContract();
@@ -155,6 +212,10 @@ export async function runSeed(): Promise<{ seededAt: Date; counts: Record<string
     modelContracts: await prisma.modelContract.count(),
     contractSections: await prisma.modelContractSection.count(),
     environments: await prisma.environment.count(),
+    complaintGrounds: await prisma.complaintGroundType.count(),
+    cityConfigs: await prisma.cityConfig.count(),
+    staffUsers: await prisma.systemUser.count(),
+    publications: await prisma.publicationItem.count(),
   };
   return { seededAt: new Date(), counts };
 }

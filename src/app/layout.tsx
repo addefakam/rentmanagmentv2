@@ -14,15 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Rent Control and Administration System - Phase 3 Console",
-  description: "Phase 3: Environments and Seed Configuration for the Residential House Rent Control and Administration System (Proclamation 1320/2016). Trilingual: Amharic, English, Afan Oromo.",
-  keywords: ["Rent Control", "Proclamation 1320/2016", "Ethiopia", "Addis Ababa", "Phase 3", "Seed Configuration"],
+  title: "Rent Control and Administration System - Phase 4 Platform",
+  description: "Incremental module construction (Sprints S1-S7) for the Residential House Rent Control and Administration System (Proclamation 1320/2016, Directive 7/2016). Trilingual: Amharic, English, Afan Oromo.",
+  keywords: ["Rent Control", "Proclamation 1320/2016", "Ethiopia", "Addis Ababa", "Phase 4", "Registration", "Penalties"],
   icons: {
     icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
   },
   openGraph: {
-    title: "Rent Control and Administration System - Phase 3 Console",
-    description: "Environments, CI/CD pipeline and trilingual seed configuration (Gate G3)",
+    title: "Rent Control and Administration System - Phase 4 Platform",
+    description: "Thirteen modules across seven sprint increments (Gate G4)",
     siteName: "Rent Control and Administration System",
     type: "website",
   },
