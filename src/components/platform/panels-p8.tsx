@@ -29,11 +29,29 @@ type O7Row = { id: string; subCityCode: string; subCityNameEn: string; officialW
 type FreezeState = { frozen: boolean; matches: boolean; version: string | null; frozenAt?: string; hash?: string; itemCount?: number };
 type G8Check = { ready: boolean; checks: { criterion: string; basis: string; pass: boolean; detail: string }[]; metrics: Record<string, unknown> };
 type AwarenessRow = { id: string; basis: string; channel: string; titleEn: string; status: string; ownerApprovalRef: string | null; distributedAt: string | null; distributionRef: string | null };
+type HypercareReportRow = { id: string; waveCode: string; dayNumber: number; reportDate: string; ticketsOpened: number; ticketsClosed: number; sev1: number; sev2: number; sev3: number; sev4: number; slaMet: boolean; breaches: string | null; notes: string | null };
+type CycleStepRow = { id: string; cycleYear: number; step: string; basis: string; reference: string; executedAt: string; detail: string | null };
+type ReferralRow = { id: string; reference: string; kind: string; subject: string; competentBody: string; basisRef: string; amount: number | null; recovered: number; status: string; outcomeRef: string | null; notes: string | null; penaltyCase: { caseNumber: string; status: string } | null };
+type FeedRow = { id: string; period: string; reference: string; itemCount: number; hash: string; publishedAt: string; publishedBy: string };
+type HandoverRow = { id: string; reference: string; waveCode: string; manualVersion: string; runbookRef: string; signedBy: string; signedAt: string; status: string; notes: string | null };
+type PirRow = { id: string; reference: string; waveCode: string; windowFrom: string; windowTo: string; summary: string; conductedBy: string; conductedAt: string; findings: { id: string; category: string; description: string; severity: string; disposition: string; backlogRef: string | null }[] };
+type MinuteRow = { id: string; reference: string; lessonsJson: string; transitionsJson: string; openItemsJson: string; status: string; signedBy: string | null; signedAt: string | null; g9Ref: string | null };
+type G9Check = { ready: boolean; checks: { criterion: string; basis: string; pass: boolean; detail: string }[]; metrics: Record<string, unknown> };
+type OperationsPayload = {
+  hypercare: { waveCode: string; daysPlanned: number; daysLogged: number; ticketsOpened: number; ticketsClosed: number; sev1: number; sev2: number; sev3: number; sev4: number; slaMetDays: number; slaPct: number; reports: HypercareReportRow[] };
+  handover: HandoverRow | null;
+  annualCycle: CycleStepRow[];
+  referrals: ReferralRow[];
+  feeds: FeedRow[];
+  pir: PirRow | null;
+  minute: MinuteRow | null;
+  g9: G9Check;
+};
 type P8Payload = {
   waves: WaveRow[]; drills: DrillRow[]; roster: RosterRow[]; hypercare: HypercareRow[];
   freeze: FreezeState; awareness: AwarenessRow[]; sessions: number;
   o7: { rows: O7Row[]; confirmed: number; total: number; closed: boolean; pendingWoredas: number };
-  readiness: G8Check; authMode: string;
+  readiness: G8Check; authMode: string; operations: OperationsPayload;
 };
 
 export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Promise<void> }) {
@@ -76,14 +94,16 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
   const greenCount = wave1?.items.filter((i) => i.status === "GREEN").length ?? 0;
   const greenTotal = wave1?.items.length ?? 0;
   const latestDrill = (kind: string) => data.drills.find((d) => d.kind === kind);
+  const ops = data.operations;
+  const wave1Live = wave1?.status === "LIVE";
 
   return (
     <div className="grid gap-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Wave rollout" value={`${data.waves.filter((w) => w.status === "LIVE").length} live / ${data.waves.length} waves`} hint="pilot → sub-city → city-wide → replication prep" />
-        <Stat label="Cutover checklist" value={`${greenCount}/${greenTotal} GREEN`} hint={wave1?.status === "READY" ? "Wave 1 READY — awaiting the G8 order" : `Wave 1 status: ${wave1?.status ?? "-"}`} />
-        <Stat label="O-7 register confirmation" value={`${data.o7.confirmed}/${data.o7.total} sub-cities`} hint={data.o7.closed ? "closed — all 118 woreda entries confirmed" : `${data.o7.pendingWoredas} woreda entries pending`} />
-        <Stat label="Gate G8" value={data.readiness.ready ? "READY" : "NOT READY"} hint={data.readiness.ready ? "cutover checklist green — go-live order requested" : `${data.readiness.checks.filter((c) => !c.pass).length} check(s) failing`} />
+        <Stat label="Wave rollout" value={`${data.waves.filter((w) => w.status === "LIVE").length} live / ${data.waves.length} waves`} hint={wave1Live ? "Wave 1 live under the G8 order" : "pilot \u2192 sub-city \u2192 city-wide \u2192 replication prep"} />
+        <Stat label="Cutover checklist" value={`${greenCount}/${greenTotal} GREEN`} hint={wave1Live ? "Wave 1 executed; Wave 2 prepared, order pending" : `Wave 1 status: ${wave1?.status ?? "-"}`} />
+        <Stat label="Hypercare (28 days)" value={`${ops.hypercare.daysLogged}/${ops.hypercare.daysPlanned} · SLA ${ops.hypercare.slaPct}%`} hint={`tickets ${ops.hypercare.ticketsOpened} · SEV-1: ${ops.hypercare.sev1}`} />
+        <Stat label="Gate G9 closure" value={ops.g9.ready ? "READY" : "NOT READY"} hint={ops.g9.ready ? "closure minute drafted — signature requested" : `${ops.g9.checks.filter((c) => !c.pass).length} check(s) failing`} />
       </div>
 
       <Panel
@@ -104,15 +124,25 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
             Re-confirm O-7 register
           </ActionButton>
           <ActionButton
-            disabled={busy || !data.readiness.ready || data.authMode !== "demo"}
+            disabled={busy || wave1Live}
             onClick={() => {
               if (window.confirm("Give the go-live order for Wave 1 (Bole sub-city, 14 woredas)? This is the Gate G8 decision and switches authentication to production mode.")) {
-                act({ kind: "golive-order", waveCode: "WAVE-1", orderRef: `GATE-G8-${new Date().toISOString().slice(0, 10)}`, actor: "STF-0005" })
-                  .then(() => act({ kind: "auth-mode", mode: "production", actor: "STF-0008" }));
+                act({ kind: "golive-execute", waveCode: "WAVE-1", orderRef: `GATE-G8-${new Date().toISOString().slice(0, 10)}`, actor: "STF-0005" });
               }
             }}
           >
-            Give go-live order (Gate G8)
+            {wave1Live ? "Go-live order executed (Gate G8)" : "Give go-live order (Gate G8)"}
+          </ActionButton>
+          <ActionButton
+            variant="outline"
+            disabled={busy || !wave1Live}
+            onClick={() => {
+              if (window.confirm("Give the city-wide cutover order for Wave 2 (remaining 10 sub-cities)? Sequencing gates must hold; the PIR records this order as an operations decision.")) {
+                act({ kind: "golive-order", waveCode: "WAVE-2", orderRef: `OPS-W2-${new Date().toISOString().slice(0, 10)}`, actor: "STF-0005" });
+              }
+            }}
+          >
+            Give Wave 2 order (operations)
           </ActionButton>
           {data.authMode === "production" && (
             <ActionButton variant="outline" disabled={busy} onClick={() => act({ kind: "auth-mode", mode: "demo", actor: "STF-0008" })}>
@@ -253,6 +283,149 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
           />
         </Panel>
       </div>
+
+      <Panel
+        title="Gate G9 closure check (plan §5.9: 'Close project at Gate G9 with lessons recorded')"
+        subtitle="Every criterion evaluates the operational record under the go-live order: hypercare, the annual cycle, enforcement, the Ministry feed, the handover, the PIR and the drafted closure minute."
+      >
+        <DataTable
+          headers={["Criterion", "Basis", "Verdict", "Detail"]}
+          rows={ops.g9.checks.map((c) => [
+            <span key={c.criterion} className="text-[11px] font-medium">{c.criterion}</span>,
+            <span key={`b-${c.criterion}`} className="text-[10px] text-muted-foreground">{c.basis}</span>,
+            c.pass
+              ? <Badge key={`p-${c.criterion}`} className="bg-emerald-100 text-emerald-800">PASS</Badge>
+              : <Badge key={`p-${c.criterion}`} className="bg-red-100 text-red-800">FAIL</Badge>,
+            <span key={`d-${c.criterion}`} className="block max-w-[420px] text-[10px] text-muted-foreground">{c.detail}</span>,
+          ])}
+        />
+      </Panel>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Hypercare daily service reports (plan A-42; HC-SCHED-P8-01)"
+          subtitle={`${ops.hypercare.daysLogged}/${ops.hypercare.daysPlanned} days · ${ops.hypercare.ticketsOpened} tickets opened, ${ops.hypercare.ticketsClosed} closed · SEV-1 ${ops.hypercare.sev1} · SLA ${ops.hypercare.slaPct}%`}
+        >
+          <DataTable
+            headers={["Day", "Open/Close", "SEV 2/3/4", "SLA", "Notes"]}
+            rows={ops.hypercare.reports.slice(-10).reverse().map((r) => [
+              <span key={r.id} className="font-mono text-[10px] tabular-nums">D{r.dayNumber}</span>,
+              <span key={`t-${r.id}`} className="text-[10px] tabular-nums">{r.ticketsOpened}/{r.ticketsClosed}</span>,
+              <span key={`s-${r.id}`} className="text-[10px] tabular-nums">{r.sev2}/{r.sev3}/{r.sev4}</span>,
+              r.slaMet
+                ? <Badge key={`m-${r.id}`} className="bg-emerald-100 text-emerald-800 text-[10px]">MET</Badge>
+                : <Badge key={`m-${r.id}`} className="bg-amber-100 text-amber-800 text-[10px]">MISSED</Badge>,
+              <span key={`n-${r.id}`} className="block max-w-[260px] text-[10px] text-muted-foreground">{r.breaches ?? r.notes ?? "—"}</span>,
+            ])}
+          />
+          <p className="mt-2 text-[10px] text-muted-foreground">Showing the latest 10 daily reports of the 28-day arc.</p>
+        </Panel>
+
+        <Panel
+          title="First annual adjustment cycle (plan A-43; Proc. Art. 8)"
+          subtitle="Operated through the real services: Bureau study, June 1 publication, June 30 effect, amendment wave — the effected rate set governs ceilings platform-wide."
+        >
+          <DataTable
+            headers={["Cycle", "Step", "Basis", "Reference / detail"]}
+            rows={ops.annualCycle.map((s) => [
+              <span key={s.id} className="font-mono text-[10px]">{s.cycleYear}</span>,
+              <Badge key={`st-${s.id}`} variant="outline" className="font-mono text-[10px]">{s.step}</Badge>,
+              <span key={`b-${s.id}`} className="text-[10px] text-muted-foreground">{s.basis}</span>,
+              <span key={`d-${s.id}`} className="block max-w-[300px] text-[10px] text-muted-foreground">{s.detail ?? s.reference}</span>,
+            ])}
+          />
+        </Panel>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Panel
+          title="Penalty referrals & court recovery (plan A-44; Dir. Art. 22)"
+          subtitle="Referrals wrap the real penalty-case flow (compute → notify → refer) and track outcomes with the competent bodies."
+        >
+          <DataTable
+            headers={["Ref", "Subject", "Body", "Amount", "Recovered", "Status"]}
+            rows={ops.referrals.map((r) => [
+              <span key={r.id} className="font-mono text-[10px]">{r.reference}</span>,
+              <span key={`s-${r.id}`} className="block max-w-[220px] text-[10px]">{r.subject}</span>,
+              <Badge key={`b-${r.id}`} variant="outline" className="text-[10px]">{r.competentBody}</Badge>,
+              <span key={`a-${r.id}`} className="text-[10px] tabular-nums">{r.amount != null ? r.amount.toFixed(0) : "—"}</span>,
+              <span key={`r-${r.id}`} className="text-[10px] tabular-nums">{r.recovered ? r.recovered.toFixed(0) : "—"}</span>,
+              <Badge key={`st-${r.id}`} className={`text-[10px] ${["RESOLVED", "RECOVERED", "CLOSED"].includes(r.status) ? "bg-emerald-100 text-emerald-800" : "bg-sky-100 text-sky-800"}`}>{r.status}</Badge>,
+            ])}
+          />
+        </Panel>
+
+        <Panel
+          title="Ministry feed publications (plan A-45; Dir. Art. 13 hop 3)"
+          subtitle="Monthly national aggregates, hash-verified and propagated upward; periods are immutable."
+        >
+          <DataTable
+            headers={["Period", "Reference", "Records", "Payload hash", "Published"]}
+            rows={ops.feeds.map((f) => [
+              <span key={f.id} className="font-mono text-[10px]">{f.period}</span>,
+              <span key={`r-${f.id}`} className="font-mono text-[10px]">{f.reference}</span>,
+              <span key={`c-${f.id}`} className="text-[10px] tabular-nums">{f.itemCount}</span>,
+              <span key={`h-${f.id}`} className="font-mono text-[10px] text-muted-foreground">{f.hash.slice(0, 16)}…</span>,
+              <span key={`p-${f.id}`} className="text-[10px] text-muted-foreground">{new Date(f.publishedAt).toISOString().slice(0, 10)}</span>,
+            ])}
+          />
+          {ops.handover && (
+            <div className="mt-3 rounded-md border bg-muted/30 p-3">
+              <p className="text-[11px] font-semibold">{ops.handover.reference} · {ops.handover.manualVersion} / {ops.handover.runbookRef} · {ops.handover.status}</p>
+              <p className="text-[10px] text-muted-foreground">Signed by {ops.handover.signedBy}</p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{ops.handover.notes}</p>
+            </div>
+          )}
+        </Panel>
+      </div>
+
+      {ops.pir && (
+        <Panel
+          title="Ninety-day post-implementation review (plan A-47)"
+          subtitle={`${ops.pir.reference} · window ${ops.pir.windowFrom.slice(0, 10)} → ${ops.pir.windowTo.slice(0, 10)} · conducted by ${ops.pir.conductedBy}`}
+        >
+          <p className="mb-3 text-[11px] text-muted-foreground">{ops.pir.summary}</p>
+          <DataTable
+            headers={["Category", "Severity", "Finding", "Disposition"]}
+            rows={ops.pir.findings.map((f) => [
+              <span key={f.id} className="font-mono text-[10px]">{f.category}</span>,
+              <Badge key={`s-${f.id}`} variant="outline" className="text-[10px]">{f.severity}</Badge>,
+              <span key={`d-${f.id}`} className="block max-w-[420px] text-[10px]">{f.description}</span>,
+              <Badge key={`x-${f.id}`} className={`text-[10px] ${f.disposition === "BACKLOG" ? "bg-sky-100 text-sky-800" : f.disposition === "ACCEPTED" ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                {f.disposition}{f.backlogRef ? ` · ${f.backlogRef}` : ""}
+              </Badge>,
+            ])}
+          />
+        </Panel>
+      )}
+
+      {ops.minute && (
+        <Panel
+          title="Closure minute (plan A-48; Gate G9)"
+          subtitle={`${ops.minute.reference} · ${ops.minute.status}${ops.minute.status === "DRAFT" ? " — signature reserved for the owner's Gate G9 decision" : ` — signed under ${ops.minute.g9Ref}`}`}
+        >
+          <div className="grid gap-3 lg:grid-cols-3">
+            <div>
+              <p className="text-[11px] font-semibold">Lessons recorded</p>
+              <ul className="mt-1 list-inside list-disc text-[10px] text-muted-foreground">
+                {(JSON.parse(ops.minute.lessonsJson) as string[]).map((l, i) => <li key={i}>{l}</li>)}
+              </ul>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold">BAU transitions</p>
+              <ul className="mt-1 list-inside list-disc text-[10px] text-muted-foreground">
+                {(JSON.parse(ops.minute.transitionsJson) as string[]).map((l, i) => <li key={i}>{l}</li>)}
+              </ul>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold">Final open-item register</p>
+              <ul className="mt-1 list-inside list-disc text-[10px] text-muted-foreground">
+                {(JSON.parse(ops.minute.openItemsJson) as string[]).map((l, i) => <li key={i}>{l}</li>)}
+              </ul>
+            </div>
+          </div>
+        </Panel>
+      )}
     </div>
   );
 }

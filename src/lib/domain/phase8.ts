@@ -505,13 +505,13 @@ async function collectChecklistEvidence(waveCode: string) {
     });
   }
 
-  // 8. hypercare schedule signed.
+  // 8. hypercare schedule signed (and, under the executed order, operated and closed).
   {
     const plan = await db.hypercarePlan.findFirst({ where: { waveCode }, orderBy: { signedAt: "desc" } });
     results.push({
-      seq: 8, pass: plan?.status === "SIGNED",
+      seq: 8, pass: plan?.status === "SIGNED" || plan?.status === "CLOSED",
       evidence: plan
-        ? `Hypercare schedule ${plan.reference}: ${plan.days} days, daily report at ${plan.dailyReportTime}, signed by ${plan.signedBy}.`
+        ? `Hypercare schedule ${plan.reference}: ${plan.days} days, daily report at ${plan.dailyReportTime}, ${plan.status === "CLOSED" ? "operated and closed at the signed handover" : `signed by ${plan.signedBy}`}.`
         : "Hypercare schedule not signed.",
     });
   }
@@ -644,8 +644,10 @@ export async function g8Check(): Promise<G8Check> {
     {
       criterion: "Hypercare schedule signed",
       basis: "Plan 5.9",
-      pass: hypercare?.status === "SIGNED",
-      detail: hypercare ? `${hypercare.reference}: ${hypercare.days} days, reports at ${hypercare.dailyReportTime}.` : "Not signed.",
+      pass: hypercare?.status === "SIGNED" || hypercare?.status === "CLOSED",
+      detail: hypercare
+        ? `${hypercare.reference}: ${hypercare.days} days, reports at ${hypercare.dailyReportTime}, ${hypercare.status === "CLOSED" ? "operated and closed at handover" : `signed by ${hypercare.signedBy}`}.`
+        : "Not signed.",
     },
     {
       criterion: "Awareness materials approved and distributed",

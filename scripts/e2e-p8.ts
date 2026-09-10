@@ -48,8 +48,9 @@ async function main() {
   const p8 = boot.json.data;
   expectThrow("four waves seeded; pilot LIVE under the G7 authorization",
     p8.waves.length === 4 && p8.waves[0].status === "LIVE" && p8.waves[0].goLiveOrderRef === "GATE-G7-2026-09-10");
-  expectThrow("Wave 1 READY with the cutover checklist 10/10 GREEN",
-    p8.waves[1].status === "READY" && p8.waves[1].items.length === 10 && p8.waves[1].items.every((i: { status: string }) => i.status === "GREEN"));
+  expectThrow("Wave 1 LIVE under the owner's G8 order with the cutover checklist 10/10 GREEN",
+    p8.waves[1].status === "LIVE" && p8.waves[1].goLiveOrderRef === "GATE-G8-2026-09-10"
+    && p8.waves[1].items.length === 10 && p8.waves[1].items.every((i: { status: string }) => i.status === "GREEN"));
   expectThrow("O-7 closed: 11/11 sub-cities confirmed", p8.o7.closed === true && p8.o7.confirmed === 11);
   expectThrow("G8 readiness check green", p8.readiness.ready === true);
 
@@ -123,16 +124,16 @@ async function main() {
   const o7Fix = await api("/api/phase8", "POST", { kind: "o7-confirm" }, { actor: "STF-0008" });
   expectThrow("O-7 confirmation restored to 11/11", o7Fix.json.ok === true && o7Fix.json.data.confirmed === o7Fix.json.data.total);
 
-  console.log("P8-F · The go-live order drill (Gate G8 action)");
-  const noRef = await api("/api/phase8", "POST", { kind: "golive-order", waveCode: "WAVE-1", orderRef: "  " }, { actor: "STF-0005" });
+  console.log("P8-F · The go-live order drill (Gate G8 decision recorded; sequencing now admits Wave 2)");
+  const noRef = await api("/api/phase8", "POST", { kind: "golive-order", waveCode: "WAVE-2", orderRef: "  " }, { actor: "STF-0005" });
   expectThrow("go-live order without the written reference refused (422 Gate G8)", noRef.status === 422 && noRef.json.rule.includes("Gate G8"));
-  const sequence = await api("/api/phase8", "POST", { kind: "golive-order", waveCode: "WAVE-2", orderRef: "DRILL-G8-02" }, { actor: "STF-0005" });
-  expectThrow("city-wide wave sequenced behind Wave 1 (422)", sequence.status === 422 && sequence.json.rule.includes("Plan 5.9"));
-  const order = await api("/api/phase8", "POST", { kind: "golive-order", waveCode: "WAVE-1", orderRef: "DRILL-G8-01" }, { actor: "STF-0005" });
-  expectThrow("go-live order executes on the green board (Wave 1 LIVE)", order.json.ok === true && order.json.data.status === "LIVE");
+  const reorderLive = await api("/api/phase8", "POST", { kind: "golive-order", waveCode: "WAVE-1", orderRef: "DRILL-G8-00" }, { actor: "STF-0005" });
+  expectThrow("re-ordering the already-live Wave 1 refused (422)", reorderLive.status === 422 && reorderLive.json.error.includes("already live"));
+  const order = await api("/api/phase8", "POST", { kind: "golive-order", waveCode: "WAVE-2", orderRef: "DRILL-G8-02" }, { actor: "STF-0005" });
+  expectThrow("city-wide order executes with Wave 1 live and O-7 closed (sequencing gate passed live)", order.json.ok === true && order.json.data.status === "LIVE");
   const afterOrder = await api("/api/phase8", "GET");
-  const liveWave = (afterOrder.json.data.waves as { code: string; status: string; goLiveOrderRef: string | null }[]).find((w) => w.code === "WAVE-1");
-  expectThrow("wave register shows Wave 1 LIVE under DRILL-G8-01", liveWave?.status === "LIVE" && liveWave?.goLiveOrderRef === "DRILL-G8-01");
+  const liveWave = (afterOrder.json.data.waves as { code: string; status: string; goLiveOrderRef: string | null }[]).find((w) => w.code === "WAVE-2");
+  expectThrow("wave register shows Wave 2 LIVE under DRILL-G8-02", liveWave?.status === "LIVE" && liveWave?.goLiveOrderRef === "DRILL-G8-02");
 
   console.log("P8-G · Hardening drill transcript + audit chain + restore");
   const recordDrill = await api("/api/phase8", "POST", {
@@ -147,11 +148,12 @@ async function main() {
   // Restore the shipped demonstration state by reseeding.
   const { runSeed } = await import("../prisma/seed");
   await runSeed();
-  step("database reseeded to the shipped go-live READY state");
+  step("database reseeded to the shipped operational state");
   const restored = await api("/api/phase8", "GET");
   const r = restored.json.data;
-  expectThrow("shipped state restored: Wave 1 READY, checklist 10/10 GREEN, G8 READY, demo mode",
-    r.waves[1].status === "READY" && r.waves[1].items.every((i: { status: string }) => i.status === "GREEN")
+  expectThrow("shipped state restored: Wave 1 LIVE under the G8 order, checklist 10/10 GREEN, G8 READY, demo mode",
+    r.waves[1].status === "LIVE" && r.waves[1].goLiveOrderRef === "GATE-G8-2026-09-10"
+    && r.waves[1].items.every((i: { status: string }) => i.status === "GREEN")
     && r.readiness.ready === true && r.authMode === "demo");
 
   console.log(`\nE2E-P8 RESULT: ${pass} checks passed, 0 failed`);

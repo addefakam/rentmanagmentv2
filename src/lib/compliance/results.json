@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-10T12:18:22.916Z",
+  "generatedAt": "2026-09-10T13:14:51.007Z",
   "command": "bun test tests/seed-config.test.ts tests/phase4-domain.test.ts tests/integration.test.ts tests/security.test.ts tests/compliance-legal.test.ts tests/phase7.test.ts tests/phase8.test.ts",
   "totals": {
-    "pass": 161,
+    "pass": 176,
     "fail": 0
   },
   "byTest": {
@@ -161,11 +161,26 @@
     "detects a governed configuration change after the freeze (hash mismatch)": "pass",
     "fails the restore drill when the restored state disagrees with the backup snapshot": "pass",
     "rehearses the rollback plan end to end inside the RTO": "pass",
-    "re-executes the checklist idempotently and stays green": "pass",
+    "re-executes the checklist idempotently and stays green on the live wave": "pass",
     "refuses the go-live order without the owner's written reference": "pass",
-    "blocks the go-live order while any cutover item is not GREEN, then executes on green": "pass",
+    "blocks a cutover order while any checklist item is not GREEN, then drills the order on green": "pass",
+    "refuses to re-order a wave that is already live": "pass",
     "sequences the city-wide wave behind Wave 1 (and keeps O-7 as its precondition)": "pass",
     "refuses a go-live order on the replication-preparation wave": "pass",
-    "ends the phase with the Gate G8 readiness check green": "pass"
+    "ends the phase with the Gate G8 readiness check green": "pass",
+    "shipped the full operational arc under the executed go-live order": "pass",
+    "recorded the first annual cycle through the real Art. 8 services with June anchoring": "pass",
+    "refuses to re-operate the recorded annual cycle": "pass",
+    "engages the effected rate set in ceiling validation": "pass",
+    "refuses further hypercare reports on the closed schedule": "pass",
+    "enforces the live-wave and day-bound discipline on Wave 2 daily reports": "pass",
+    "refuses hypercare closure twice": "pass",
+    "runs the referral lifecycle with transition discipline over the real penalty flow": "pass",
+    "restricts recovery orders to the court of law": "pass",
+    "refuses a duplicate Ministry feed period and a duplicate PIR": "pass",
+    "refuses a duplicate closure minute": "pass",
+    "executes the Wave 2 order with the production switch, then restores the review posture": "pass",
+    "signs the closure minute under the owner's G9 reference, then restores the draft": "pass",
+    "ends the project with the Gate G9 readiness check green": "pass"
   }
 }

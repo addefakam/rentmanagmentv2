@@ -30,6 +30,10 @@ import {
   G6_APPROVAL_REF, G7_APPROVAL_REF, PLATFORM_SETTINGS_P8, AWARENESS_DISTRIBUTION_REF,
   SUPPORT_ROSTER_P8, HYPERCARE_PLAN_P8,
 } from "../src/lib/seed-data/catalogs-p8";
+import {
+  G8_APPROVAL_REF, ANNUAL_CYCLE_2026, ENFORCEMENT_SEED, MINISTRY_FEED_SCHEDULE,
+  HYPERCARE_PLAN_WAVE2, OPERATIONS_HANDOVER_P8B, PIR_FINDINGS, CLOSURE_MINUTE_P8B,
+} from "../src/lib/seed-data/catalogs-ops";
 
 const prisma = new PrismaClient();
 
@@ -173,6 +177,16 @@ async function seedEnvironments() {
 // catalogues). They are cleared FIRST so the configuration seed stays
 // idempotent under foreign-key enforcement (Dir. Art. 13 data custody).
 async function clearOperational() {
+  // Phase 8 Part B tables (operations under the order) - cleared first; the
+  // enforcement referrals reference penalty cases (Dir. Art. 13 custody).
+  await prisma.closureMinute.deleteMany({});
+  await prisma.pirFinding.deleteMany({});
+  await prisma.pirRecord.deleteMany({});
+  await prisma.operationsHandover.deleteMany({});
+  await prisma.ministryFeedPublication.deleteMany({});
+  await prisma.enforcementReferral.deleteMany({});
+  await prisma.annualCycleStep.deleteMany({});
+  await prisma.hypercareReport.deleteMany({});
   // Phase 8 tables reference waves/org config - clear them first (Dir. Art. 13 custody).
   await prisma.productionSession.deleteMany({});
   await prisma.platformSetting.deleteMany({});
@@ -225,6 +239,11 @@ export async function runSeed(): Promise<{
   counts: Record<string, number>;
   phase7: { migratedTotal: number; reconciledWoredas: number; traineeCount: number; pilotDays: number; awareness: number };
   phase8: { o7Confirmed: number; waves: number; checklistGreen: number; drillsPassed: number; wave1Status: string };
+  phase8b: {
+    wave1OrderRef: string; hypercareDays: number; sev1: number; slaPct: number;
+    cycleYear: number; referrals: number; concludedReferrals: number; feeds: number;
+    handover: string; pirFindings: number; minute: string; g9Ready: boolean;
+  };
 }> {
   await clearOperational();
   await seedOrgTree();
@@ -259,7 +278,8 @@ export async function runSeed(): Promise<{
   };
   const p7 = await seedPhase7();
   const p8 = await seedPhase8();
-  return { seededAt: new Date(), counts, phase7: p7, phase8: p8 };
+  const p8b = await seedPhase8B();
+  return { seededAt: new Date(), counts, phase7: p7, phase8: p8, phase8b: p8b };
 }
 
 // ---------------------------------------------------------------------------
@@ -358,6 +378,141 @@ async function seedPhase8() {
     g7Ref: G7_APPROVAL_REF,
     perfRecorded,
     perfSource,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8 Part B seed (plan activities A-42..A-48): operations under the
+// owner's go-live order. The Gate G8 decision (G8_APPROVAL_REF) executes on
+// Wave 1 with the production authentication switch, hypercare runs its 28
+// signed daily reports (zero severity-one), the first annual adjustment
+// cycle is operated through the real Proc. Art. 8 services, penalty
+// referrals and court recovery track with the competent bodies, the Ministry
+// feed publishes monthly, hypercare closes with the signed handover, the
+// ninety-day PIR records its findings, and the closure minute is drafted
+// with lessons — signature reserved for the owner's Gate G9 decision.
+// The demonstrator records the full operational arc; relative dates follow
+// the same compressed-timeline convention as the Phase 7 pilot logs.
+// ---------------------------------------------------------------------------
+async function seedPhase8B() {
+  const {
+    executeGoLiveOrder, logHypercareDay, closeHypercare, operateAnnualCycle,
+    createEnforcementReferral, recordReferralOutcome, publishMinistryFeed,
+    runPostImplementationReview, addPirFinding, draftClosureMinute, g9Check,
+  } = await import("../src/lib/domain/operations");
+  const {
+    prepareWaves, ensureCutoverItems, executeCutoverChecklist, signHypercarePlan,
+  } = await import("../src/lib/domain/phase8");
+  const { setAuthMode } = await import("../src/lib/security/session");
+
+  await prepareWaves();
+
+  // 0. Wave 2 preparation under its sequencing gates: signed preparation
+  //    hypercare schedule and a fully executed checklist (order pending).
+  await ensureCutoverItems("WAVE-2");
+  await signHypercarePlan(HYPERCARE_PLAN_WAVE2);
+  const w2 = await executeCutoverChecklist("WAVE-2", { staffCode: "STF-0008" });
+  if (!w2.allGreen) {
+    throw new Error(`Phase 8B seed: Wave 2 preparation checklist not green - ${w2.items.filter((i) => i.status !== "GREEN").map((i) => i.key).join(", ")}`);
+  }
+
+  // 1. The Gate G8 decision executes: Wave 1 cuts over under the owner's
+  //    written order and authentication switches to production. The review
+  //    surface is then restored to demo mode for the gate review (the switch
+  //    discipline at physical cutover is a runbook item; DEF-06-01).
+  const wave = await executeGoLiveOrder("WAVE-1", G8_APPROVAL_REF, { staffCode: "STF-0005" });
+  await setAuthMode("demo", "STF-0008");
+  const cutoverAt = wave.cutoverAt ?? new Date();
+
+  // 2. Hypercare: 28 deterministic daily reports under HC-SCHED-P8-01.
+  //    Zero severity-one across the arc; one honest SLA breach (day 9,
+  //    month-end surge) feeds the improvement backlog BL-01.
+  const story = (day: number): {
+    opened: number; closed: number; sev2: number; sev3: number; sev4: number;
+    slaMet: boolean; breaches?: string; notes?: string;
+  } => {
+    if (day === 1) return { opened: 9, closed: 7, sev2: 0, sev3: 1, sev4: 0, slaMet: true, notes: "Go-live day: front-desk queue coaching at all three desks; checklist item order (DESK-101)." };
+    if (day === 3) return { opened: 7, closed: 7, sev2: 1, sev3: 0, sev4: 0, slaMet: true, notes: "Payment ledger display lag for same-day receipts (DESK-118); resolved same day within the SEV-2 window." };
+    if (day === 9) return { opened: 6, closed: 5, sev2: 0, sev3: 1, sev4: 0, slaMet: false, breaches: "SEV-3 response missed the next-business-day target (month-end payment surge; level-1 staffing gap).", notes: "Friday weekly summary: month-end surge; improvement backlog BL-01 opened." };
+    if (day === 17) return { opened: 4, closed: 4, sev2: 0, sev3: 1, sev4: 0, slaMet: true, notes: "Replication retry after a network blip; second hop completed within the hour (Dir. Art. 13)." };
+    if (day === 28) return { opened: 2, closed: 2, sev2: 0, sev3: 0, sev4: 1, slaMet: true, notes: "Handover day: manual v1.1 amendments folded in; hypercare closes." };
+    const opened = Math.max(2, 7 - Math.floor(day / 5));
+    const closed = opened - (day % 7 === 0 ? 1 : 0);
+    const sev4 = day % 6 === 0 ? 1 : 0;
+    return {
+      opened, closed, sev2: 0, sev3: 0, sev4, slaMet: true,
+      notes: sev4 ? "Improvement suggestion recorded to the backlog (BL-03 related)." : undefined,
+    };
+  };
+  for (let day = 1; day <= 28; day++) {
+    const s = story(day);
+    const d = new Date(cutoverAt.getTime());
+    d.setUTCDate(d.getUTCDate() + day);
+    await logHypercareDay({
+      waveCode: "WAVE-1", dayNumber: day, reportDate: d,
+      ticketsOpened: s.opened, ticketsClosed: s.closed,
+      sev1: 0, sev2: s.sev2, sev3: s.sev3, sev4: s.sev4,
+      slaMet: s.slaMet, breaches: s.breaches, notes: s.notes, staffCode: "STF-0008",
+    });
+  }
+
+  // 3. First annual adjustment cycle through the real Proc. Art. 8 services.
+  const cycle = await operateAnnualCycle({ ...ANNUAL_CYCLE_2026, staffCode: "STF-0004" });
+
+  // 4. Penalty referrals and court recovery with the competent bodies.
+  let concluded = 0;
+  for (const seed of ENFORCEMENT_SEED) {
+    const { outcomes, ...refInput } = seed;
+    const ref = await createEnforcementReferral({ ...refInput, staffCode: "STF-0005" });
+    for (const o of outcomes) {
+      await recordReferralOutcome(ref.reference, o, "STF-0005");
+    }
+    const last = outcomes[outcomes.length - 1]?.status ?? "REFERRED";
+    if (["RESOLVED", "RECOVERED", "CLOSED"].includes(last)) concluded += 1;
+  }
+
+  // 5. Ministry feed: monthly periods across the 90-day window (plan A-45).
+  const periodAt = (monthOffset: number): string => {
+    const d = new Date(cutoverAt.getTime());
+    d.setUTCMonth(d.getUTCMonth() + monthOffset);
+    return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+  };
+  for (const f of MINISTRY_FEED_SCHEDULE) {
+    await publishMinistryFeed(periodAt(f.monthOffset), "STF-0007");
+  }
+
+  // 6. Hypercare closure with the signed operations handover (plan A-46).
+  await closeHypercare({ ...OPERATIONS_HANDOVER_P8B, staffCode: "STF-0008" });
+
+  // 7. The ninety-day post-implementation review with its findings (A-47).
+  await runPostImplementationReview({ reference: "PIR-P8-90D", conductedBy: "STF-0005" });
+  for (const f of PIR_FINDINGS) {
+    await addPirFinding({ pirReference: "PIR-P8-90D", ...f });
+  }
+
+  // 8. The closure minute is drafted; signature awaits the owner's G9 decision.
+  await draftClosureMinute({ ...CLOSURE_MINUTE_P8B, staffCode: "STF-0005" });
+
+  // Self-check: the platform ships Gate G9 READY.
+  const g9 = await g9Check();
+  if (!g9.ready) {
+    const failing = g9.checks.filter((c) => !c.pass).map((c) => c.criterion);
+    throw new Error(`Phase 8B seed: Gate G9 check failing - ${failing.join("; ")}`);
+  }
+  const hs = await import("../src/lib/domain/operations").then((m) => m.hypercareSummary("WAVE-1"));
+  return {
+    wave1OrderRef: G8_APPROVAL_REF,
+    hypercareDays: hs.daysLogged,
+    sev1: hs.sev1,
+    slaPct: hs.slaPct,
+    cycleYear: cycle.cycleYear,
+    referrals: ENFORCEMENT_SEED.length,
+    concludedReferrals: concluded,
+    feeds: MINISTRY_FEED_SCHEDULE.length,
+    handover: OPERATIONS_HANDOVER_P8B.reference,
+    pirFindings: PIR_FINDINGS.length,
+    minute: CLOSURE_MINUTE_P8B.reference,
+    g9Ready: g9.ready,
   };
 }
 

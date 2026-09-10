@@ -63,6 +63,8 @@ export const CAPABILITIES: Record<string, string[]> = {
   ], // officer sign-in (any active staff role)
   "phase8:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // cutover, drills, O-7, freeze, roster, hypercare
   "golive:order": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // executes the owner's written go-live order (G8)
+  "operations:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // hypercare, cycle, referrals, handover, PIR (plan A-42..A-48)
+  "feed:publish": ["MINISTRY_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"], // national feed to the Ministry (A-45)
   "setting:manage": ["SYSTEM_ADMIN"], // platform settings incl. auth_mode switch
   // Read capabilities enforced when auth_mode = production (DEF-06-01)
   "read:parties": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],

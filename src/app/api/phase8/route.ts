@@ -1,12 +1,16 @@
 // /api/phase8 — Go-Live, Operations and Continuous Improvement evidence
-// (plan section 5.9; Gate G8 package).
-// GET  : waves + cutover checklist, drills, support roster, hypercare plan,
-//        O-7 confirmation summary, configuration freeze, awareness
-//        distribution, auth mode, G8 readiness check.
+// (plan section 5.9; Gate G8 order execution and Gate G9 package).
+// GET  : waves + cutover checklists, drills, support roster, hypercare plan
+//        and daily reports, O-7 confirmation, configuration freeze, awareness
+//        distribution, auth mode, G8 readiness, Part B operations summary
+//        (annual cycle, referrals, Ministry feeds, handover, PIR, closure
+//        minute, G9 check).
 // POST : action dispatcher over capability-guarded service calls:
 //        o7-confirm, checklist-execute, drill-rollback, drill-restore,
 //        drill-record, freeze-config, hypercare-sign, awareness-distribute,
-//        auth-mode, golive-order.
+//        auth-mode, golive-order, golive-execute, hypercare-log,
+//        hypercare-close, cycle-operate, referral-create, referral-outcome,
+//        feed-publish, pir-run, pir-finding, minute-draft, minute-sign.
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { withGuard } from "@/lib/security/authz";
@@ -16,6 +20,12 @@ import {
   upsertRoster, signHypercarePlan, distributeAwareness,
   executeCutoverChecklist, giveGoLiveOrder, g8Check, prepareWaves,
 } from "@/lib/domain/phase8";
+import {
+  executeGoLiveOrder, logHypercareDay, closeHypercare, operateAnnualCycle,
+  createEnforcementReferral, recordReferralOutcome, publishMinistryFeed,
+  runPostImplementationReview, addPirFinding, draftClosureMinute,
+  signClosureMinute, operationsSummary,
+} from "@/lib/domain/operations";
 import { setAuthMode, getAuthMode, withReadGuard } from "@/lib/security/session";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +42,9 @@ export async function GET(req: Request) {
       db.awarenessItem.findMany({ orderBy: { createdAt: "asc" } }),
       db.productionSession.count({ where: { revokedAt: null, expiresAt: { gt: new Date() } } }),
     ]);
-    const [o7, readiness, authMode] = await Promise.all([o7Summary(), g8Check(), getAuthMode()]);
+    const [o7, readiness, authMode, operations] = await Promise.all([o7Summary(), g8Check(), getAuthMode(), operationsSummary()]);
     return ok({
-      waves, drills, roster, hypercare, freeze, awareness, sessions, o7, readiness, authMode,
+      waves, drills, roster, hypercare, freeze, awareness, sessions, o7, readiness, authMode, operations,
     });
   } catch (err) { return fail(err); }
 }
@@ -107,6 +117,110 @@ export async function POST(req: Request) {
           { action: "GO_LIVE_ORDER", entity: "GoLiveWave", ref: (d: { code: string }) => d.code,
             summary: (d: { code: string; goLiveOrderRef: string | null }) => `Go-live order ${d.goLiveOrderRef} executed on ${d.code}` },
           () => giveGoLiveOrder(String(input.waveCode ?? "WAVE-1"), String(input.orderRef ?? ""), { staffCode: "x" }));
+      case "golive-execute":
+        return await withGuard(req, "golive:order",
+          { action: "GO_LIVE_ORDER_EXECUTE", entity: "GoLiveWave", ref: (d: { code: string }) => d.code,
+            summary: (d: { code: string; goLiveOrderRef: string | null }) => `Go-live order ${d.goLiveOrderRef} executed on ${d.code} with the production switch` },
+          () => executeGoLiveOrder(String(input.waveCode ?? "WAVE-1"), String(input.orderRef ?? ""), { staffCode: "x" }));
+      case "hypercare-log":
+        return await withGuard(req, "operations:manage",
+          { action: "HYPERCARE_DAY_LOG", entity: "HypercareReport", ref: (d: { dayNumber: number }) => `${String(input.waveCode ?? "WAVE-1")}-day-${d.dayNumber}` },
+          () => logHypercareDay({
+            waveCode: String(input.waveCode ?? "WAVE-1"), dayNumber: Number(input.dayNumber ?? 0),
+            reportDate: input.reportDate ? new Date(String(input.reportDate)) : undefined,
+            ticketsOpened: Number(input.ticketsOpened ?? 0), ticketsClosed: Number(input.ticketsClosed ?? 0),
+            sev1: Number(input.sev1 ?? 0), sev2: Number(input.sev2 ?? 0),
+            sev3: Number(input.sev3 ?? 0), sev4: Number(input.sev4 ?? 0),
+            slaMet: input.slaMet === undefined ? true : Boolean(input.slaMet),
+            breaches: input.breaches ? String(input.breaches) : undefined,
+            notes: input.notes ? String(input.notes) : undefined,
+            staffCode: "x",
+          }));
+      case "hypercare-close":
+        return await withGuard(req, "operations:manage",
+          { action: "HYPERCARE_CLOSE_HANDOVER", entity: "OperationsHandover", ref: (d: { reference: string }) => d.reference,
+            summary: (d: { manualVersion: string }) => `Hypercare closed; operations handover signed (${d.manualVersion})` },
+          () => closeHypercare({
+            waveCode: String(input.waveCode ?? "WAVE-1"), reference: String(input.reference ?? ""),
+            manualVersion: String(input.manualVersion ?? "OPS-MANUAL-v1.1"),
+            runbookRef: String(input.runbookRef ?? "RUNBOOK-v1.1"),
+            signedBy: String(input.signedBy ?? ""), staffCode: "x",
+            notes: input.notes ? String(input.notes) : undefined,
+          }));
+      case "cycle-operate":
+        return await withGuard(req, "operations:manage",
+          { action: "ANNUAL_CYCLE_OPERATE", entity: "AnnualCycleStep", ref: (d: { cycleYear: number }) => `AC-${d.cycleYear}` ,
+            summary: (d: { cycleYear: number }) => `Annual adjustment cycle ${d.cycleYear} recorded end to end (Proc. Art. 8)` },
+          () => operateAnnualCycle({
+            cycleYear: Number(input.cycleYear ?? new Date().getUTCFullYear()),
+            percentage: Number(input.percentage ?? 8),
+            studyRef: String(input.studyRef ?? ""), staffCode: "x",
+          }));
+      case "referral-create":
+        return await withGuard(req, "operations:manage",
+          { action: "ENFORCEMENT_REFERRAL_CREATE", entity: "EnforcementReferral", ref: (d: { reference: string }) => d.reference,
+            summary: (d: { reference: string; competentBody: string }) => `Referral ${d.reference} sent to ${d.competentBody}` },
+          () => createEnforcementReferral({
+            offenseCode: input.offenseCode ? String(input.offenseCode) : undefined,
+            subjectType: input.subjectType ? String(input.subjectType) : undefined,
+            subjectRef: input.subjectRef ? String(input.subjectRef) : undefined,
+            monthlyRentRef: input.monthlyRentRef != null ? Number(input.monthlyRentRef) : undefined,
+            basisRef: String(input.basisRef ?? "Dir. Art. 22"),
+            kind: String(input.referralKind ?? "PENALTY_REFERRAL"),
+            subject: String(input.subject ?? ""),
+            competentBody: String(input.competentBody ?? ""),
+            amount: input.amount != null ? Number(input.amount) : undefined,
+            notes: input.notes ? String(input.notes) : undefined,
+            staffCode: "x",
+          }));
+      case "referral-outcome":
+        return await withGuard(req, "operations:manage",
+          { action: "ENFORCEMENT_REFERRAL_OUTCOME", entity: "EnforcementReferral", ref: (d: { reference: string }) => d.reference,
+            summary: (d: { reference: string; status: string }) => `Referral ${d.reference} -> ${d.status}` },
+          () => recordReferralOutcome(String(input.reference ?? ""), {
+            status: String(input.status ?? ""),
+            outcomeRef: input.outcomeRef ? String(input.outcomeRef) : undefined,
+            recovered: input.recovered != null ? Number(input.recovered) : undefined,
+            notes: input.notes ? String(input.notes) : undefined,
+          }, "x"));
+      case "feed-publish":
+        return await withGuard(req, "feed:publish",
+          { action: "MINISTRY_FEED_PUBLISH", entity: "MinistryFeedPublication", ref: (d: { period: string }) => d.period,
+            summary: (d: { period: string; itemCount: number }) => `Ministry feed ${d.period} published (${d.itemCount} records)` },
+          () => publishMinistryFeed(String(input.period ?? ""), "x"));
+      case "pir-run":
+        return await withGuard(req, "operations:manage",
+          { action: "PIR_RUN", entity: "PirRecord", ref: (d: { reference: string }) => d.reference,
+            summary: (d: { reference: string }) => `Ninety-day post-implementation review ${d.reference} conducted` },
+          () => runPostImplementationReview({ reference: String(input.reference ?? ""), conductedBy: "x", summary: input.summary ? String(input.summary) : undefined }));
+      case "pir-finding":
+        return await withGuard(req, "operations:manage",
+          { action: "PIR_FINDING_RECORD", entity: "PirFinding", ref: () => String(input.pirReference ?? ""),
+            summary: (d: { category: string; disposition: string }) => `PIR finding recorded: ${d.category}/${d.disposition}` },
+          () => addPirFinding({
+            pirReference: String(input.pirReference ?? ""), category: String(input.category ?? ""),
+            description: String(input.description ?? ""), severity: String(input.severity ?? ""),
+            disposition: String(input.disposition ?? ""),
+            backlogRef: input.backlogRef ? String(input.backlogRef) : undefined,
+          }));
+      case "minute-draft":
+        return await withGuard(req, "operations:manage",
+          { action: "CLOSURE_MINUTE_DRAFT", entity: "ClosureMinute", ref: (d: { reference: string }) => d.reference,
+            summary: (d: { reference: string }) => `Closure minute ${d.reference} drafted with lessons` },
+          () => draftClosureMinute({
+            reference: String(input.reference ?? ""),
+            lessons: (input.lessons ?? []) as string[],
+            transitions: (input.transitions ?? []) as string[],
+            openItems: (input.openItems ?? []) as string[],
+            staffCode: "x",
+          }));
+      case "minute-sign":
+        return await withGuard(req, "golive:order",
+          { action: "CLOSURE_MINUTE_SIGN", entity: "ClosureMinute", ref: (d: { reference: string }) => d.reference,
+            summary: (d: { reference: string; g9Ref: string | null }) => `Closure minute ${d.reference} signed under ${d.g9Ref}` },
+          () => signClosureMinute(String(input.reference ?? ""), {
+            g9Ref: String(input.g9Ref ?? ""), signedBy: String(input.signedBy ?? "Owner"),
+          }));
       case "prepare-waves":
         return await withGuard(req, "phase8:manage",
           { action: "WAVES_PREPARE", entity: "GoLiveWave", ref: (d: { length: number }) => `waves-${d.length}` },

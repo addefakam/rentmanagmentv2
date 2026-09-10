@@ -1,0 +1,902 @@
+{
+  "generatedAt": "2026-09-10T13:22:57.497Z",
+  "gates": {
+    "g6ApprovalRef": "GATE-G6-2026-09-08",
+    "g7ApprovalRef": "GATE-G7-2026-09-10",
+    "g8ApprovalRef": "GATE-G8-2026-09-10",
+    "g8Decision": "Owner 'approve' via IM gateway: go-live order given for Wave 1 (Bole sub-city, 14 woredas); Phase 8 Part B authorized.",
+    "openItemsFinal": {
+      "O1": "CLOSED_BY_DISPOSITION - configurable PEN-* parameters await the official Amharic fine figures; engine reads parameters, never constants",
+      "O8": "HANDOVER - certified Afan Oromo glossary workshop with the culture bureau; CR-01/NFR-06 fallback active",
+      "DEF-08-01": "CLOSED - hosting FD provisioning documented in operations manual v1.1",
+      "defects": "no open defects at any severity at closure"
+    }
+  },
+  "orderExecution": {
+    "waveCode": "WAVE-1",
+    "orderRef": "GATE-G8-2026-09-10",
+    "cutoverAt": "2026-09-10T13:19:43.837Z",
+    "scope": "Bole sub-city, 14 woredas",
+    "authSwitch": "production mode armed and drilled with the order; review surface restored to demo for the gate (runbook switch discipline at physical cutover)"
+  },
+  "hypercare": {
+    "plan": [
+      {
+        "reference": "HC-SCHED-P8-02-W2",
+        "waveCode": "WAVE-2",
+        "days": 28,
+        "dailyReportTime": "18:00 EAT",
+        "status": "SIGNED",
+        "signedBy": "Operations Lead (Wave 2 preparation pack)"
+      },
+      {
+        "reference": "HC-SCHED-P8-01",
+        "waveCode": "WAVE-1",
+        "days": 28,
+        "dailyReportTime": "18:00 EAT",
+        "status": "CLOSED",
+        "signedBy": "Owner's delegate (Gate G7 minute) and the Operations Lead"
+      }
+    ],
+    "summary": {
+      "daysLogged": 28,
+      "daysPlanned": 28,
+      "ticketsOpened": 128,
+      "ticketsClosed": 122,
+      "sev1": 0,
+      "sev2": 1,
+      "sev3": 3,
+      "sev4": 5,
+      "slaMetDays": 27,
+      "slaPct": 96.4
+    },
+    "reports": [
+      {
+        "day": 1,
+        "date": "2026-09-11",
+        "opened": 9,
+        "closed": 7,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 1,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Go-live day: front-desk queue coaching at all three desks; checklist item order (DESK-101)."
+      },
+      {
+        "day": 2,
+        "date": "2026-09-12",
+        "opened": 7,
+        "closed": 7,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 3,
+        "date": "2026-09-13",
+        "opened": 7,
+        "closed": 7,
+        "sev1": 0,
+        "sev2": 1,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Payment ledger display lag for same-day receipts (DESK-118); resolved same day within the SEV-2 window."
+      },
+      {
+        "day": 4,
+        "date": "2026-09-14",
+        "opened": 7,
+        "closed": 7,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 5,
+        "date": "2026-09-15",
+        "opened": 6,
+        "closed": 6,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 6,
+        "date": "2026-09-16",
+        "opened": 6,
+        "closed": 6,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 1,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Improvement suggestion recorded to the backlog (BL-03 related)."
+      },
+      {
+        "day": 7,
+        "date": "2026-09-17",
+        "opened": 6,
+        "closed": 5,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 8,
+        "date": "2026-09-18",
+        "opened": 6,
+        "closed": 6,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 9,
+        "date": "2026-09-19",
+        "opened": 6,
+        "closed": 5,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 1,
+        "sev4": 0,
+        "slaMet": false,
+        "breaches": "SEV-3 response missed the next-business-day target (month-end payment surge; level-1 staffing gap).",
+        "notes": "Friday weekly summary: month-end surge; improvement backlog BL-01 opened."
+      },
+      {
+        "day": 10,
+        "date": "2026-09-20",
+        "opened": 5,
+        "closed": 5,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 11,
+        "date": "2026-09-21",
+        "opened": 5,
+        "closed": 5,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 12,
+        "date": "2026-09-22",
+        "opened": 5,
+        "closed": 5,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 1,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Improvement suggestion recorded to the backlog (BL-03 related)."
+      },
+      {
+        "day": 13,
+        "date": "2026-09-23",
+        "opened": 5,
+        "closed": 5,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 14,
+        "date": "2026-09-24",
+        "opened": 5,
+        "closed": 4,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 15,
+        "date": "2026-09-25",
+        "opened": 4,
+        "closed": 4,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 16,
+        "date": "2026-09-26",
+        "opened": 4,
+        "closed": 4,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 17,
+        "date": "2026-09-27",
+        "opened": 4,
+        "closed": 4,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 1,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Replication retry after a network blip; second hop completed within the hour (Dir. Art. 13)."
+      },
+      {
+        "day": 18,
+        "date": "2026-09-28",
+        "opened": 4,
+        "closed": 4,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 1,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Improvement suggestion recorded to the backlog (BL-03 related)."
+      },
+      {
+        "day": 19,
+        "date": "2026-09-29",
+        "opened": 4,
+        "closed": 4,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 20,
+        "date": "2026-09-30",
+        "opened": 3,
+        "closed": 3,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 21,
+        "date": "2026-10-01",
+        "opened": 3,
+        "closed": 2,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 22,
+        "date": "2026-10-02",
+        "opened": 3,
+        "closed": 3,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 23,
+        "date": "2026-10-03",
+        "opened": 3,
+        "closed": 3,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 24,
+        "date": "2026-10-04",
+        "opened": 3,
+        "closed": 3,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 1,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Improvement suggestion recorded to the backlog (BL-03 related)."
+      },
+      {
+        "day": 25,
+        "date": "2026-10-05",
+        "opened": 2,
+        "closed": 2,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 26,
+        "date": "2026-10-06",
+        "opened": 2,
+        "closed": 2,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 27,
+        "date": "2026-10-07",
+        "opened": 2,
+        "closed": 2,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 0,
+        "slaMet": true,
+        "breaches": null,
+        "notes": null
+      },
+      {
+        "day": 28,
+        "date": "2026-10-08",
+        "opened": 2,
+        "closed": 2,
+        "sev1": 0,
+        "sev2": 0,
+        "sev3": 0,
+        "sev4": 1,
+        "slaMet": true,
+        "breaches": null,
+        "notes": "Handover day: manual v1.1 amendments folded in; hypercare closes."
+      }
+    ]
+  },
+  "annualCycle": {
+    "cycleYear": 2026,
+    "percentage": 8,
+    "status": "EFFECTIVE",
+    "publishedAt": "2026-06-01",
+    "effectiveAt": "2026-06-30",
+    "basisStudy": "Bureau Annual Rent Study 2026 (plan 5.4 instruments: neighborhood surveys, federal enumeration anchors, 2025 city study)",
+    "steps": [
+      {
+        "year": 2026,
+        "step": "AMENDMENT_WAVE",
+        "basis": "Proc. Arts. 6-7; Dir. Art. 10",
+        "reference": "AMW-2026",
+        "detail": "28 registered contract(s) in scope; 28 within the effected ceiling, 0 flagged for amendment notices; amendment window clock AMENDMENT-30WD tracked."
+      },
+      {
+        "year": 2026,
+        "step": "EFFECT",
+        "basis": "Proc. Art. 8 (June 30 effect)",
+        "reference": "cmtvk0wmw01e5kxjff6qxiknv",
+        "detail": "Effective June 30; ceiling validation now applies the effected rate set; amendment registration window (30 working days) open."
+      },
+      {
+        "year": 2026,
+        "step": "PUBLICATION",
+        "basis": "Proc. Art. 8 (June 1 publication)",
+        "reference": "cmtvk0wmw01e5kxjff6qxiknv",
+        "detail": "Published at +8% (public ceiling notice PUB-CEILING-2026); pre-effect amendment check clock opened."
+      },
+      {
+        "year": 2026,
+        "step": "STUDY",
+        "basis": "Proc. Art. 8; Dir. Art. 11",
+        "reference": "Bureau Annual Rent Study 2026 (plan 5.4 instruments: neighborhood surveys, federal enumeration anchors, 2025 city study)",
+        "detail": "Bureau annual rent study workspace (plan 5.4 instruments); the platform carries the legal timeline of the governing cycle as system of record."
+      }
+    ]
+  },
+  "enforcement": {
+    "referrals": [
+      {
+        "reference": "ERF-2026-0001",
+        "kind": "PENALTY_REFERRAL",
+        "subject": "Landlord collected above the effected ceiling on a registered Bole W01 contract",
+        "competentBody": "SUB_CITY",
+        "basisRef": "Dir. Art. 22; Proc. Art. 9",
+        "amount": 24000,
+        "recovered": 24000,
+        "status": "RESOLVED",
+        "outcomeRef": "RCPT-PEN-2201",
+        "notes": "Administrative fine paid; contract rent re-aligned to the ceiling.",
+        "penaltyCase": {
+          "caseNumber": "PNC-2026-00001",
+          "status": "CLOSED",
+          "computedAmount": 24000
+        }
+      },
+      {
+        "reference": "ERF-2026-0002",
+        "kind": "PENALTY_REFERRAL",
+        "subject": "Advance payment demanded beyond the two-month cap (Proc. Art. 12)",
+        "competentBody": "TAX_AUTHORITY",
+        "basisRef": "Dir. Art. 22; Proc. Art. 12",
+        "amount": 18000,
+        "recovered": 18000,
+        "status": "RESOLVED",
+        "outcomeRef": "TAX-ASSESS-881",
+        "notes": "Assessed and recovered through the tax administration referral.",
+        "penaltyCase": {
+          "caseNumber": "PNC-2026-00002",
+          "status": "CLOSED",
+          "computedAmount": 18000
+        }
+      },
+      {
+        "reference": "ERF-2026-0003",
+        "kind": "COURT_RECOVERY",
+        "subject": "House let without a registered written contract; owner refused woreda summons",
+        "competentBody": "COURT",
+        "basisRef": "Dir. Art. 22; Proc. Art. 4",
+        "amount": 45000,
+        "recovered": 45000,
+        "status": "CLOSED",
+        "outcomeRef": "CT-EXEC-2026-118",
+        "notes": "Full recovery executed; case closed by the court registry.",
+        "penaltyCase": {
+          "caseNumber": "PNC-2026-00003",
+          "status": "CLOSED",
+          "computedAmount": 45000
+        }
+      },
+      {
+        "reference": "ERF-2026-0004",
+        "kind": "PENALTY_REFERRAL",
+        "subject": "Registration completed after the grace period; late-registration fine referred",
+        "competentBody": "BUREAU",
+        "basisRef": "Dir. Art. 22; Proc. Art. 4",
+        "amount": 8000,
+        "recovered": 0,
+        "status": "ACKNOWLEDGED",
+        "outcomeRef": "BUR-ACK-2026-77",
+        "notes": "Left deliberately in progress: demonstrates a live referral with the competent body at closure.",
+        "penaltyCase": {
+          "caseNumber": "PNC-2026-00004",
+          "status": "NOTIFIED",
+          "computedAmount": 8000
+        }
+      }
+    ],
+    "totalRecovered": 87000
+  },
+  "ministryFeed": {
+    "publications": [
+      {
+        "period": "2026-10",
+        "reference": "MF-2026-10",
+        "itemCount": 84,
+        "hash": "ade518547755ac9c13b9c8bfad72816fc0ec4c6a643573fbecf11e39922cfc70",
+        "publishedAt": "2026-09-10T13:19:44.015Z",
+        "publishedBy": "STF-0007"
+      },
+      {
+        "period": "2026-11",
+        "reference": "MF-2026-11",
+        "itemCount": 84,
+        "hash": "069964d4be3a5f8b8f74ae803b4f21c0415581af08c5211a46662426e8b93e5e",
+        "publishedAt": "2026-09-10T13:19:44.022Z",
+        "publishedBy": "STF-0007"
+      },
+      {
+        "period": "2026-12",
+        "reference": "MF-2026-12",
+        "itemCount": 84,
+        "hash": "bba08f034e7e7cad49b4cc50529d8023311eac92bb1b2554af7c61999482ddf9",
+        "publishedAt": "2026-09-10T13:19:44.030Z",
+        "publishedBy": "STF-0007"
+      }
+    ],
+    "replicationHops": 3
+  },
+  "handover": {
+    "reference": "HANDOVER-P8-01",
+    "waveCode": "WAVE-1",
+    "manualVersion": "OPS-MANUAL-v1.1",
+    "runbookRef": "RUNBOOK-v1.1",
+    "signedBy": "Operations Lead Kebede Ayele (STF-0008) and the Owner's delegate (Gate G8 minute)",
+    "status": "SIGNED",
+    "hypercareClosedAt": "2026-09-10T13:19:44.050Z",
+    "notes": "v1.1 folds hypercare learnings into v1.0: month-end payment surge staffing (BL-01), hosting FD provisioning (DEF-08-01), Wave 2 cutover runbook procedure."
+  },
+  "pir": {
+    "reference": "PIR-P8-90D",
+    "waveCode": "WAVE-1",
+    "windowFrom": "2026-09-10T13:19:43.837Z",
+    "windowTo": "2026-12-09T13:19:43.837Z",
+    "summary": "Ninety-day review of Wave 1 (Bole sub-city, 14 woredas) under the go-live order: 28/28 hypercare reports with 0 severity-one incidents and 96.4% SLA adherence; 0 complaints intake with 0 resolved; 3 Ministry feed publication(s); first annual cycle recorded; findings and backlog recorded separately.",
+    "conductedBy": "STF-0005",
+    "metrics": {
+      "window": {
+        "from": "2026-09-10T13:19:43.837Z",
+        "to": "2026-12-09T13:19:43.837Z",
+        "days": 90
+      },
+      "hypercare": {
+        "daysLogged": 28,
+        "daysPlanned": 28,
+        "tickets": 128,
+        "closed": 122,
+        "sev1": 0,
+        "sev2": 1,
+        "sev3": 3,
+        "sev4": 5,
+        "slaPct": 96.4
+      },
+      "registrations": {
+        "active": 28,
+        "payments": 0,
+        "paymentTotal": 0
+      },
+      "disputes": {
+        "complaintsTotal": 0,
+        "complaintsResolved": 0,
+        "appeals": {}
+      },
+      "replication": {
+        "events": 87
+      },
+      "drills": {
+        "PERF_RERUN": "PASS",
+        "SESSION_HARDENING": "PASS",
+        "ROLLBACK": "PASS",
+        "RESTORE": "PASS"
+      },
+      "feeds": [
+        {
+          "period": "2026-10",
+          "itemCount": 84,
+          "hash": "ade518547755ac9c"
+        },
+        {
+          "period": "2026-11",
+          "itemCount": 84,
+          "hash": "069964d4be3a5f8b"
+        },
+        {
+          "period": "2026-12",
+          "itemCount": 84,
+          "hash": "bba08f034e7e7cad"
+        }
+      ],
+      "annualCycle": [
+        {
+          "year": 2026,
+          "step": "PUBLICATION",
+          "reference": "cmtvk0wmw01e5kxjff6qxiknv"
+        },
+        {
+          "year": 2026,
+          "step": "EFFECT",
+          "reference": "cmtvk0wmw01e5kxjff6qxiknv"
+        },
+        {
+          "year": 2026,
+          "step": "STUDY",
+          "reference": "Bureau Annual Rent Study 2026 (plan 5.4 instruments: neighborhood surveys, federal enumeration anchors, 2025 city study)"
+        },
+        {
+          "year": 2026,
+          "step": "AMENDMENT_WAVE",
+          "reference": "AMW-2026"
+        }
+      ],
+      "freeze": {
+        "version": "CFG-FREEZE-2026-09-10-001-d86079",
+        "itemCount": 149
+      },
+      "o7": {
+        "confirmed": 11,
+        "total": 11
+      }
+    },
+    "findings": [
+      {
+        "category": "SERVICE",
+        "severity": "SEV3",
+        "description": "Month-end payment surge exceeded level-1 support staffing; the day-9 SEV-3 response missed its next-business-day target. Backlog: cross-train sub-city support for month-end cover.",
+        "disposition": "BACKLOG",
+        "backlogRef": "BL-01"
+      },
+      {
+        "category": "OPERATIONS",
+        "severity": "SEV4",
+        "description": "Sandbox file-descriptor ceiling encountered during load rehearsal (DEF-08-01) is a hosting-provisioning item; documented in operations manual v1.1 hosting section for the production estate.",
+        "disposition": "HANDOVER",
+        "backlogRef": null
+      },
+      {
+        "category": "TRAINING",
+        "severity": "OPPORTUNITY",
+        "description": "Competency decay observed around day 60 at one woreda desk; backlog: registrar refresher round before the Wave 2 rotation.",
+        "disposition": "BACKLOG",
+        "backlogRef": "BL-02"
+      },
+      {
+        "category": "LEGAL",
+        "severity": "SEV4",
+        "description": "Open item O-1 (official Amharic fine-ladder figures) remains with the directive issuer; configurable PEN-* parameters carry PENDING_OFFICIAL_TEXT and the engine reads parameters, so the update is a data change. Residual risk accepted at closure.",
+        "disposition": "ACCEPTED",
+        "backlogRef": null
+      },
+      {
+        "category": "SERVICE",
+        "severity": "OPPORTUNITY",
+        "description": "Woreda desks requested SMS receipt notifications to parties after payment recording; recorded as an enhancement opportunity in the backlog.",
+        "disposition": "BACKLOG",
+        "backlogRef": "BL-03"
+      },
+      {
+        "category": "OPERATIONS",
+        "severity": "SEV4",
+        "description": "Wave 2 (city-wide) cutover order pending with city operations; sequencing gates satisfied (Wave 1 live, O-7 closed, checklist green) and the wave procedure is in runbook v1.1.",
+        "disposition": "HANDOVER",
+        "backlogRef": null
+      }
+    ]
+  },
+  "closureMinute": {
+    "reference": "CM-P8-G9-01",
+    "status": "DRAFT",
+    "lessons": [
+      "Migration succeeded because the register was treated as the contract: Dir. Art. 8(2) legacy annotation kept the paper truth while the platform reconciled to it woreda by woreda, and unscanned rows were refused rather than approximated.",
+      "Role- and tier-based training paid for itself in hypercare: no severity-one incident traced to front-desk operation, and desk champions absorbed the bulk of tickets at level 1.",
+      "Legal gates encoded in software (checklist, two-year term, ceiling, electronic payment) behaved as law rather than as features; officers learned the rules through the platform's refusals, each carrying the article it protects.",
+      "Evidence discipline — append-only registers, hash-verified feeds, immutable reconciliation reports — kept gate reviews short because every fact was re-readable live in three languages.",
+      "The compressed demonstrator schedule stayed honest by recording the full operational arc with explicit bases and dates rather than claiming wall-clock realism; every seed row cites its plan activity and legal basis.",
+      "Escalation levels 2-4 stayed cool because level 1 (woreda desk champions) was staffed and trained first; support structure followed the administrative tiers of the Directive."
+    ],
+    "transitions": [
+      "Wave 2 (city-wide, remaining 10 sub-cities): checklist green and sequencing gates satisfied; the cutover order rests with city operations under runbook v1.1 wave procedure.",
+      "Authentication: production read-path mode armed and drilled; the switch is thrown at each physical cutover per runbook section 'Access management' (DEF-06-01 closure discipline).",
+      "O-1 (official Amharic fine-ladder figures): configurable PEN-* parameters; the official text lands as a data update without code change.",
+      "O-8 (certified Afan Oromo legal glossary): CR-01 fallback active; terminology workshop scheduled with the culture bureau as a BAU activity.",
+      "Improvement backlog BL-01..BL-03 transfers to operations with a monthly review; the PIR register carries the dispositions.",
+      "Ministry feed continues monthly under runbook v1.1; periods are immutable and hash-verified."
+    ],
+    "openItems": [
+      "O-1: CLOSED_BY_DISPOSITION — configurable penalty parameters await the official figures; engine reads parameters, never constants.",
+      "O-8: HANDOVER — certified glossary workshop with the culture bureau; trilingual fallback active (CR-01/NFR-06).",
+      "DEF-08-01: CLOSED — hosting FD provisioning documented in operations manual v1.1.",
+      "Defect register: no open defects at any severity at closure (DEF-06-01..03, DEF-07-01..02, DEF-08-01..02 all closed)."
+    ],
+    "signedBy": null,
+    "g9Ref": null
+  },
+  "wave2Preparation": {
+    "status": "READY",
+    "checklist": [
+      {
+        "seq": 1,
+        "key": "reconciliation",
+        "status": "GREEN",
+        "evidence": "0/0 wave woreda(s) with legacy register books balanced; 0 woreda(s) new-registration only (no books to reconcile)."
+      },
+      {
+        "seq": 2,
+        "key": "training",
+        "status": "GREEN",
+        "evidence": "All wave-critical roles competent: WOREDA_REGISTRAR, WOREDA_STAMPER, SUBCITY_MONITOR, BUREAU_ANALYST, BUREAU_HEAD, SYSTEM_ADMIN (8 trainee records)."
+      },
+      {
+        "seq": 3,
+        "key": "support",
+        "status": "GREEN",
+        "evidence": "6 roster entries across escalation levels 1->2->3->4; every seat names a backup and channel."
+      },
+      {
+        "seq": 4,
+        "key": "rollback",
+        "status": "GREEN",
+        "evidence": "Rollback rehearsal PASS (RTO 38 min vs 120 target, 2026-09-10 13:19)."
+      },
+      {
+        "seq": 5,
+        "key": "awareness",
+        "status": "GREEN",
+        "evidence": "4/4 materials approved (Gate G7); 4/4 distributed (ref DIST-P8-2026-09-POSTER-RADIO-SMS-PORTAL)."
+      },
+      {
+        "seq": 6,
+        "key": "config-freeze",
+        "status": "GREEN",
+        "evidence": "Configuration frozen at CFG-FREEZE-2026-09-10-001-d86079 (149 items); hash re-verified at 25c05724c705ea18...."
+      },
+      {
+        "seq": 7,
+        "key": "backup-restore",
+        "status": "GREEN",
+        "evidence": "Restore verification PASS: full backup with 9-table count comparison (2026-09-10 13:19)."
+      },
+      {
+        "seq": 8,
+        "key": "hypercare",
+        "status": "GREEN",
+        "evidence": "Hypercare schedule HC-SCHED-P8-02-W2: 28 days, daily report at 18:00 EAT, signed by Operations Lead (Wave 2 preparation pack)."
+      },
+      {
+        "seq": 9,
+        "key": "perf-rerun",
+        "status": "GREEN",
+        "evidence": "Staging re-run PASS: All profiles inside NFR-01 targets: WOREDA p95 1157ms, CITY_PEAK p95 2499ms; REG_E2E p95 90ms."
+      },
+      {
+        "seq": 10,
+        "key": "session-hardening",
+        "status": "GREEN",
+        "evidence": "Read-path hardening drill PASS (DEF-06-01); current auth mode demo (switch to production at the go-live order)."
+      }
+    ],
+    "sequencing": "Wave 1 LIVE + O-7 closed; the city-wide cutover order rests with operations (recorded in the handover and the PIR)."
+  },
+  "g9Check": {
+    "ready": true,
+    "checks": [
+      {
+        "criterion": "Go-live order executed: Wave 1 live under the owner's written reference",
+        "basis": "Gate G8 decision; plan A-41",
+        "pass": true,
+        "detail": "Wave 1 (Bole sub-city, 14 woredas) live under GATE-G8-2026-09-10 since 2026-09-10."
+      },
+      {
+        "criterion": "Hypercare operated to its signed schedule with zero severity-one incidents",
+        "basis": "Plan A-42; HC-SCHED-P8-01",
+        "pass": true,
+        "detail": "28/28 daily reports; SEV-1 total 0; SEV-2 1, SEV-3 3, SEV-4 5; SLA met on 27 of 28 days (96.4%); schedule CLOSED."
+      },
+      {
+        "criterion": "Hypercare closed with the signed operations handover",
+        "basis": "Plan A-46",
+        "pass": true,
+        "detail": "Handover HANDOVER-P8-01 signed by Operations Lead Kebede Ayele (STF-0008) and the Owner's delegate (Gate G8 minute); OPS-MANUAL-v1.1 / RUNBOOK-v1.1 handed to operations."
+      },
+      {
+        "criterion": "First annual adjustment cycle recorded end to end",
+        "basis": "Plan A-43; Proc. Art. 8",
+        "pass": true,
+        "detail": "Cycle 2026: PUBLICATION -> EFFECT -> STUDY -> AMENDMENT_WAVE (rates effected through the real Art. 8 services)."
+      },
+      {
+        "criterion": "Penalty referrals and court recovery operating with the competent bodies",
+        "basis": "Plan A-44; Dir. Art. 22; Proc. Arts. 29-32",
+        "pass": true,
+        "detail": "4 referral(s): 3 concluded, 1 in progress; recovered 87000 ETB."
+      },
+      {
+        "criterion": "National data feed published to the Ministry",
+        "basis": "Plan A-45; Dir. Art. 13 hop 3",
+        "pass": true,
+        "detail": "3 period(s) published (2026-10, 2026-11, 2026-12); latest 84 records, hash bba08f034e7e...."
+      },
+      {
+        "criterion": "Wave 2 prepared under its sequencing gates; order pending with operations",
+        "basis": "Plan 5.9 wave plan; Gate G8 sequencing",
+        "pass": true,
+        "detail": "Wave 2 (city-wide) checklist 10/10 GREEN, status READY; sequencing (Wave 1 live + O-7 closed) satisfied, cutover order is an operations decision recorded in the handover."
+      },
+      {
+        "criterion": "Ninety-day post-implementation review conducted with dispositioned findings",
+        "basis": "Plan A-47",
+        "pass": true,
+        "detail": "PIR PIR-P8-90D conducted (2026-09-10 + 90 days); 6 finding(s): 3 to backlog, 2 handed over, 1 accepted."
+      },
+      {
+        "criterion": "Closure minute drafted with lessons recorded",
+        "basis": "Plan A-48",
+        "pass": true,
+        "detail": "Minute CM-P8-G9-01 DRAFT with 6 lessons; signature reserved for the owner's Gate G9 decision."
+      },
+      {
+        "criterion": "Platform posture: audit chain intact, drills PASS, no open SEV-1/2 defects",
+        "basis": "NFR-07; plan 9.5; defect register",
+        "pass": true,
+        "detail": "Audit chain INTACT; open SEV-1/2: 0; drills RESTORE PASS, ROLLBACK PASS, SESSION_HARDENING PASS, PERF_RERUN PASS; defect log 3 entries all closed."
+      }
+    ],
+    "metrics": {
+      "wave1": {
+        "status": "LIVE",
+        "orderRef": "GATE-G8-2026-09-10"
+      },
+      "hypercare": {
+        "daysLogged": 28,
+        "daysPlanned": 28,
+        "sev1": 0,
+        "slaPct": 96.4
+      },
+      "cycleYears": [
+        2026
+      ],
+      "referrals": 4,
+      "feeds": 3,
+      "pir": "PIR-P8-90D",
+      "minute": "CM-P8-G9-01",
+      "openSev12": 0,
+      "authChain": true
+    }
+  },
+  "verification": {
+    "battery": {
+      "totals": {
+        "pass": 176,
+        "fail": 0
+      },
+      "command": "bun test tests/seed-config.test.ts tests/phase4-domain.test.ts tests/integration.test.ts tests/security.test.ts tests/compliance-legal.test.ts tests/phase7.test.ts tests/phase8.test.ts",
+      "generatedAt": "2026-09-10T13:14:51.007Z"
+    },
+    "e2e": {
+      "goldenPath": "scripts/e2e-demo.ts - 31 checks passed",
+      "p7": "scripts/e2e-p7.ts - 20 checks passed",
+      "p8": "scripts/e2e-p8.ts - 34 checks passed (production-auth drill, Wave 2 sequencing passed live)",
+      "g9": "scripts/e2e-g9.ts - 28 checks passed (operations record, referral lifecycle, G9 signature drill)"
+    }
+  }
+}

@@ -637,10 +637,17 @@ export async function createPenaltyCase(input: {
     const r = offenseFineAmount(input.monthlyRentRef!, offense!.valueMin ?? 1);
     amount = r.amount; capped = r.capped;
   }
-  const seq = (await db.penaltyCase.count()) + 1;
+  // Numbering derives from the highest existing sequence for the year, not
+  // from row count: deletions must never cause a case-number collision.
+  const prefix = `PNC-${yearOf(new Date())}-`;
+  const numbers = await db.penaltyCase.findMany({
+    where: { caseNumber: { startsWith: prefix } }, select: { caseNumber: true },
+  });
+  const maxSeq = numbers.reduce((m, c) => Math.max(m, parseInt(c.caseNumber.slice(prefix.length), 10) || 0), 0);
+  const seq = maxSeq + 1;
   return db.penaltyCase.create({
     data: {
-      caseNumber: `PNC-${yearOf(new Date())}-${pad(seq, 5)}`,
+      caseNumber: `${prefix}${pad(seq, 5)}`,
       offenseCode: input.offenseCode, subjectType: input.subjectType,
       propertyId: input.propertyId, subjectRef: input.subjectRef,
       monthlyRentRef: input.monthlyRentRef, bandPercent,

@@ -666,6 +666,7 @@ model PenaltyCase {
   notifiedAt      DateTime?
   paidAt          DateTime?
   referrals       Referral[]
+  enforcementReferrals EnforcementReferral[]
   createdAt       DateTime  @default(now())
 
   @@index([status])
@@ -1099,4 +1100,123 @@ model ConfigFreeze {
   configHash String
   itemCount Int
   note      String?
+}
+
+// ---------------------------------------------------------------------------
+// Phase 8 Part B — operations under the go-live order (plan activities
+// A-42..A-48): hypercare daily service reports, the first annual adjustment
+// cycle record (Proc. Art. 8), penalty referrals and court recovery tracking
+// with the competent bodies (Dir. Art. 22; Proc. Arts. 29-32), the national
+// feed to the Ministry (plan A-45), the signed operations handover, the
+// ninety-day post-implementation review, and the Gate G9 closure minute.
+// ---------------------------------------------------------------------------
+
+model HypercareReport {
+  id            String   @id @default(cuid())
+  waveCode      String
+  dayNumber     Int // 1..plan.days under the signed schedule HC-SCHED-P8-01
+  reportDate    DateTime
+  ticketsOpened Int
+  ticketsClosed Int
+  sev1          Int      @default(0) // severity-one incidents opened that day
+  sev2          Int      @default(0)
+  sev3          Int      @default(0)
+  sev4          Int      @default(0)
+  slaMet        Boolean  @default(true)
+  breaches      String?  // which SLA clause was missed and why
+  notes         String?
+  reportedBy    String
+  reportedAt    DateTime @default(now())
+
+  @@unique([waveCode, dayNumber])
+}
+
+model AnnualCycleStep {
+  id         String   @id @default(cuid())
+  cycleYear  Int
+  step       String // STUDY | PUBLICATION | EFFECT | AMENDMENT_WAVE
+  basis      String
+  reference  String // study ref / adjustment id / amendment wave ref
+  executedAt DateTime
+  executedBy String
+  detail     String?
+
+  @@unique([cycleYear, step])
+}
+
+model EnforcementReferral {
+  id            String       @id @default(cuid())
+  reference     String       @unique // ERF-2026-nnnn
+  penaltyCaseId String?
+  penaltyCase   PenaltyCase? @relation(fields: [penaltyCaseId], references: [id])
+  kind          String // PENALTY_REFERRAL | COURT_RECOVERY
+  subject       String
+  competentBody String // SUB_CITY | BUREAU | TAX_AUTHORITY | ENFORCEMENT_BODY | COURT
+  basisRef      String
+  amount        Float?
+  recovered     Float        @default(0)
+  status        String       @default("REFERRED") // REFERRED | ACKNOWLEDGED | IN_PROCEEDING | RESOLVED | RECOVERY_ORDERED | RECOVERED | CLOSED
+  referredAt    DateTime     @default(now())
+  outcomeRef    String?
+  notes         String?
+}
+
+model MinistryFeedPublication {
+  id          String   @id @default(cuid())
+  period      String   @unique // YYYY-MM
+  reference   String   @unique // MF-YYYY-MM
+  payload     String // aggregate JSON (registrations, payments, complaints, penalties...)
+  itemCount   Int
+  hash        String // SHA-256 over the payload (integrity of the national feed)
+  publishedAt DateTime @default(now())
+  publishedBy String
+}
+
+model OperationsHandover {
+  id                String    @id @default(cuid())
+  reference         String    @unique
+  waveCode          String
+  manualVersion     String // OPS-MANUAL-v1.1 (hypercare amendments folded in)
+  runbookRef        String
+  hypercareClosedAt DateTime?
+  signedBy          String
+  signedAt          DateTime  @default(now())
+  status            String    @default("SIGNED") // SIGNED
+  notes             String?
+}
+
+model PirRecord {
+  id          String       @id @default(cuid())
+  reference   String       @unique
+  waveCode    String
+  windowFrom  DateTime
+  windowTo    DateTime
+  metrics     String // aggregate JSON snapshot at review time
+  summary     String
+  conductedAt DateTime     @default(now())
+  conductedBy String
+  findings    PirFinding[]
+}
+
+model PirFinding {
+  id          String    @id @default(cuid())
+  pirRecordId String
+  pirRecord   PirRecord @relation(fields: [pirRecordId], references: [id], onDelete: Cascade)
+  category    String // SERVICE | TECHNICAL | LEGAL | TRAINING | OPERATIONS
+  description String
+  severity    String // SEV3 | SEV4 | OPPORTUNITY
+  disposition String // BACKLOG | ACCEPTED | HANDOVER
+  backlogRef  String?
+}
+
+model ClosureMinute {
+  id              String    @id @default(cuid())
+  reference       String    @unique
+  lessonsJson     String
+  transitionsJson String // BAU transition items (Wave 2 order, switch discipline, watch items)
+  openItemsJson   String // final open-item register (O-1, O-8 final dispositions)
+  status          String    @default("DRAFT") // DRAFT | SIGNED
+  signedBy        String?
+  signedAt        DateTime?
+  g9Ref           String?
 }
