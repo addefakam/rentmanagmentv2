@@ -4,9 +4,11 @@
 //   POST  : create a unit under a parent (SUB_CITY under a BUREAU, WOREDA
 //           under a SUB_CITY); codes must stay unique
 //   PATCH : rename / correct trilingual names of an existing unit
-// Capability: org:manage.
+// CITY SCOPE: the parent (creation) and the unit itself (rename) must sit
+// inside the acting officer's city — a city admin manages only their own
+// office structure. Capability: org:manage.
 import { ok, fail, body } from "@/lib/api";
-import { withGuard } from "@/lib/security/authz";
+import { withGuard, cityContext } from "@/lib/security/authz";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,7 @@ export async function POST(req: Request) {
     return await withGuard(
       req, "org:manage",
       { action: "ORG_UNIT_CREATE", entity: "OrgUnit", ref: (d: { code: string }) => d.code },
-      async () => {
+      async (actor) => {
         const input = await body<Record<string, unknown>>(req);
         const parentId = String(input.parentId ?? "");
         const tier = String(input.tier ?? "");
@@ -24,6 +26,10 @@ export async function POST(req: Request) {
         const nameEn = String(input.nameEn ?? "").trim();
         if (!parentId || !nameEn || !code) throw new Error("parent, code and English name are required.");
         if (!["SUB_CITY", "WOREDA"].includes(tier)) throw new Error("Only SUB_CITY or WOREDA units can be created here.");
+        const ctx = await cityContext(actor, {
+          city: input.cityCode ?? req.headers.get("x-city-code"),
+          unitId: parentId, unitLabel: "parent org unit",
+        });
         const parent = await db.orgUnit.findUnique({ where: { id: parentId } });
         if (!parent) throw new Error("Unknown parent org unit.");
         if (tier === "SUB_CITY" && parent.tier !== "BUREAU") throw new Error("A sub-city must hang directly under a bureau.");
@@ -38,7 +44,7 @@ export async function POST(req: Request) {
             nameOm: String(input.nameOm ?? nameEn),
             parentId: parent.id,
             confirmationStatus: "PENDING_OFFICIAL_REGISTER",
-            sourceNote: `Registered from the console by ${"acting officer"}; confirm against the official establishment register (O-7).`,
+            sourceNote: `Registered from the console by ${actor.staffCode} (${ctx.cityCode}); confirm against the official establishment register (O-7).`,
           },
         });
       },
@@ -51,11 +57,15 @@ export async function PATCH(req: Request) {
     return await withGuard(
       req, "org:manage",
       { action: "ORG_UNIT_RENAME", entity: "OrgUnit", ref: (d: { code: string }) => d.code },
-      async () => {
+      async (actor) => {
         const input = await body<Record<string, unknown>>(req);
         const id = String(input.id ?? "");
         const unit = await db.orgUnit.findUnique({ where: { id } });
         if (!unit) throw new Error("Unknown org unit.");
+        await cityContext(actor, {
+          city: input.cityCode ?? req.headers.get("x-city-code"),
+          unitId: id, unitLabel: "org unit",
+        });
         return db.orgUnit.update({
           where: { id },
           data: {

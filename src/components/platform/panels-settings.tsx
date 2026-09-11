@@ -142,9 +142,11 @@ function LadderEditor() {
 
 // ---------------------------------------------------------------------------
 // 4 — org hierarchy editor: add sub-cities / woredas with trilingual names.
+// NOTE: actions run as the SIGNED-IN officer (no hardcoded actor) — the city
+// scope wall rejects any unit reference outside the officer's own city.
 // ---------------------------------------------------------------------------
 function OrgEditor() {
-  const { boot, refresh } = useBoot();
+  const { boot, refresh, officer } = useBoot();
   const units = boot?.orgUnits ?? [];
   const bureaus = useMemo(() => units.filter((u) => u.tier === "BUREAU"), [units]);
   const [bureauId, setBureauId] = useState("");
@@ -157,11 +159,11 @@ function OrgEditor() {
   const [unit, setUnit] = useState({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" });
   const create = async () => {
     const parentId = unit.tier === "SUB_CITY" ? effectiveBureau : effectiveSc;
-    const out = await call("/api/org-units", "POST", { ...unit, parentId }, "STF-0005");
+    const out = await call("/api/org-units", "POST", { ...unit, parentId }, officer.staffCode);
     if (out) { toast.success(`${out.code} registered (pending official register, O-7)`); setUnit({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" }); await refresh(); }
   };
   const rename = async (id: string, nameEn: string) => {
-    const out = await call("/api/org-units", "PATCH", { id, nameEn }, "STF-0005");
+    const out = await call("/api/org-units", "PATCH", { id, nameEn }, officer.staffCode);
     if (out) { toast.success(`${out.code} renamed`); await refresh(); }
   };
 
@@ -219,15 +221,114 @@ function OrgEditor() {
 }
 
 // ---------------------------------------------------------------------------
+// 5 — staff register: the city super-admin adds and manages the officers of
+// ONE city (sign-in code auto-issued). System admins do the same for any
+// city they view. Capability: staff:manage (CITY_ADMIN, SYSTEM_ADMIN).
+// ---------------------------------------------------------------------------
+const CITY_ROLE_CODES = [
+  "WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST",
+  "BUREAU_HEAD", "COMMITTEE_MEMBER", "CITY_ADMIN",
+];
+
+function StaffRegister() {
+  const { boot, refresh, officer } = useBoot();
+  const [draft, setDraft] = useState({ fullName: "", roleCode: "WOREDA_REGISTRAR", orgUnitId: "", language: "en" });
+  const [busy, setBusy] = useState(false);
+  const [created, setCreated] = useState<{ staffCode: string; fullName: string } | null>(null);
+  const staff = boot?.staff ?? [];
+  const roles = (boot?.roles ?? []).filter((r) => CITY_ROLE_CODES.includes(r.code));
+  const units = boot?.orgUnits ?? [];
+
+  const add = async () => {
+    setBusy(true);
+    const out = await call("/api/staff", "POST", draft, officer.staffCode) as { staffCode: string; fullName: string; message: string } | null;
+    setBusy(false);
+    if (out) {
+      setCreated({ staffCode: out.staffCode, fullName: out.fullName });
+      toast.success(out.message);
+      setDraft({ fullName: "", roleCode: "WOREDA_REGISTRAR", orgUnitId: "", language: draft.language });
+      await refresh();
+    }
+  };
+  const toggle = async (u: { id?: string; staffCode: string; isActive?: boolean }) => {
+    if (!u.id) return;
+    setBusy(true);
+    const out = await call("/api/staff", "PATCH", { id: u.id, isActive: !u.isActive }, officer.staffCode) as { message: string } | null;
+    setBusy(false);
+    if (out) { toast.success(out.message); await refresh(); }
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      <DataTable
+        headers={["Code", "Officer", "Role", "Office", "State", "Action"]}
+        rows={staff.map((u) => [
+          <span key={u.staffCode} className="font-mono text-[10px]">{u.staffCode}</span>,
+          <span key={`n-${u.staffCode}`} className="text-[11px] font-semibold">{u.fullName}</span>,
+          <span key={`r-${u.staffCode}`} className="text-[10px]">{u.role?.nameEn ?? u.roleCode}</span>,
+          <span key={`o-${u.staffCode}`} className="font-mono text-[10px]">{u.orgUnit?.code ?? "—"}</span>,
+          u.isActive ? <StatusBadge key={`s-${u.staffCode}`} value="ACTIVE" /> : <StatusBadge key={`s-${u.staffCode}`} value="CLOSED" />,
+          u.id && u.staffCode !== officer.staffCode ? (
+            <ActionButton key={`a-${u.staffCode}`} variant="outline" disabled={busy} onClick={() => void toggle(u)}>
+              {u.isActive ? "Deactivate" : "Reactivate"}
+            </ActionButton>
+          ) : (
+            <span key={`a-${u.staffCode}`} className="text-[10px] text-muted-foreground">—</span>
+          ),
+        ])}
+        empty="No staff registered in this city yet."
+      />
+
+      {created ? (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-xs">
+          <p className="font-semibold text-emerald-900">{created.fullName} registered — sign-in code {created.staffCode}.</p>
+          <p className="text-emerald-800">Hand over the code: it is the officer’s sign-in credential for {boot?.cityConfig?.nameEn ?? "this city"}.</p>
+        </div>
+      ) : null}
+
+      <div className="rounded-lg border bg-muted/20 p-3">
+        <p className="mb-2 text-xs font-semibold">Add an officer to {boot?.cityConfig?.nameEn ?? "this city"}</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
+          <Field label="Full name"><TextField value={draft.fullName} onChange={(e) => setDraft({ ...draft, fullName: e.target.value })} placeholder="e.g. Kebebe Tsegaye" /></Field>
+          <Field label="Role">
+            <SelectField value={draft.roleCode} onChange={(v) => setDraft({ ...draft, roleCode: v })}
+              options={roles.map((r) => ({ value: r.code, label: r.nameEn }))} />
+          </Field>
+          <Field label="Home office">
+            <SelectField value={draft.orgUnitId} onChange={(v) => setDraft({ ...draft, orgUnitId: v })}
+              options={units.map((u) => ({ value: u.id, label: `${u.code} — ${u.nameEn}` }))}
+              placeholder="select office" />
+          </Field>
+          <Field label="Language">
+            <SelectField value={draft.language} onChange={(v) => setDraft({ ...draft, language: v })}
+              options={[{ value: "am", label: "አማርኛ" }, { value: "en", label: "English" }, { value: "om", label: "Afaan Oromoo" }]} />
+          </Field>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <ActionButton onClick={add} disabled={busy || !draft.fullName.trim() || !draft.orgUnitId}>Register officer</ActionButton>
+          <span className="text-[11px] text-muted-foreground">Staff codes are issued automatically (STF-####) and serve as the sign-in code. National roles are federal appointments and cannot be created from a city.</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 export function SettingsPage() {
-  const { boot } = useBoot();
+  const { boot, officer } = useBoot();
   if (!boot) return null;
+  const canManageStaff = officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
   return (
     <div className="grid grid-cols-1 gap-4">
+      {canManageStaff ? (
+        <Panel title="Staff register" subtitle="The city’s officers: add new staff, issue sign-in codes, deactivate or reactivate accounts, and move officers between offices. City admin authority stops at this city’s boundary.">
+          <StaffRegister />
+        </Panel>
+      ) : null}
       <Panel title="City identity & statutory parameters" subtitle="Per-city rule set (Dir. Art. 14). Changes take effect immediately; the statutory clock params drive complaints and appeal windows.">
         <CityConfigForm />
       </Panel>
-      <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive's offense catalogue; values are configurable parameters (open item O1). Rows referenced by penalty cases are deactivated, never deleted.">
+      <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive’s offense catalogue; values are configurable parameters (open item O1). Rows referenced by penalty cases are deactivated, never deleted.">
         <LadderEditor />
       </Panel>
       <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle="Sub-cities and woredas of the city bureau. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7).">

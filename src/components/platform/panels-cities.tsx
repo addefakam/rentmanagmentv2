@@ -31,12 +31,13 @@ type CityRow = {
 type OnboardResult = {
   cityCode: string; bureauCode: string; contractVersion: string | null;
   team: string[]; orgUnits: string[]; message: string;
+  cityAdmin: { staffCode: string; fullName: string };
 };
 
 const EMPTY_FORM = {
   cityCode: "", nameEn: "", nameAm: "", nameOm: "",
   canonicalLang: "am", complaintDecisionDays: "30", appealDays: "15",
-  seedTeam: true, bureauHeadName: "", registrarName: "", stamperName: "",
+  cityAdminName: "", seedTeam: true, bureauHeadName: "", registrarName: "", stamperName: "",
 };
 
 export function CitiesAdmin() {
@@ -91,7 +92,7 @@ export function CitiesAdmin() {
 
   const codeOk = /^[A-Z]{2,4}$/.test(form.cityCode);
   const teamOk = !form.seedTeam || (!!form.bureauHeadName.trim() && !!form.registrarName.trim());
-  const canSubmit = codeOk && !!form.nameEn.trim() && teamOk && !busy;
+  const canSubmit = codeOk && !!form.nameEn.trim() && !!form.cityAdminName.trim() && teamOk && !busy;
 
   return (
     <div className="grid grid-cols-1 gap-4">
@@ -170,17 +171,31 @@ export function CitiesAdmin() {
           </div>
 
           <div className="rounded-lg border bg-muted/20 p-3">
+            <p className="text-xs font-semibold">City administrator (required)</p>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              A city super-admin is created with the city — full authority over this city only: adds users, manages the office structure and runs all city operations. Fleet management stays with the system admin.
+            </p>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Field label="City admin full name">
+                <TextField value={form.cityAdminName} onChange={(e) => set("cityAdminName", e.target.value)} placeholder="e.g. Tigist Alemu" />
+              </Field>
+              <Field label="Sign-in"><TextField value="staff code auto-issued" disabled /></Field>
+              <Field label="Authority"><TextField value="this city only" disabled /></Field>
+            </div>
+          </div>
+
+          <div className="rounded-lg border bg-muted/20 p-3">
             <label className="flex cursor-pointer items-center gap-2 text-xs font-semibold">
               <input
                 type="checkbox" className="h-4 w-4 accent-[#D4875A]"
                 checked={form.seedTeam} onChange={(e) => set("seedTeam", e.target.checked)}
               />
-              Create a starter team (sign-in = staff code; codes are issued automatically)
+              Also create starter desks (optional — sign-in = staff code; codes are issued automatically)
             </label>
             {form.seedTeam ? (
               <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <Field label="Bureau head name"><TextField value={form.bureauHeadName} onChange={(e) => set("bureauHeadName", e.target.value)} placeholder="e.g. Tigist Alemu" /></Field>
-                <Field label="Woreda registrar name"><TextField value={form.registrarName} onChange={(e) => set("registrarName", e.target.value)} placeholder="e.g. Yonas Girma" /></Field>
+                <Field label="Bureau head name"><TextField value={form.bureauHeadName} onChange={(e) => set("bureauHeadName", e.target.value)} placeholder="e.g. Yonas Girma" /></Field>
+                <Field label="Woreda registrar name"><TextField value={form.registrarName} onChange={(e) => set("registrarName", e.target.value)} placeholder="e.g. Bontu Tesfaye" /></Field>
                 <Field label="Woreda stamper name"><TextField value={form.stamperName} onChange={(e) => set("stamperName", e.target.value)} placeholder="optional" /></Field>
               </div>
             ) : null}
@@ -191,7 +206,7 @@ export function CitiesAdmin() {
               {busy ? "Onboarding…" : `Onboard ${form.cityCode || "new city"}`}
             </ActionButton>
             <span className="text-[11px] text-muted-foreground">
-              Creates {form.cityCode ? `${form.cityCode}-BUREAU → ${form.cityCode}-CENTRAL → ${form.cityCode}-CENTRAL-W01` : "the org skeleton"}, clones the federal model contract, and opens the city for sign-in.
+              Creates {form.cityCode ? `${form.cityCode}-BUREAU → ${form.cityCode}-CENTRAL → ${form.cityCode}-CENTRAL-W01` : "the org skeleton"}, the city administrator, clones the federal model contract, and opens the city for sign-in.
             </span>
           </div>
 
@@ -200,13 +215,16 @@ export function CitiesAdmin() {
               <p className="font-semibold text-emerald-900">{result.message}</p>
               <p className="mt-1 text-emerald-800">Org units: {result.orgUnits.join(" → ")}</p>
               {result.contractVersion ? <p className="text-emerald-800">Model contract {result.contractVersion} cloned (pending legal review).</p> : null}
-              {result.team.length > 0 ? (
-                <p className="mt-1 text-emerald-800">
-                  Starter team sign-in codes — hand these to the city: {result.team.join(" · ")}
+              {result.cityAdmin ? (
+                <p className="mt-1 font-semibold text-emerald-900">
+                  City administrator — {result.cityAdmin.fullName}: sign-in code {result.cityAdmin.staffCode} (full authority over {result.cityCode} only).
                 </p>
-              ) : (
-                <p className="text-emerald-800">No starter team was created — add staff from the seed register or onboarding later.</p>
-              )}
+              ) : null}
+              {result.team.length > 1 ? (
+                <p className="mt-1 text-emerald-800">
+                  Starter desks: {result.team.slice(1).join(" · ")}
+                </p>
+              ) : null}
             </div>
           ) : null}
         </div>

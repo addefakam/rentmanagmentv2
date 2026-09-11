@@ -76,7 +76,9 @@ export async function GET(req: Request) {
   }
 }
 
-// POST — onboard a new city in one step.
+// POST — onboard a new city in one step. A CITY super-admin account is
+// created with the city (its staff code is returned); optional starter desks
+// (bureau head / registrar / stamper) can be requested alongside.
 export async function POST(req: Request) {
   try {
     return await withGuard(
@@ -170,17 +172,27 @@ export async function POST(req: Request) {
           contractVersion = created.version;
         }
 
-        // Optional starter team — staff codes are auto-issued after the highest
-        // existing number, so they never collide with seeded registers.
-        const team: string[] = [];
+        // City super-admin — created with the city, always (owner requirement):
+        // one account with full authority over THIS city only (staff register,
+        // office structure, all operations). Staff codes auto-issue after the
+        // highest existing number so they never collide with seeded registers.
+        const all = await db.systemUser.findMany({ select: { staffCode: true } });
+        let next = 1;
+        for (const u of all) {
+          const m = /^(STF)-(\d+)$/.exec(u.staffCode);
+          if (m) next = Math.max(next, Number(m[1]) + 1);
+        }
+        const mk = () => `STF-${next++}`;
+        const adminName = String(input.cityAdminName ?? "").trim() || `${nameEn} City Administrator`;
+        const admin = await db.systemUser.create({
+          data: { staffCode: mk(), fullName: adminName, roleCode: "CITY_ADMIN", orgUnitId: bureau.id, language: canonicalLang },
+        });
+
+        // Optional additional starter team (registrar / stamper desks).
+        const team: string[] = [
+          `${admin.staffCode} · CITY ADMIN — full authority over ${cityCode}`,
+        ];
         if (input.seedTeam) {
-          const all = await db.systemUser.findMany({ select: { staffCode: true } });
-          let next = 1;
-          for (const u of all) {
-            const m = /^STF-(\d+)$/.exec(u.staffCode);
-            if (m) next = Math.max(next, Number(m[1]) + 1);
-          }
-          const mk = () => `STF-${next++}`;
           const roleCity = [
             { roleCode: "BUREAU_HEAD", name: String(input.bureauHeadName ?? "").trim(), orgUnitId: bureau.id },
             { roleCode: "WOREDA_REGISTRAR", name: String(input.registrarName ?? "").trim(), orgUnitId: woreda.id },
@@ -197,8 +209,9 @@ export async function POST(req: Request) {
 
         return {
           cityCode: config.cityCode, bureauCode, contractVersion, team,
+          cityAdmin: { staffCode: admin.staffCode, fullName: admin.fullName },
           orgUnits: [bureau.code, subCity.code, woreda.code],
-          message: `City ${nameEn} (${cityCode}) is live — officers can sign in immediately.`,
+          message: `City ${nameEn} (${cityCode}) is live — city administrator ${admin.fullName} (${admin.staffCode}) can sign in and manage it immediately.`,
         };
       },
     );

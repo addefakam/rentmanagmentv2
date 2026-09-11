@@ -4,6 +4,9 @@
 // A city = one BUREAU org unit subtree; every operational list below is
 // filtered to that subtree (Dir. Arts. 2, 6, 13). `cities` carries the
 // switcher list for national officers.
+// ISOLATION: a sign-in is required; city-bound officers are PINNED to their
+// own city — any ?city= parameter pointing elsewhere is ignored server-side,
+// and the cities/orgUnits lists they receive only ever contain their city.
 // ============================================================================
 
 import { db } from "@/lib/db";
@@ -17,22 +20,32 @@ export async function GET(req: Request) {
   try {
     const requested = new URL(req.url).searchParams.get("city");
     const officer = await currentOfficer();
+    if (!officer) {
+      return Response.json({ ok: false, error: "Sign in required." }, { status: 401 });
+    }
 
     // --- scope resolution -------------------------------------------------
     const allUnits = await db.orgUnit.findMany({ orderBy: { code: "asc" } });
     const allConfigs = await db.cityConfig.findMany({ orderBy: { cityCode: "asc" } });
+    // City-bound officers are pinned to their home city: a requested ?city=
+    // that differs is ignored (tamper-proof — the server, not the client,
+    // decides the scope). National officers may switch across the fleet.
+    const requestedCity = officer.national
+      ? (requested ?? officer.cityCode)
+      : officer.cityCode;
     // A deactivated city stays browsable only for national officers (ministry
     // / system admin oversight); a city-scoped officer gets a 403, which the
     // console shell translates into a fresh sign-in.
-    const requestedCity = requested ?? officer?.cityCode ?? null;
     const requestedCfg = allConfigs.find((c) => c.cityCode === requestedCity);
-    if (requestedCfg && !requestedCfg.isActive && !officer?.national) {
+    if (requestedCfg && !requestedCfg.isActive && !officer.national) {
       return Response.json(
         { ok: false, error: `${requestedCfg.nameEn} is deactivated. Sign in again or contact the system administrator.` },
         { status: 403 },
       );
     }
-    const configs = officer?.national ? allConfigs : allConfigs.filter((c) => c.isActive);
+    const configs = officer.national
+      ? allConfigs
+      : allConfigs.filter((c) => c.isActive && c.cityCode === officer.cityCode);
     const activeCity =
       configs.find((c) => c.cityCode === requestedCity)?.cityCode ?? configs[0]?.cityCode ?? "AA";
     const scope = cityScope(allUnits as never, configs as never, activeCity);
@@ -152,7 +165,10 @@ export async function GET(req: Request) {
 
     return ok({
       cityCode: activeCity, cities, cityConfig: scope.config,
-      orgUnits: allUnits, roles, idTypes, statusTypes, grounds, staff, penaltyParams,
+      // City-bound officers see only their own org subtree — never another
+      // city's structure. National officers see the full tree (fleet editors).
+      orgUnits: officer.national ? allUnits : allUnits.filter((u) => unitIds.includes(u.id)),
+      roles, idTypes, statusTypes, grounds, staff, penaltyParams,
       activeContract, adjustments, publications, environments, deadlines, snapshots: snapshotsRaw,
       parties, properties, files, payments, complaints, appeals: appealsScoped, penalties: penaltiesRaw,
       teams, visits: visitsRaw, replications: replicationsRaw, backups, counts,

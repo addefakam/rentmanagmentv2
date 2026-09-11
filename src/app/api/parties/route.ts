@@ -1,9 +1,11 @@
 // /api/parties — M1 party onboarding. POST creates (with Dir. Art. 7
 // original-and-copy and proxy rules), GET lists.
+// CITY SCOPE: parties are registered at a city org unit; a city-bound officer
+// can only register/list parties of their own city (403 on cross-city refs).
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createParty } from "@/lib/domain/service";
-import { withGuard } from "@/lib/security/authz";
+import { withGuard, cityContext, readScope } from "@/lib/security/authz";
 import { withReadGuard } from "@/lib/security/session";
 
 export const dynamic = "force-dynamic";
@@ -12,7 +14,9 @@ export async function GET(req: Request) {
   try {
     // Phase 8 hardening (DEF-06-01): identity data is a sensitive read (NFR-07).
     await withReadGuard(req, { capability: "read:parties", sensitive: true, entity: "Party register" });
+    const scope = await readScope(req);
     const parties = await db.party.findMany({
+      where: scope ? { registeredAtOrgUnitId: { in: scope.unitIds } } : {},
       include: { idType: true }, orderBy: { createdAt: "desc" }, take: 200,
     });
     return ok(parties);
@@ -24,19 +28,25 @@ export async function POST(req: Request) {
     const input = await body<Record<string, unknown>>(req);
     return await withGuard(req, "party:write",
       { action: "PARTY_CREATE", entity: "Party", ref: (d) => d.partyCode, summary: (d) => d.idCheckNote },
-      () => createParty({
-        type: String(input.type), fullName: String(input.fullName),
-        idTypeId: String(input.idTypeId), idNumber: String(input.idNumber),
-        idOriginalSeen: Boolean(input.idOriginalSeen), idCopyAttached: Boolean(input.idCopyAttached),
-        phone: input.phone ? String(input.phone) : undefined,
-        address: input.address ? String(input.address) : undefined,
-        isDeaf: Boolean(input.isDeaf), usesSignLanguage: Boolean(input.usesSignLanguage),
-        proxyName: input.proxyName ? String(input.proxyName) : undefined,
-        proxyIdNumber: input.proxyIdNumber ? String(input.proxyIdNumber) : undefined,
-        proxyWitness1Name: input.proxyWitness1Name ? String(input.proxyWitness1Name) : undefined,
-        proxyWitness2Name: input.proxyWitness2Name ? String(input.proxyWitness2Name) : undefined,
-        registeredAtOrgUnitId: String(input.registeredAtOrgUnitId),
-        verifyIdentityOnline: Boolean(input.verifyIdentityOnline),
-      }));
+      async (actor) => {
+        const ctx = await cityContext(actor, {
+          city: input.cityCode ?? req.headers.get("x-city-code"),
+          unitId: String(input.registeredAtOrgUnitId ?? ""), unitLabel: "registering office",
+        });
+        return createParty({
+          type: String(input.type), fullName: String(input.fullName),
+          idTypeId: String(input.idTypeId), idNumber: String(input.idNumber),
+          idOriginalSeen: Boolean(input.idOriginalSeen), idCopyAttached: Boolean(input.idCopyAttached),
+          phone: input.phone ? String(input.phone) : undefined,
+          address: input.address ? String(input.address) : undefined,
+          isDeaf: Boolean(input.isDeaf), usesSignLanguage: Boolean(input.usesSignLanguage),
+          proxyName: input.proxyName ? String(input.proxyName) : undefined,
+          proxyIdNumber: input.proxyIdNumber ? String(input.proxyIdNumber) : undefined,
+          proxyWitness1Name: input.proxyWitness1Name ? String(input.proxyWitness1Name) : undefined,
+          proxyWitness2Name: input.proxyWitness2Name ? String(input.proxyWitness2Name) : undefined,
+          registeredAtOrgUnitId: String(input.registeredAtOrgUnitId),
+          verifyIdentityOnline: Boolean(input.verifyIdentityOnline),
+        });
+      });
   } catch (err) { return fail(err); }
 }
