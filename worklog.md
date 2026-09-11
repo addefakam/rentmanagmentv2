@@ -307,3 +307,20 @@ Stage Summary:
 - Entire app+DB chain PROVEN working end to end: build (postgres) -> runtime (pooled Neon) -> real data. Nothing is broken in the repo or the Neon database.
 - Remaining failure domain is exclusively Vercel project configuration (env var absent/not in Production scope, stale deployment not redeployed after env change, or stale build-command override).
 - d91faca pending push; owner action list delivered in chat.
+
+---
+Task ID: 15 (GitHub push of d91faca)
+Agent: Main agent (Super Z)
+Task: Owner supplied a fresh PAT; push the pending deploy-docs commit.
+
+Work Log:
+- Verified no credentials existed (env, git config, credential stores, gh CLI) - confirmed blocker from Task 14.
+- Owner pasted a new classic PAT (repo scope). Pushed using the token once in the push URL only (never written to config or files).
+- Push result: da06a6f..22c1fc4 main -> main. Two workspace auto-commits (c8f1879, 22c1fc4, UUID messages) rode along on top of d91faca - inspected: mode-bit drift 100644->100755 on 13 files + worklog.md Task 14 entry; NO content changes (docx diff = mode lines only, no secrets).
+- Post-push sweep: token string zero hits in working tree, .git/config, .git/logs; remote.origin.url clean; working tree clean.
+- Unauthenticated ls-remote confirms GitHub main = 22c1fc4 (d91faca included).
+
+Stage Summary:
+- GitHub main is up to date: d91faca (Vercel checklist + check-neon fixes) is public, plus 2 benign sync commits.
+- Token not persisted anywhere; owner must REVOKE it now (GitHub -> Settings -> Developer settings -> Tokens).
+- Repo fully deploy-ready; remaining owner action unchanged: set DATABASE_URL on Vercel (pooled + pgbouncer=true) and Redeploy latest commit.
