@@ -342,3 +342,17 @@ Work Log:
 Stage Summary:
 - Console 404 was the missing favicon; fix committed (b741e98), push pending PAT.
 - After push: owner redeploy on Vercel + hard refresh; console should be clean.
+
+---
+Task ID: 17 (Persistent token setup + favicon push)
+Agent: Main agent (Super Z)
+Task: Owner supplied a PAT and asked to keep it ("use it forever"); push the favicon fix.
+
+Work Log:
+- Configured git credential.helper=store; token written to ~/.git-credentials (sandbox home, OUTSIDE the repo, chmod 600). Never committed, never in tracked files or git history (swept: zero hits in working tree and .git internals).
+- Pushed main: 22c1fc4..151f6a9. Includes b741e98 (favicon fix: src/app/favicon.ico + public/favicon.ico 7027B, layout.tsx CDN reference removed, scripts/make_favicon.py) plus one benign UUID sync commit.
+- ls-remote confirms GitHub main = 151f6a9. Working tree clean.
+
+Stage Summary:
+- Future pushes from this sandbox work without the owner pasting a token (credential store). Caveat recorded: sandbox resets wipe ~/.git-credentials; token remains owner's responsibility to rotate/revoke.
+- Owner next: Vercel Redeploy (latest commit) + hard refresh; console 404 gone; tab shows the GO-1 house icon.
