@@ -17,9 +17,8 @@ export const metadata: Metadata = {
   title: "Rent Control and Administration System - Phase 4 Platform",
   description: "Incremental module construction (Sprints S1-S7) for the Residential House Rent Control and Administration System (Proclamation 1320/2016, Directive 7/2016). Trilingual: Amharic, English, Afan Oromo.",
   keywords: ["Rent Control", "Proclamation 1320/2016", "Ethiopia", "Addis Ababa", "Phase 4", "Registration", "Penalties"],
-  icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
-  },
+  // Favicon: src/app/favicon.ico is picked up automatically by the Next.js
+  // app-router file convention (served at /favicon.ico) — no external CDN.
   openGraph: {
     title: "Rent Control and Administration System - Phase 4 Platform",
     description: "Thirteen modules across seven sprint increments (Gate G4)",
