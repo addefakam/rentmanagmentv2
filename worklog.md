@@ -453,3 +453,27 @@ Stage Summary:
 - Deactivation is a soft suspension preserving all data; guarded so one active city always remains
 - Hawassa left ACTIVE as a live third-city demo (reactivate/deactivate anytime from /cities)
 - Screenshots: download/cities-desktop.png, download/cities-mobile.png
+
+---
+Task ID: 23
+Agent: main (Super Z)
+Task: Corrected SaaS city-governance need — treat the system as ONE city plus a super-powered fleet module: create/edit/deactivate-activate cities on demand, see data at regional or city level, every city gets full functionality + one city admin locked to their city, data never mixes.
+
+Work Log:
+- Audited Task 22 state: onboarding + activate/deactivate existed; found three gaps vs the corrected need — no EDIT, no regional-level view, and onboard crashed in production because CITY_ADMIN role had no seed row (SystemUser.role is a required relation).
+- catalogs.ts: added CITY_ADMIN role (City Super-Administrator, tier BUREAU) to the platform catalogue.
+- /api/cities POST: defensive role.upsert before account creation (works on un-reseeded Neon); verified staff codes issue sequentially (STF-1006..1009 in one onboarding).
+- /api/cities PATCH: added EDIT mode — trilingual names, canonicalLang, complaint/appeal days, currency, workWeek; {cityCode, isActive} keeps the status-change mode; bureau code immutable (isolation anchor).
+- /api/cities GET: per-city ops stats (open/total complaints, payment count + gross ETB) alongside usage stats.
+- panels-cities.tsx: new REGIONAL OVERVIEW panel (7 KPIs, all-cities combined); fleet table adds Registry + Operations columns and per-row Edit; shadcn Dialog editor for city identity/params.
+- shell.tsx: soft refresh — same-city boot refresh no longer sets loading, so panels keep local state (onboarding credentials card survived; previously ModuleFrame unmounted panels and wiped it).
+- SECURITY FIX: fleet mutations moved to new city:write capability (SYSTEM_ADMIN only). Found MINISTRY_ANALYST could POST/PATCH cities (created + deleted junk city XYZ in sqlite during the test); ministry keeps read-only city:admin.
+- E2E (browser + curl): onboarded Bahir Dar (STF-1006 Abebe Kebede city admin + 3 desks, BDU-1.0 contract 10 sections) and Hawassa (STF-1010, no starter team); success card shows credentials; edit Adama days 30/15→25/12→revert persisted; CITY_ADMIN requesting ?city=AA is pinned to BDU and sees only BDU in cities list; /cities renders 403 card for CITY_ADMIN; deactivate HAW → login 403 with named message + city leaves login directory; reactivate → sign-in restored; ministry GET ok / POST+PATCH 403; registrar 403; 0px horizontal overflow at 390 and 1280.
+- Reseeded local sqlite (DB was empty after sandbox reset); dev.log clean; lint clean.
+- Commit 654e0d8 prepared; push BLOCKED — sandbox reset wiped ~/.git-credentials, owner PAT needed again.
+
+Stage Summary:
+- SaaS model complete: one system per city + one super-powered City Management module; onboarding hands the city FULL functionality with a locked-to-city super-admin; data isolation proven at API level; regional vs city level data views in place.
+- Demo state: AA, Adama, Bahir Dar (BDU), Hawassa (HAW) all ACTIVE; Bahir Dar demonstrates the onboarding flow end to end.
+- Owner: (1) supply PAT to push 654e0d8; (2) run prisma db push against Neon once so CityConfig.isActive exists in production before using deactivate; (3) Vercel redeploy.
+- Screenshots: download/cities-desktop-1280.png, download/cities-mobile-390.png.
