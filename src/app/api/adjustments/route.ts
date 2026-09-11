@@ -26,6 +26,7 @@ export async function POST(req: Request) {
     return await withGuard(req, "adjustment:draft",
       { action: "ADJUSTMENT_DRAFT", entity: "RentAdjustment", ref: (d) => d.year != null ? `Y${d.year}` : null },
       () => createAdjustment(
+        String(input.cityCode ?? req.headers.get("x-city-code") ?? "AA"),
         Number(input.year), Number(input.percentage),
         input.basisStudy ? String(input.basisStudy) : undefined,
       ));

@@ -38,6 +38,7 @@ model OrgUnit {
   reconciliationReports ReconciliationReport[]
   trainingSessions   TrainingSession[]
   pilotSubCities     PilotConfig[]
+  cityConfig         CityConfig?
   isActive           Boolean   @default(true)
   confirmationStatus String    @default("CONFIRMED") // CONFIRMED | PENDING_OFFICIAL_REGISTER
   sourceNote         String?
@@ -102,6 +103,7 @@ model PropertyStatusType {
 // ---------------------------------------------------------------------------
 model ModelContract {
   id             String                 @id @default(cuid())
+  cityCode       String                 @default("AA") // owning city bureau
   version        String                 @unique
   status         String                 @default("ACTIVE") // ACTIVE | SUPERSEDED
   issuedBy       String
@@ -290,6 +292,8 @@ model SystemUser {
 model CityConfig {
   id            String  @id @default(cuid())
   cityCode      String  @unique
+  bureauId      String? @unique
+  bureau        OrgUnit? @relation(fields: [bureauId], references: [id])
   nameEn        String
   nameAm        String
   nameOm        String
@@ -298,6 +302,9 @@ model CityConfig {
   holidaysNote  String?
   minLeaseYears Int     @default(2) // Proc. Art. 6
   maxPrepayMonths Int   @default(2) // Proc. Art. 12
+  canonicalLang String  @default("am") // CR-01: city's primary legal rendering
+  complaintDecisionDays Int @default(30) // Proc. Art. 22 (working days)
+  appealDays    Int     @default(15) // Proc. Art. 24
   isActive      Boolean @default(true)
 }
 
@@ -497,7 +504,8 @@ model RegistryBookEntry {
 // ---------------------------------------------------------------------------
 model RentAdjustment {
   id                  String    @id @default(cuid())
-  year                Int       @unique
+  cityCode            String    @default("AA")
+  year                Int
   percentage          Float // Bureau study result applied to ceiling baseline
   status              String    @default("DRAFT") // DRAFT | PUBLISHED | EFFECTIVE
   publishedAt         DateTime?
@@ -505,6 +513,8 @@ model RentAdjustment {
   basisStudy          String?
   publishedByOrgUnitId String?
   createdAt           DateTime  @default(now())
+
+  @@unique([cityCode, year])
 }
 
 // ---------------------------------------------------------------------------

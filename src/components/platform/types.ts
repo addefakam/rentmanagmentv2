@@ -10,7 +10,8 @@ export interface Role { id: string; code: string; nameEn: string; nameAm: string
 export interface IdType { id: string; code: string; nameEn: string; nameAm: string; nameOm: string; }
 export interface StatusType { id: string; code: string; nameEn: string; nameAm: string; nameOm: string; exemptionMonths: number | null; legalBasis?: string | null; }
 export interface Ground { id: string; code: string; nameEn: string; nameAm: string; nameOm: string; legalBasis: string; }
-export interface CityConfig { id: string; cityCode: string; nameEn: string; nameAm: string; nameOm: string; currency: string; workWeek: string; minLeaseYears: number; maxPrepayMonths: number; }
+export interface CityConfig { id: string; cityCode: string; nameEn: string; nameAm: string; nameOm: string; currency: string; workWeek: string; minLeaseYears: number; maxPrepayMonths: number; canonicalLang: string; complaintDecisionDays: number; appealDays: number; bureauId?: string | null; }
+export interface CityInfo { cityCode: string; nameEn: string; nameAm: string; nameOm: string; bureauCode: string; currency?: string; canonicalLang?: string; }
 export interface Staff { id: string; fullName: string; roleCode: string; language: string; role: Role; orgUnit: OrgUnit; }
 export interface ContractSection { id: string; orderNo: number; code: string; titleEn: string; titleAm: string; titleOm: string; contentEn?: string | null; contentAm?: string | null; contentOm?: string | null; certificationStatus: string; legalBasis?: string | null; }
 export interface ModelContract { id: string; version: string; status: string; issuedBy: string; legalBasis: string; effectiveFrom: string; canonicalLang: string; sections: ContractSection[]; }
@@ -42,10 +43,12 @@ export interface ReplicationRow { id: string; batchRef: string; fromOrgUnitId: s
 export interface BackupRow { id: string; type: string; startedAt: string; completedAt?: string | null; status: string; location: string; environment: { name: string; stage: string; backupScheme: string }; }
 export interface Snapshot { id: string; period: string; sourceTier: string; contractsRegistered: number; activeFiles: number; complaintsReceived: number; complaintsDecided: number; penaltiesImposed: number; orgUnit: OrgUnit; computedAt: string; }
 export interface Environment { id: string; name: string; stage: string; purpose: string; backupScheme: string; rpoMinutes?: number | null; }
+export interface PenaltyParam { id: string; code: string; category: string; offenseEn: string; offenseAm: string; offenseOm: string; valueType: string; valueMin?: number | null; valueMax?: number | null; rangeLabelEn?: string | null; rangeLabelAm?: string | null; basisRef: string; confirmationStatus: string; isActive: boolean; }
 
 export interface BootPayload {
+  cityCode: string; cities: CityInfo[]; cityConfig: CityConfig | null;
   orgUnits: OrgUnit[]; roles: Role[]; idTypes: IdType[]; statusTypes: StatusType[];
-  grounds: Ground[]; cityConfigs: CityConfig[]; staff: Staff[];
+  grounds: Ground[]; cityConfigs: CityConfig[]; staff: Staff[]; penaltyParams: PenaltyParam[];
   activeContract: ModelContract | null; adjustments: Adjustment[]; publications: Publication[];
   environments: Environment[]; deadlines: Deadline[]; snapshots: Snapshot[];
   parties: Party[]; properties: Property[]; files: RegFile[]; payments: Payment[];

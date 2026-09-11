@@ -35,6 +35,12 @@ export const CITY_CONFIGS = [
     holidaysNote: "National public holidays configurable; working-day clocks exclude Sat/Sun.",
     minLeaseYears: 2, maxPrepayMonths: 2, isActive: true,
   },
+  {
+    cityCode: "AD", nameEn: "Adama", nameAm: "አዳማ", nameOm: "Adaamaa",
+    currency: "ETB", workWeek: "MON-FRI",
+    holidaysNote: "National public holidays configurable; working-day clocks exclude Sat/Sun.",
+    minLeaseYears: 2, maxPrepayMonths: 2, isActive: true,
+  },
 ];
 
 // Demonstration staff accounts bound to the seeded hierarchy (M13).
@@ -49,6 +55,12 @@ export const DEMO_STAFF = [
   { staffCode: "STF-0006", fullName: "Kebede Ayele", roleCode: "COMMITTEE_MEMBER", orgUnitCode: "AA-BUREAU", language: "om" },
   { staffCode: "STF-0007", fullName: "Lensa Gemeda", roleCode: "MINISTRY_ANALYST", orgUnitCode: "FED-MINISTRY", language: "en" },
   { staffCode: "STF-0008", fullName: "System Admin", roleCode: "SYSTEM_ADMIN", orgUnitCode: "FED-MINISTRY", language: "en" },
+  // Adama city officers (multi-city onboarding) — bureau + woreda desks
+  { staffCode: "STF-1001", fullName: "Chaltu Bekele", roleCode: "WOREDA_REGISTRAR", orgUnitCode: "AD-CENTRAL-W01", language: "om" },
+  { staffCode: "STF-1002", fullName: "Tsegaye Hailu", roleCode: "WOREDA_STAMPER", orgUnitCode: "AD-CENTRAL-W01", language: "om" },
+  { staffCode: "STF-1003", fullName: "Ayunni Gemmechu", roleCode: "SUBCITY_MONITOR", orgUnitCode: "AD-CENTRAL", language: "om" },
+  { staffCode: "STF-1004", fullName: "Bonsa Degaga", roleCode: "BUREAU_ANALYST", orgUnitCode: "AD-BUREAU", language: "om" },
+  { staffCode: "STF-1005", fullName: "Meseret Worku", roleCode: "BUREAU_HEAD", orgUnitCode: "AD-BUREAU", language: "om" },
 ];
 
 // Public awareness publications — Proc. Arts. 14, 16, 18 (M11)

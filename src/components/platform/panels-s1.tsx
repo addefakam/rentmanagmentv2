@@ -35,13 +35,26 @@ function OrgNameDual({ o, lang }: { o: { nameEn: string; nameAm: string; nameOm:
 }
 
 // Phase 5 RBAC: every mutating call carries the acting officer's staff code.
-// Default is the woreda registrar; privileged panels pass an explicit actor
-// (see STF map in types.ts) so the console demonstrates role separation.
+// The signed-in officer (set by the console shell after /api/auth login)
+// becomes the default actor; panels that demonstrate separation of duties may
+// still pass an explicit actor code. The city in view rides the x-city-code
+// header so city-scoped endpoints (adjustments, publications) land correctly.
 export const DEFAULT_ACTOR = "STF-0001";
+
+type CallContext = { staffCode: string | null; cityCode: string | null };
+let callCtx: CallContext = { staffCode: null, cityCode: null };
+export function setCallContext(ctx: Partial<CallContext>) {
+  callCtx = { ...callCtx, ...ctx };
+}
+
 export async function call(url: string, method: string, payload: unknown, actor?: string) {
   const res = await fetch(url, {
     method,
-    headers: { "Content-Type": "application/json", "x-staff-code": actor ?? DEFAULT_ACTOR },
+    headers: {
+      "Content-Type": "application/json",
+      "x-staff-code": actor ?? callCtx.staffCode ?? DEFAULT_ACTOR,
+      ...(callCtx.cityCode ? { "x-city-code": callCtx.cityCode } : {}),
+    },
     body: JSON.stringify(payload),
   });
   const json = await res.json();

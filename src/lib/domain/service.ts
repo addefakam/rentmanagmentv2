@@ -316,11 +316,11 @@ export async function annotateFile(fileId: string, code: string, text: string, b
 // ---------------------------------------------------------------------------
 // S4 / M5 — Adjustment engine (Proc. Arts. 8-11; Dir. Art. 11)
 // ---------------------------------------------------------------------------
-export async function createAdjustment(year: number, percentage: number, basisStudy?: string) {
+export async function createAdjustment(cityCode: string, year: number, percentage: number, basisStudy?: string) {
   requireTrue(percentage >= 0 && percentage <= 100, "Proc. Art. 8", "Adjustment percentage must be between 0 and 100.");
-  const dup = await db.rentAdjustment.findUnique({ where: { year } });
-  requireTrue(!dup, "Proc. Art. 8", `An adjustment for ${year} already exists.`);
-  return db.rentAdjustment.create({ data: { year, percentage, basisStudy } });
+  const dup = await db.rentAdjustment.findFirst({ where: { cityCode, year } });
+  requireTrue(!dup, "Proc. Art. 8", `An adjustment for ${year} already exists in city ${cityCode}.`);
+  return db.rentAdjustment.create({ data: { cityCode, year, percentage, basisStudy } });
 }
 
 export async function publishAdjustment(id: string, byOrgUnitId: string) {
@@ -340,11 +340,14 @@ export async function publishAdjustment(id: string, byOrgUnitId: string) {
       dueAt: effectDate(adj!.year),
     },
   });
-  // Public publication feed (Proc. Art. 8; Art. 18)
-  const bureau = await db.orgUnit.findUnique({ where: { code: "AA-BUREAU" } });
+  // Public publication feed (Proc. Art. 8; Art. 18) — under the city's bureau.
+  const cityConfig = await db.cityConfig.findUnique({ where: { cityCode: adj!.cityCode } });
+  const bureau = cityConfig?.bureauId
+    ? await db.orgUnit.findUnique({ where: { id: cityConfig.bureauId } })
+    : await db.orgUnit.findUnique({ where: { code: "AA-BUREAU" } });
   await db.publicationItem.create({
     data: {
-      code: `PUB-CEILING-${adj!.year}`, category: "CEILING",
+      code: `PUB-CEILING-${adj!.cityCode}-${adj!.year}`, category: "CEILING",
       titleEn: `Rent ceiling adjustment ${adj!.year}: +${adj!.percentage}%`,
       titleAm: `የ${adj!.year} የኪራይ ጣሪያ ማስተካከያ: +${adj!.percentage}%`,
       titleOm: `Guddina daangaa kiraalaa ${adj!.year}: +${adj!.percentage}%`,
@@ -807,7 +810,7 @@ export async function amendModelContract(input: {
     data: {
       version: input.newVersion, status: "ACTIVE", issuedBy: base!.issuedBy,
       legalBasis: base!.legalBasis, effectiveFrom: new Date(),
-      canonicalLang: base!.canonicalLang,
+      canonicalLang: base!.canonicalLang, cityCode: base!.cityCode,
       sections: {
         create: base!.sections.map((s) => {
           const ch = input.changes.find((c) => c.sectionCode === s.code);

@@ -66,6 +66,10 @@ export const CAPABILITIES: Record<string, string[]> = {
   "operations:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // hypercare, cycle, referrals, handover, PIR (plan A-42..A-48)
   "feed:publish": ["MINISTRY_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"], // national feed to the Ministry (A-45)
   "setting:manage": ["SYSTEM_ADMIN"], // platform settings incl. auth_mode switch
+  // Multi-city administration (per-city rule sets, Dir. Art. 14)
+  "city:manage": ["BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // city identity + statutory params
+  "ladder:manage": ["BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // penalty ladder values
+  "org:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // sub-city / woreda register
   // Read capabilities enforced when auth_mode = production (DEF-06-01)
   "read:parties": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
   "read:registration": ["WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"],

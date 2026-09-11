@@ -1,0 +1,73 @@
+// ============================================================================
+// rbac-pages.ts — Which role codes may open which console page. The sidebar
+// filters by this map and the console layout enforces it server-side. API
+// mutations stay guarded separately by authz.ts capabilities.
+// ============================================================================
+
+const ALL_ROLES = [
+  "WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST",
+  "BUREAU_HEAD", "COMMITTEE_MEMBER", "MINISTRY_ANALYST", "SYSTEM_ADMIN",
+];
+
+const REGISTRY_ROLES = ALL_ROLES; // every officer may read the registry pages
+const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER");
+const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
+const SETTINGS_ROLES = ["BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
+const PROJECT_ROLES = ["BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
+
+export const PAGE_ACCESS: Record<string, string[]> = {
+  "/": ALL_ROLES,
+  "/parties": REGISTRY_ROLES,
+  "/properties": REGISTRY_ROLES,
+  "/registration": REGISTRY_ROLES,
+  "/rent": REGISTRY_ROLES,
+  "/complaints": OPERATIONS_ROLES,
+  "/enforcement": OPERATIONS_ROLES,
+  "/reports": INSIGHT_ROLES,
+  "/settings": SETTINGS_ROLES,
+  "/project": PROJECT_ROLES,
+  "/project/evidence": PROJECT_ROLES,
+  "/project/testing": PROJECT_ROLES,
+  "/project/uat": PROJECT_ROLES,
+  "/project/pilot": PROJECT_ROLES,
+  "/project/golive": PROJECT_ROLES,
+};
+
+export function canAccess(pathname: string, roleCode: string): boolean {
+  const allowed = PAGE_ACCESS[pathname];
+  if (!allowed) return true; // unknown paths default open (public shell)
+  return allowed.includes(roleCode);
+}
+
+export type NavItem = {
+  href: string;
+  labelKey: string;
+  labelEn: string;
+  group: "overview" | "registry" | "operations" | "insights" | "admin" | "project";
+};
+
+export const NAV_ITEMS: NavItem[] = [
+  { href: "/", labelKey: "nav.dashboard", labelEn: "Dashboard", group: "overview" },
+  { href: "/parties", labelKey: "nav.parties", labelEn: "Parties (M1)", group: "registry" },
+  { href: "/properties", labelKey: "nav.assets", labelEn: "Properties & Contract (M2, M3)", group: "registry" },
+  { href: "/registration", labelKey: "nav.registration", labelEn: "Registration (M4)", group: "registry" },
+  { href: "/rent", labelKey: "nav.rent", labelEn: "Rent & Payments (M5, M6)", group: "operations" },
+  { href: "/complaints", labelKey: "nav.disputes", labelEn: "Complaints (M8, M12)", group: "operations" },
+  { href: "/enforcement", labelKey: "nav.enforcement", labelEn: "Control & Penalties (M7, M9)", group: "operations" },
+  { href: "/reports", labelKey: "nav.data", labelEn: "Data & Reports (M10, M11)", group: "insights" },
+  { href: "/settings", labelKey: "nav.settings", labelEn: "City Settings", group: "admin" },
+  { href: "/project", labelKey: "nav.evidence", labelEn: "Evidence & Gates", group: "project" },
+  { href: "/project/testing", labelKey: "nav.p5", labelEn: "Testing & Compliance", group: "project" },
+  { href: "/project/uat", labelKey: "nav.p6", labelEn: "UAT & Legal Validation", group: "project" },
+  { href: "/project/pilot", labelKey: "nav.p7", labelEn: "Migration, Training & Pilot", group: "project" },
+  { href: "/project/golive", labelKey: "nav.p8", labelEn: "Go-Live & Operations", group: "project" },
+];
+
+export const NAV_GROUPS: Array<{ key: NavItem["group"]; labelEn: string }> = [
+  { key: "overview", labelEn: "Overview" },
+  { key: "registry", labelEn: "Registry" },
+  { key: "operations", labelEn: "Operations" },
+  { key: "insights", labelEn: "Insights" },
+  { key: "admin", labelEn: "Administration" },
+  { key: "project", labelEn: "Project tools" },
+];

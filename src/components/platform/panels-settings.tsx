@@ -1,0 +1,238 @@
+// ============================================================================
+// panels-settings.tsx — City Settings (Dir. Art. 14 per-city rule sets).
+// Four no-code editors for the city administration:
+//   1. City identity    — trilingual names, currency, work week, canonical lang
+//   2. Statutory params — lease/prepay/deadline parameters (Proc./Dir. driven)
+//   3. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
+//   4. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
+// ============================================================================
+
+"use client";
+
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+import { t } from "./i18n";
+import { call } from "./panels-s1";
+import { useBoot } from "./shell";
+import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import type { PenaltyParam } from "./types";
+
+// ---------------------------------------------------------------------------
+// 1 + 2 — identity and statutory parameters share one form per city.
+// ---------------------------------------------------------------------------
+function CityConfigForm() {
+  const { boot, refresh } = useBoot();
+  const cfg = boot?.cityConfig;
+  const [form, setForm] = useState<Record<string, string> | null>(null);
+
+  const value = (k: string, fallback = "") => form?.[k] ?? (cfg ? String((cfg as unknown as Record<string, unknown>)[k] ?? fallback) : fallback);
+  const set = (k: string, v: string) => setForm({ ...(form ?? {}), [k]: v });
+
+  if (!cfg) return <p className="text-sm text-muted-foreground">No city configuration loaded.</p>;
+
+  const save = async () => {
+    const data = await call("/api/settings", "PATCH", {
+      cityCode: cfg.cityCode,
+      nameEn: value("nameEn"), nameAm: value("nameAm"), nameOm: value("nameOm"),
+      currency: value("currency", "ETB"), workWeek: value("workWeek", "MON-FRI"),
+      canonicalLang: value("canonicalLang", "am"),
+      minLeaseYears: value("minLeaseYears", "2"), maxPrepayMonths: value("maxPrepayMonths", "2"),
+      complaintDecisionDays: value("complaintDecisionDays", "30"), appealDays: value("appealDays", "15"),
+    });
+    if (data) {
+      toast.success(`${data.cityCode} configuration saved`);
+      setForm(null);
+      await refresh();
+    }
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <Field label="City name (English)"><TextField value={value("nameEn")} onChange={(e) => set("nameEn", e.target.value)} /></Field>
+        <Field label="የከተማ ስም (አማርኛ)"><TextField value={value("nameAm")} onChange={(e) => set("nameAm", e.target.value)} /></Field>
+        <Field label="Magaalaa (Afaan Oromoo)"><TextField value={value("nameOm")} onChange={(e) => set("nameOm", e.target.value)} /></Field>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Field label="Currency"><TextField value={value("currency", "ETB")} onChange={(e) => set("currency", e.target.value)} /></Field>
+        <Field label="Work week">
+          <SelectField value={value("workWeek", "MON-FRI")} onChange={(v) => set("workWeek", v)}
+            options={[{ value: "MON-FRI", label: "Mon–Fri" }, { value: "MON-SAT", label: "Mon–Sat" }]} />
+        </Field>
+        <Field label="Primary legal language (CR-01)">
+          <SelectField value={value("canonicalLang", "am")} onChange={(v) => set("canonicalLang", v)}
+            options={[{ value: "am", label: "Amharic" }, { value: "om", label: "Afaan Oromoo" }, { value: "en", label: "English" }]} />
+        </Field>
+        <Field label="City code (read-only)"><TextField value={cfg.cityCode} disabled /></Field>
+      </div>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Field label="Min lease years (Proc. Art. 6)"><TextField type="number" min="1" value={value("minLeaseYears", "2")} onChange={(e) => set("minLeaseYears", e.target.value)} /></Field>
+        <Field label="Max advance months (Proc. Art. 12)"><TextField type="number" min="0" value={value("maxPrepayMonths", "2")} onChange={(e) => set("maxPrepayMonths", e.target.value)} /></Field>
+        <Field label="Complaint decision days (Proc. Art. 22)"><TextField type="number" min="1" value={value("complaintDecisionDays", "30")} onChange={(e) => set("complaintDecisionDays", e.target.value)} /></Field>
+        <Field label="Appeal window days (Proc. Art. 24)"><TextField type="number" min="1" value={value("appealDays", "15")} onChange={(e) => set("appealDays", e.target.value)} /></Field>
+      </div>
+      <div><ActionButton onClick={save}>Save city configuration</ActionButton></div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 3 — penalty ladder editor (values editable; catalogue per Dir. Art. 22).
+// ---------------------------------------------------------------------------
+function LadderEditor() {
+  const { boot, refresh } = useBoot();
+  const [draft, setDraft] = useState({ code: "", offenseEn: "", valueType: "MULTIPLE_OF_MONTHLY_RENT", valueMin: "", valueMax: "", basisRef: "Dir. Art. 22" });
+  const rows = boot?.penaltyParams ?? [];
+
+  const patch = async (id: string, data: Record<string, unknown>) => {
+    const out = await call("/api/penalty-ladder", "PATCH", { id, ...data });
+    if (out) { toast.success(`${out.code} updated`); await refresh(); }
+  };
+  const remove = async (row: PenaltyParam) => {
+    const out = await call("/api/penalty-ladder", "DELETE", { id: row.id });
+    if (out) { toast.success(out.deleted ? `${out.code} deleted` : `${out.code} deactivated (in use by penalty cases)`); await refresh(); }
+  };
+  const create = async () => {
+    const out = await call("/api/penalty-ladder", "POST", draft);
+    if (out) { toast.success(`${out.code} added to the ladder`); setDraft({ code: "", offenseEn: "", valueType: "MULTIPLE_OF_MONTHLY_RENT", valueMin: "", valueMax: "", basisRef: "Dir. Art. 22" }); await refresh(); }
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      <DataTable
+        headers={["Code", "Offense", "Kind", "Range", "Basis", "State", "Acts"]}
+        rows={rows.map((r) => [
+          <span key={r.id} className="font-mono text-[10px]">{r.code}</span>,
+          <span key={`o-${r.id}`} className="block max-w-[240px] text-[10px]">{r.offenseEn}</span>,
+          <span key={`v-${r.id}`} className="text-[10px]">{r.valueType.replace(/_/g, " ").toLowerCase()}</span>,
+          <span key={`r-${r.id}`} className="text-[10px] tabular-nums">
+            {r.valueMin ?? "—"}{r.valueMax != null ? ` – ${r.valueMax}` : "+"}
+          </span>,
+          <span key={`b-${r.id}`} className="text-[10px]">{r.basisRef}</span>,
+          r.isActive ? <StatusBadge key={`s-${r.id}`} value="ACTIVE" /> : <StatusBadge key={`s-${r.id}`} value="CLOSED" />,
+          <span key={`a-${r.id}`} className="flex flex-wrap gap-1">
+            <ActionButton variant="outline" onClick={() => patch(r.id, { isActive: !r.isActive })}>{r.isActive ? "Disable" : "Enable"}</ActionButton>
+            <ActionButton variant="ghost" onClick={() => remove(r)}>Delete</ActionButton>
+          </span>,
+        ])}
+        empty="No ladder rows."
+      />
+      <div className="rounded-lg border bg-muted/20 p-3">
+        <p className="mb-2 text-xs font-semibold">Add an offense row</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <Field label="Code"><TextField value={draft.code} onChange={(e) => setDraft({ ...draft, code: e.target.value.toUpperCase() })} placeholder="PEN-SUBLET" /></Field>
+          <Field label="Offense (English)"><TextField value={draft.offenseEn} onChange={(e) => setDraft({ ...draft, offenseEn: e.target.value })} /></Field>
+          <Field label="Value kind">
+            <SelectField value={draft.valueType} onChange={(v) => setDraft({ ...draft, valueType: v })}
+              options={[
+                { value: "MULTIPLE_OF_MONTHLY_RENT", label: "Multiple of monthly rent" },
+                { value: "PERCENT", label: "Percent" },
+                { value: "PERCENT_PER_CASH_PAYMENT", label: "Percent per cash payment" },
+              ]} />
+          </Field>
+          <Field label="Value min"><TextField type="number" value={draft.valueMin} onChange={(e) => setDraft({ ...draft, valueMin: e.target.value })} /></Field>
+          <Field label="Value max"><TextField type="number" value={draft.valueMax} onChange={(e) => setDraft({ ...draft, valueMax: e.target.value })} /></Field>
+          <Field label="Legal basis"><TextField value={draft.basisRef} onChange={(e) => setDraft({ ...draft, basisRef: e.target.value })} /></Field>
+        </div>
+        <div className="mt-2"><ActionButton onClick={create} disabled={!draft.code || !draft.offenseEn}>Add row</ActionButton></div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 4 — org hierarchy editor: add sub-cities / woredas with trilingual names.
+// ---------------------------------------------------------------------------
+function OrgEditor() {
+  const { boot, refresh } = useBoot();
+  const units = boot?.orgUnits ?? [];
+  const bureaus = useMemo(() => units.filter((u) => u.tier === "BUREAU"), [units]);
+  const [bureauId, setBureauId] = useState("");
+  const effectiveBureau = bureauId || bureaus[0]?.id || "";
+  const subCities = units.filter((u) => u.tier === "SUB_CITY" && u.parentId === effectiveBureau);
+  const [scId, setScId] = useState("");
+  const effectiveSc = scId || subCities[0]?.id || "";
+  const woredas = units.filter((u) => u.tier === "WOREDA" && u.parentId === effectiveSc);
+
+  const [unit, setUnit] = useState({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" });
+  const create = async () => {
+    const parentId = unit.tier === "SUB_CITY" ? effectiveBureau : effectiveSc;
+    const out = await call("/api/org-units", "POST", { ...unit, parentId }, "STF-0005");
+    if (out) { toast.success(`${out.code} registered (pending official register, O-7)`); setUnit({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" }); await refresh(); }
+  };
+  const rename = async (id: string, nameEn: string) => {
+    const out = await call("/api/org-units", "PATCH", { id, nameEn }, "STF-0005");
+    if (out) { toast.success(`${out.code} renamed`); await refresh(); }
+  };
+
+  return (
+    <div className="grid grid-cols-1 gap-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Field label="Bureau">
+          <SelectField value={effectiveBureau} onChange={setBureauId}
+            options={bureaus.map((b) => ({ value: b.id, label: `${b.code} — ${b.nameEn}` }))} />
+        </Field>
+        <Field label="Sub-city (for woreda edits)">
+          <SelectField value={effectiveSc} onChange={setScId}
+            options={subCities.map((s) => ({ value: s.id, label: `${s.code} — ${s.nameEn}` }))} />
+        </Field>
+      </div>
+
+      <DataTable
+        headers={["Code", "Tier", "Name (EN)", "Woredas under sub-city"]}
+        rows={[...subCities, ...woredas].map((u) => [
+          <span key={u.id} className="font-mono text-[10px]">{u.code}</span>,
+          <span key={`t-${u.id}`} className="text-[10px]">{u.tier.replace("_", " ")}</span>,
+          <span key={`n-${u.id}`} className="flex items-center gap-1">
+            <TextField
+              defaultValue={u.nameEn}
+              onBlur={(e) => { if (e.target.value && e.target.value !== u.nameEn) void rename(u.id, e.target.value); }}
+            />
+          </span>,
+          <span key={`c-${u.id}`} className="text-[10px] text-muted-foreground">
+            {u.tier === "SUB_CITY" ? `${units.filter((w) => w.parentId === u.id).length} woredas` : u.confirmationStatus === "CONFIRMED" ? "confirmed" : "pending O-7"}
+          </span>,
+        ])}
+        empty="No units under this bureau."
+      />
+
+      <div className="rounded-lg border bg-muted/20 p-3">
+        <p className="mb-2 text-xs font-semibold">Register a new unit</p>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
+          <Field label="Level">
+            <SelectField value={unit.tier} onChange={(v) => setUnit({ ...unit, tier: v })}
+              options={[{ value: "WOREDA", label: "Woreda" }, { value: "SUB_CITY", label: "Sub-city" }]} />
+          </Field>
+          <Field label="Code"><TextField value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value.toUpperCase() })} placeholder="AD-CENTRAL-W15" /></Field>
+          <Field label="Name (English)"><TextField value={unit.nameEn} onChange={(e) => setUnit({ ...unit, nameEn: e.target.value })} /></Field>
+          <Field label="ስም (አማርኛ)"><TextField value={unit.nameAm} onChange={(e) => setUnit({ ...unit, nameAm: e.target.value })} /></Field>
+          <Field label="Maqaa (Oromoo)"><TextField value={unit.nameOm} onChange={(e) => setUnit({ ...unit, nameOm: e.target.value })} /></Field>
+        </div>
+        <div className="mt-2">
+          <ActionButton onClick={create} disabled={!unit.code || !unit.nameEn || (unit.tier === "WOREDA" && !effectiveSc)}>
+            Register unit
+          </ActionButton>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+export function SettingsPage() {
+  const { boot } = useBoot();
+  if (!boot) return null;
+  return (
+    <div className="grid grid-cols-1 gap-4">
+      <Panel title="City identity & statutory parameters" subtitle="Per-city rule set (Dir. Art. 14). Changes take effect immediately; the statutory clock params drive complaints and appeal windows.">
+        <CityConfigForm />
+      </Panel>
+      <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive's offense catalogue; values are configurable parameters (open item O1). Rows referenced by penalty cases are deactivated, never deleted.">
+        <LadderEditor />
+      </Panel>
+      <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle="Sub-cities and woredas of the city bureau. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7).">
+        <OrgEditor />
+      </Panel>
+    </div>
+  );
+}

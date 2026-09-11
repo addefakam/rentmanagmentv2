@@ -17,7 +17,13 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const input = await body<Record<string, unknown>>(req);
-    const bureau = await db.orgUnit.findUnique({ where: { code: "AA-BUREAU" } });
+    // Publishing bureau: the requested city's bureau (x-city-code header,
+    // set by the console for the city in view), else the Addis Ababa bureau.
+    const cityCode = req.headers.get("x-city-code");
+    const cityConfig = cityCode ? await db.cityConfig.findUnique({ where: { cityCode } }) : null;
+    const bureau = cityConfig?.bureauId
+      ? await db.orgUnit.findUnique({ where: { id: cityConfig.bureauId } })
+      : await db.orgUnit.findUnique({ where: { code: "AA-BUREAU" } });
     return await withGuard(req, "publication:manage",
       { action: "PUBLICATION_CREATE", entity: "PublicationItem", ref: (d: { code: string }) => d.code },
       () => db.publicationItem.create({

@@ -182,9 +182,9 @@ export async function operateAnnualCycle(input: AnnualCycleInput) {
 
   // Step 2 — publication through the real service (June 1 anchoring; public
   // ceiling notice on the Proc. Art. 18 feed; pre-effect check clock).
-  const adj = await db.rentAdjustment.findUnique({ where: { year: input.cycleYear } });
+  const adj = await db.rentAdjustment.findFirst({ where: { cityCode: "AA", year: input.cycleYear } });
   requireTrue(!adj, "Proc. Art. 8", `An adjustment for ${input.cycleYear} already exists; the cycle record would not be first-hand.`);
-  const created = await createAdjustment(input.cycleYear, input.percentage, input.studyRef);
+  const created = await createAdjustment("AA", input.cycleYear, input.percentage, input.studyRef);
   const published = await publishAdjustment(created.id, bureau!.id);
   const publication = await db.annualCycleStep.create({
     data: {
