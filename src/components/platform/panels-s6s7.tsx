@@ -45,7 +45,7 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
     <div className="grid gap-4">
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M7 · Control team & visit" subtitle="Proc. Art. 20: own-initiative and complaint-based control. Dir. Art. 20: team identification duty; vacancy monitoring beyond six months.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Team code"><TextField value={team.teamCode} onChange={(e) => setTeam({ ...team, teamCode: e.target.value })} /></Field>
               <Field label="Sub-city">
@@ -95,7 +95,7 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
 
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M9 · Compute penalty" subtitle="Proc. Arts. 29-32: fines capped at 3 months' rent. Dir. Art. 22: configurable ladder (O1), cash referral 10%, vacancy surcharge 5-25% of annual rent by band.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Field label="Offense (penalty ladder)">
               <SelectField value={pen.offenseCode} onChange={(v) => setPen({ ...pen, offenseCode: v })}
                 options={["PEN-UNREG-RENT", "PEN-LATE-REG", "PEN-UNREG-AMEND", "PEN-UNAUTH-INCREASE", "PEN-ILLEGAL-EVICTION", "PEN-EXCESS-ADVANCE", "PEN-NOTICELESS-TERM", "PEN-VAC-5"].map((c) => ({ value: c, label: c }))}
@@ -177,7 +177,7 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
       )}
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="M10 · Tier replication" subtitle="Dir. Art. 13: woreda → sub-city → Bureau → Ministry upward change propagation. Registry registrations enqueue automatically.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Source unit">
                 <SelectField value={rep.fromOrgUnitId} onChange={(v) => setRep({ ...rep, fromOrgUnitId: v })}
@@ -205,7 +205,7 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
         </Panel>
 
         <Panel title="M10 · Backup runs" subtitle="Environment backup schemes seeded in Phase 3 (Dir. Art. 13): RPO/RTO per tier.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <DataTable
               headers={["Environment", "Scheme", "Type", "Status", "When"]}
               rows={boot.backups.map((b) => [
@@ -230,7 +230,7 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="M11 · Aggregation snapshots" subtitle="Proc. Art. 18; Dir. Art. 13: sub-city aggregation duty; Bureau city analytics; Ministry national feed.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Org unit">
                 <SelectField value={snap.orgUnitId} onChange={(v) => setSnap({ ...snap, orgUnitId: v })}
@@ -253,7 +253,7 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
         </Panel>
 
         <Panel title="M11 · Public data feed" subtitle="Proc. Arts. 14, 16, 18: ceilings, calendar, awareness material and statistics published to citizens.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Code"><TextField value={pub.code} onChange={(e) => setPub({ ...pub, code: e.target.value })} placeholder="PUB-STAT-001" /></Field>
               <Field label="Category">

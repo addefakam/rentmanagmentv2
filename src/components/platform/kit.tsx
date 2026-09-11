@@ -13,13 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import type { Lang } from "./types";
 import { t } from "./i18n";
 
 export function Panel({ title, subtitle, children, className }: { title: string; subtitle?: string; children: React.ReactNode; className?: string }) {
   return (
-    <Card className={className}>
+    // min-w-0: lets the card shrink inside grid layouts; overflow-hidden:
+    // guarantees wide table content never paints over neighbouring panels.
+    <Card className={cn("min-w-0 overflow-hidden", className)}>
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold">{title}</CardTitle>
         {subtitle ? <CardDescription className="text-xs">{subtitle}</CardDescription> : null}
@@ -31,11 +33,11 @@ export function Panel({ title, subtitle, children, className }: { title: string;
 
 export function Stat({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="text-xs text-muted-foreground">{label}</div>
-        <div className="text-2xl font-bold tabular-nums">{value}</div>
-        {hint ? <div className="mt-1 text-[11px] text-muted-foreground">{hint}</div> : null}
+    <Card className="min-w-0">
+      <CardContent className="min-w-0 p-4">
+        <div className="text-xs break-words text-muted-foreground">{label}</div>
+        <div className="text-2xl font-bold break-words tabular-nums">{value}</div>
+        {hint ? <div className="mt-1 text-[11px] break-words text-muted-foreground">{hint}</div> : null}
       </CardContent>
     </Card>
   );
@@ -103,16 +105,19 @@ export function RuleBadge({ rule }: { rule: string }) {
 export function DataTable({ headers, rows, empty }: { headers: string[]; rows: React.ReactNode[][]; empty?: string }) {
   if (rows.length === 0) return <p className="py-3 text-sm text-muted-foreground">{empty ?? "—"}</p>;
   return (
-    <ScrollArea className="max-h-96 w-full">
+    // Native scroll area (not Radix ScrollArea): wide tables scroll horizontally
+    // inside the panel instead of stretching the panel grid and overlapping
+    // neighbouring cards; tall tables scroll vertically past max-h-96.
+    <div className="max-h-96 w-full overflow-auto">
       <Table>
-        <TableHeader><TableRow>{headers.map((h) => <TableHead key={h} className="text-xs">{h}</TableHead>)}</TableRow></TableHeader>
+        <TableHeader><TableRow>{headers.map((h) => <TableHead key={h} className="text-xs whitespace-nowrap">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>
           {rows.map((r, i) => (
             <TableRow key={i}>{r.map((cell, j) => <TableCell key={j} className="text-xs">{cell}</TableCell>)}</TableRow>
           ))}
         </TableBody>
       </Table>
-    </ScrollArea>
+    </div>
   );
 }
 
