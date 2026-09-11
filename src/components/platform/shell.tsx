@@ -73,7 +73,12 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
   const setLang = useCallback((l: Lang) => setLangState(l), []);
 
   const refresh = useCallback(async (cityCode?: string) => {
-    setLoading(true);
+    // Hard load (skeleton, unmounts panels) ONLY when nothing is booted yet
+    // or the officer is SWITCHING cities. A same-city refresh (after an
+    // onboard/edit/save) is soft: panels stay mounted so their local state —
+    // e.g. the city-administrator credentials card just returned by an
+    // onboarding — survives the data update.
+    if (!boot || cityCode !== undefined) setLoading(true);
     try {
       const target = cityCode ?? city;
       const res = await fetch(`/api/platform?city=${encodeURIComponent(target)}`, { cache: "no-store" });
@@ -94,7 +99,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
     } finally {
       setLoading(false);
     }
-  }, [city, officer.staffCode]);
+  }, [city, officer.staffCode, boot]);
 
   useEffect(() => { void refresh(); }, []); // initial boot only
 

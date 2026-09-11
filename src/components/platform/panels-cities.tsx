@@ -1,15 +1,16 @@
 // ============================================================================
-// panels-cities.tsx — City Management (fleet administration, national roles).
-// One screen where the system admin:
-//   1. sees every city on the platform — active AND deactivated — with live
-//      usage stats (org structure, staff, properties, files);
-//   2. onboards a brand-new city from ONE form: org skeleton (bureau →
-//      Central sub-city → W01), city config (statutory params), a cloned
-//      model contract and an optional starter team — the city is usable
-//      immediately, no code changes and no seed scripts;
-//   3. deactivates / reactivates a city — a soft suspension: sign-in is
-//      refused for that city's officers and the city leaves the switcher,
-//      while every record stays intact for audit and reactivation.
+// panels-cities.tsx — City Management (the SaaS control plane, national roles).
+// The platform is delivered as ONE system per city; this module is where the
+// system admin exercises fleet super-powers:
+//   1. REGIONAL level — combined totals across every city (staff, registry,
+//      operations) plus a per-city fleet table, so the super-admin sees all
+//      city data at a glance without entering any city;
+//   2. CITY level — drill into any city through the top-bar switcher (its
+//      pages show that city's data only);
+//   3. lifecycle — onboard a new city from ONE form (org skeleton, statutory
+//      config, model contract and the mandatory city super-admin), EDIT a
+//      city's identity/parameters, and deactivate/reactivate (soft
+//      suspension — data preserved, sign-in refused, switcher hidden).
 // Ministry analysts get a read-only view; only SYSTEM_ADMIN sees controls.
 // ============================================================================
 
@@ -19,13 +20,16 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
-import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { Panel, Stat, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 
 type CityRow = {
   cityCode: string; nameEn: string; nameAm: string; nameOm: string;
-  bureauCode: string; canonicalLang: string;
+  bureauCode: string; canonicalLang: string; currency: string;
   complaintDecisionDays: number; appealDays: number; isActive: boolean;
   subCities: number; woredas: number; staff: number; properties: number; files: number;
+  complaintsOpen: number; complaintsTotal: number;
+  paymentsCount: number; paymentsAmount: number;
 };
 
 type OnboardResult = {
@@ -40,6 +44,8 @@ const EMPTY_FORM = {
   cityAdminName: "", seedTeam: true, bureauHeadName: "", registrarName: "", stamperName: "",
 };
 
+const num = (n: number) => n.toLocaleString("en-US");
+
 export function CitiesAdmin() {
   const { officer, refresh } = useBoot();
   const canWrite = officer.roleCode === "SYSTEM_ADMIN";
@@ -48,6 +54,11 @@ export function CitiesAdmin() {
   const [busy, setBusy] = useState(false);
   const [confirmCode, setConfirmCode] = useState<string | null>(null);
   const [result, setResult] = useState<OnboardResult | null>(null);
+  const [edit, setEdit] = useState<CityRow | null>(null);
+  const [editForm, setEditForm] = useState({
+    nameEn: "", nameAm: "", nameOm: "", canonicalLang: "am",
+    complaintDecisionDays: "30", appealDays: "15",
+  });
 
   const set = (k: keyof typeof EMPTY_FORM, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -64,6 +75,21 @@ export function CitiesAdmin() {
     })();
     return () => { alive = false; };
   }, []);
+
+  // Regional rollup — all cities combined ("regional level" view).
+  const t = (rows ?? []).reduce(
+    (acc, r) => ({
+      active: acc.active + (r.isActive ? 1 : 0),
+      staff: acc.staff + r.staff,
+      properties: acc.properties + r.properties,
+      files: acc.files + r.files,
+      complaintsOpen: acc.complaintsOpen + r.complaintsOpen,
+      complaintsTotal: acc.complaintsTotal + r.complaintsTotal,
+      paymentsCount: acc.paymentsCount + r.paymentsCount,
+      paymentsAmount: acc.paymentsAmount + r.paymentsAmount,
+    }),
+    { active: 0, staff: 0, properties: 0, files: 0, complaintsOpen: 0, complaintsTotal: 0, paymentsCount: 0, paymentsAmount: 0 },
+  );
 
   const onboard = async () => {
     setBusy(true);
@@ -90,33 +116,84 @@ export function CitiesAdmin() {
     }
   };
 
+  const openEdit = (row: CityRow) => {
+    setEdit(row);
+    setEditForm({
+      nameEn: row.nameEn, nameAm: row.nameAm, nameOm: row.nameOm,
+      canonicalLang: row.canonicalLang,
+      complaintDecisionDays: String(row.complaintDecisionDays),
+      appealDays: String(row.appealDays),
+    });
+  };
+
+  const saveEdit = async () => {
+    if (!edit) return;
+    setBusy(true);
+    const out = await call("/api/cities", "PATCH", {
+      cityCode: edit.cityCode,
+      nameEn: editForm.nameEn, nameAm: editForm.nameAm, nameOm: editForm.nameOm,
+      canonicalLang: editForm.canonicalLang,
+      complaintDecisionDays: editForm.complaintDecisionDays,
+      appealDays: editForm.appealDays,
+    }) as { message: string } | null;
+    setBusy(false);
+    if (out) {
+      toast.success(out.message);
+      setEdit(null);
+      await load();
+      await refresh();
+    }
+  };
+
   const codeOk = /^[A-Z]{2,4}$/.test(form.cityCode);
   const teamOk = !form.seedTeam || (!!form.bureauHeadName.trim() && !!form.registrarName.trim());
   const canSubmit = codeOk && !!form.nameEn.trim() && !!form.cityAdminName.trim() && teamOk && !busy;
 
   return (
     <div className="grid grid-cols-1 gap-4">
+      {/* Regional overview ------------------------------------------------- */}
+      <Panel
+        title="Regional overview — all cities combined"
+        subtitle="Super-admin view of every city's data at regional level. To work inside one city's data, pick it in the top-bar city switcher — each city's pages then show that city only."
+      >
+        {rows === null ? (
+          <p className="py-3 text-sm text-muted-foreground">Loading regional totals…</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+            <Stat label="Cities active" value={`${t.active} / ${rows.length}`} hint="active / onboarded" />
+            <Stat label="Staff (all cities)" value={num(t.staff)} hint="active officers" />
+            <Stat label="Properties" value={num(t.properties)} hint="registered units" />
+            <Stat label="Registration files" value={num(t.files)} hint="all cities" />
+            <Stat label="Open complaints" value={num(t.complaintsOpen)} hint={`of ${num(t.complaintsTotal)} total`} />
+            <Stat label="Payments recorded" value={num(t.paymentsCount)} hint="receipts issued" />
+            <Stat label="Collected (ETB)" value={num(t.paymentsAmount)} hint="all cities, gross" />
+          </div>
+        )}
+      </Panel>
+
       {/* Fleet table ------------------------------------------------------ */}
       <Panel
         title={`Cities on the platform (${rows?.length ?? "…"})`}
-        subtitle="Every city, active or deactivated. Deactivation is a soft suspension — data is preserved and the city can be reactivated at any time."
+        subtitle="City-level numbers per row. Deactivation is a soft suspension — data is preserved and the city can be reactivated at any time."
       >
         {rows === null ? (
           <p className="py-3 text-sm text-muted-foreground">Loading city fleet…</p>
         ) : (
           <DataTable
-            headers={["Status", "City", "Bureau", "Structure", "Staff", "Properties", "Files", "Statutory (days)", canWrite ? "Action" : "Access"]}
+            headers={["Status", "City", "Bureau", "Structure", "Staff", "Registry", "Operations", "Statutory (days)", canWrite ? "Action" : "Access"]}
             rows={rows.map((r) => [
               <StatusBadge key={`s-${r.cityCode}`} value={r.isActive ? "ACTIVE" : "CLOSED"} />,
               <span key={`c-${r.cityCode}`}>
                 <span className="block text-xs font-semibold">{r.nameEn}</span>
-                <span className="font-mono text-[10px] text-muted-foreground">{r.cityCode} · {r.canonicalLang.toUpperCase()}</span>
+                <span className="font-mono text-[10px] text-muted-foreground">{r.cityCode} · {r.canonicalLang.toUpperCase()} · {r.currency}</span>
               </span>,
               <span key={`b-${r.cityCode}`} className="font-mono text-[10px]">{r.bureauCode}</span>,
               <span key={`st-${r.cityCode}`} className="text-[10px] tabular-nums">{r.subCities} sub-cities · {r.woredas} woredas</span>,
-              <span key={`u-${r.cityCode}`} className="text-[10px] tabular-nums">{r.staff}</span>,
-              <span key={`p-${r.cityCode}`} className="text-[10px] tabular-nums">{r.properties}</span>,
-              <span key={`f-${r.cityCode}`} className="text-[10px] tabular-nums">{r.files}</span>,
+              <span key={`u-${r.cityCode}`} className="text-[10px] tabular-nums">{num(r.staff)}</span>,
+              <span key={`p-${r.cityCode}`} className="text-[10px] tabular-nums">{num(r.properties)} prop · {num(r.files)} files</span>,
+              <span key={`o-${r.cityCode}`} className="text-[10px] tabular-nums">
+                {num(r.complaintsOpen)}/{num(r.complaintsTotal)} compl · {num(r.paymentsCount)} pay
+              </span>,
               <span key={`d-${r.cityCode}`} className="text-[10px] tabular-nums">complaint {r.complaintDecisionDays} · appeal {r.appealDays}</span>,
               canWrite ? (
                 confirmCode === r.cityCode ? (
@@ -127,13 +204,15 @@ export function CitiesAdmin() {
                     <ActionButton variant="ghost" onClick={() => setConfirmCode(null)}>Cancel</ActionButton>
                   </span>
                 ) : (
-                  <ActionButton
-                    key={`a-${r.cityCode}`}
-                    variant={r.isActive ? "outline" : "default"}
-                    onClick={() => setConfirmCode(r.cityCode)}
-                  >
-                    {r.isActive ? "Deactivate" : "Reactivate"}
-                  </ActionButton>
+                  <span key={`a-${r.cityCode}`} className="flex flex-wrap gap-1">
+                    <ActionButton variant="outline" disabled={busy} onClick={() => openEdit(r)}>Edit</ActionButton>
+                    <ActionButton
+                      variant={r.isActive ? "outline" : "default"}
+                      onClick={() => setConfirmCode(r.cityCode)}
+                    >
+                      {r.isActive ? "Deactivate" : "Reactivate"}
+                    </ActionButton>
+                  </span>
                 )
               ) : (
                 <span key={`a-${r.cityCode}`} className="text-[10px] text-muted-foreground">view only</span>
@@ -144,10 +223,50 @@ export function CitiesAdmin() {
         )}
       </Panel>
 
+      {/* Edit dialog ------------------------------------------------------- */}
+      <Dialog open={!!edit} onOpenChange={(o) => { if (!o) setEdit(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit city {edit?.cityCode}</DialogTitle>
+            <DialogDescription>
+              Change the city&apos;s identity and statutory parameters. Operational data (properties, files, complaints, payments) is never touched by an edit.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Field label="Name (English)"><TextField value={editForm.nameEn} onChange={(e) => setEditForm((f) => ({ ...f, nameEn: e.target.value }))} /></Field>
+              <Field label="ስም (አማርኛ)"><TextField value={editForm.nameAm} onChange={(e) => setEditForm((f) => ({ ...f, nameAm: e.target.value }))} /></Field>
+              <Field label="Maqaa (Afaan Oromoo)"><TextField value={editForm.nameOm} onChange={(e) => setEditForm((f) => ({ ...f, nameOm: e.target.value }))} /></Field>
+            </div>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <Field label="Primary legal language">
+                <SelectField value={editForm.canonicalLang} onChange={(v) => setEditForm((f) => ({ ...f, canonicalLang: v }))}
+                  options={[{ value: "am", label: "Amharic" }, { value: "om", label: "Afaan Oromoo" }, { value: "en", label: "English" }]} />
+              </Field>
+              <Field label="Complaint decision days">
+                <TextField type="number" min="1" value={editForm.complaintDecisionDays} onChange={(e) => setEditForm((f) => ({ ...f, complaintDecisionDays: e.target.value }))} />
+              </Field>
+              <Field label="Appeal window days">
+                <TextField type="number" min="1" value={editForm.appealDays} onChange={(e) => setEditForm((f) => ({ ...f, appealDays: e.target.value }))} />
+              </Field>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Bureau code {edit?.bureauCode} is permanent — it anchors this city&apos;s data isolation boundary.
+            </p>
+          </div>
+          <DialogFooter>
+            <ActionButton variant="ghost" onClick={() => setEdit(null)}>Cancel</ActionButton>
+            <ActionButton onClick={saveEdit} disabled={busy || !editForm.nameEn.trim()}>
+              {busy ? "Saving…" : "Save changes"}
+            </ActionButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Onboard form ----------------------------------------------------- */}
       <Panel
         title="Onboard a new city"
-        subtitle="When a new city requests the system, configure it here once — org skeleton, statutory parameters, model contract and starter team are created in one step. The city appears in the sign-in directory immediately."
+        subtitle="When a new city requests the system, configure it here once — org skeleton, statutory parameters, model contract and the city super-admin are created in one step. The city appears in the sign-in directory immediately."
       >
         <div className="grid grid-cols-1 gap-3">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
@@ -173,7 +292,7 @@ export function CitiesAdmin() {
           <div className="rounded-lg border bg-muted/20 p-3">
             <p className="text-xs font-semibold">City administrator (required)</p>
             <p className="mb-2 text-[11px] text-muted-foreground">
-              A city super-admin is created with the city — full authority over this city only: adds users, manages the office structure and runs all city operations. Fleet management stays with the system admin.
+              A city super-admin is created with the city — full authority over this city only: adds users, manages the office structure and runs all city operations. Fleet management stays with the system admin, and this account can never see another city&apos;s data.
             </p>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
               <Field label="City admin full name">

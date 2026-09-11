@@ -1,15 +1,22 @@
 // ============================================================================
-// /api/cities — fleet-level city administration for the system admin (and
-// read-only for the Ministry). A "city" is one BUREAU org-unit subtree plus a
-// CityConfig row (Dir. Arts. 2, 6, 13); onboarding one therefore creates the
-// org skeleton, the config, a starter model contract and an optional starter
-// team in ONE step so the city is immediately usable — no code changes.
-//   GET   : all cities (active AND deactivated) with per-city usage stats
-//   POST  : onboard a new city (org tree + config + contract + starter staff)
-//   PATCH : activate / deactivate a city — deactivation hides it from the
-//           login directory and blocks its officers at sign-in without
-//           touching any of their data; reactivation restores everything.
-// Capability: city:admin (MINISTRY_ANALYST read, SYSTEM_ADMIN full).
+// /api/cities — the SaaS control plane for the whole platform.
+// The system admin treats every deployment as ONE city plus this fleet
+// module; onboarding a city hands it the FULL system with its own city
+// super-admin, who is locked to that city (no cross-city data, ever).
+// A "city" is one BUREAU org-unit subtree plus a CityConfig row (Dir. Arts.
+// 2, 6, 13); onboarding creates the org skeleton, the config, a cloned model
+// contract and the mandatory city administrator in ONE step — no code changes.
+//   GET   : all cities (active AND deactivated) with per-city operational
+//           stats + the data the super-admin needs to read at regional level
+//           (fleet-wide totals are derived client-side from the same rows).
+//   POST  : onboard a new city (org tree + config + contract + city admin).
+//   PATCH : two modes —
+//           { cityCode, isActive }        -> activate / deactivate (soft
+//                                            suspension, data untouched);
+//           { cityCode, ...configFields } -> edit the city identity and
+//                                            statutory parameters.
+// Capability: GET reads need city:admin (MINISTRY_ANALYST read-only);
+// POST / PATCH mutations need city:write (SYSTEM_ADMIN only).
 // ============================================================================
 
 import { ok, fail, body } from "@/lib/api";
@@ -23,16 +30,22 @@ const AS_INT = (v: unknown, fallback: number) => {
   return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
 };
 
-// GET — the fleet table for /cities.
+const OPEN_COMPLAINT_STATUSES = ["INTAKE", "COMPLETENESS_VERIFIED", "UNDER_INVESTIGATION"];
+
+// GET — the fleet table for /cities. Per-city rows carry usage + operations
+// stats so the system admin sees data at REGIONAL level (all-city totals) and
+// can drill into CITY level through the switcher or each city's pages.
 export async function GET(req: Request) {
   try {
     await requireCapability(req, "city:admin");
-    const [units, configs, users, properties, files] = await Promise.all([
+    const [units, configs, users, properties, files, complaints, payments] = await Promise.all([
       db.orgUnit.findMany({ orderBy: { code: "asc" } }),
       db.cityConfig.findMany({ orderBy: { cityCode: "asc" } }),
       db.systemUser.findMany({ where: { isActive: true }, select: { orgUnitId: true } }),
       db.property.findMany({ select: { woredaId: true } }),
       db.registrationFile.findMany({ select: { woredaId: true } }),
+      db.complaint.findMany({ select: { receivedAtOrgUnitId: true, status: true } }),
+      db.payment.findMany({ select: { amount: true, file: { select: { woredaId: true } } } }),
     ]);
     const byParent = new Map<string | null, string[]>();
     for (const u of units) {
@@ -55,11 +68,14 @@ export async function GET(req: Request) {
       const tierOf = new Map(units.map((u) => [u.id, u.tier]));
       const woredaIds = ids.filter((id) => tierOf.get(id) === "WOREDA");
       const bureau = units.find((u) => u.id === c.bureauId);
+      const cityComplaints = complaints.filter((k) => ids.includes(k.receivedAtOrgUnitId));
+      const cityPayments = payments.filter((p) => woredaIds.includes(p.file.woredaId));
       return {
         cityCode: c.cityCode,
         nameEn: c.nameEn, nameAm: c.nameAm, nameOm: c.nameOm,
         bureauCode: bureau?.code ?? "—",
         canonicalLang: c.canonicalLang,
+        currency: c.currency,
         complaintDecisionDays: c.complaintDecisionDays,
         appealDays: c.appealDays,
         isActive: c.isActive,
@@ -68,6 +84,10 @@ export async function GET(req: Request) {
         staff: users.filter((u) => ids.includes(u.orgUnitId)).length,
         properties: properties.filter((p) => woredaIds.includes(p.woredaId)).length,
         files: files.filter((f) => woredaIds.includes(f.woredaId)).length,
+        complaintsOpen: cityComplaints.filter((k) => OPEN_COMPLAINT_STATUSES.includes(k.status)).length,
+        complaintsTotal: cityComplaints.length,
+        paymentsCount: cityPayments.length,
+        paymentsAmount: Math.round(cityPayments.reduce((s, p) => s + p.amount, 0)),
       };
     });
     return ok({ cities });
@@ -76,13 +96,15 @@ export async function GET(req: Request) {
   }
 }
 
-// POST — onboard a new city in one step. A CITY super-admin account is
-// created with the city (its staff code is returned); optional starter desks
-// (bureau head / registrar / stamper) can be requested alongside.
+// POST — onboard a new city in one step. The CITY super-admin account is
+// created with the city, ALWAYS (owner requirement): one account with full
+// authority over THIS city only (staff register, office structure, all city
+// operations); it can never see another city's data. Staff codes auto-issue
+// after the highest existing number so they never collide.
 export async function POST(req: Request) {
   try {
     return await withGuard(
-      req, "city:admin",
+      req, "city:write",
       { action: "CITY_ONBOARD", entity: "CityConfig", ref: (d: { cityCode: string }) => d.cityCode },
       async () => {
         const input = await body<Record<string, unknown>>(req);
@@ -103,6 +125,23 @@ export async function POST(req: Request) {
         const bureauCode = (String(input.bureauCode ?? "").trim().toUpperCase() || `${cityCode}-BUREAU`);
         const dupUnit = await db.orgUnit.findUnique({ where: { code: bureauCode } });
         if (dupUnit) throw new Error(`Org unit code ${bureauCode} is already registered.`);
+
+        // The city super-admin role must exist before the account is created.
+        // Seeded with the platform catalogue, upserted here so older database
+        // (e.g. the production Postgres) also accept onboarding unchanged.
+        await db.role.upsert({
+          where: { code: "CITY_ADMIN" },
+          update: {},
+          create: {
+            code: "CITY_ADMIN",
+            nameEn: "City Super-Administrator",
+            nameAm: "የከተማ ዋና አስተዳዳሪ",
+            nameOm: "Bulchaa Waggaa Magaalaa",
+            tierScope: "BUREAU",
+            legalNote:
+              "City Management: full authority over ONE city — staff register, office structure, all city operations; strictly no cross-city access.",
+          },
+        });
 
         // Starter org skeleton: bureau -> Central sub-city -> W01 woreda, so
         // the city is operational the moment it is onboarded (more units can
@@ -172,14 +211,10 @@ export async function POST(req: Request) {
           contractVersion = created.version;
         }
 
-        // City super-admin — created with the city, always (owner requirement):
-        // one account with full authority over THIS city only (staff register,
-        // office structure, all operations). Staff codes auto-issue after the
-        // highest existing number so they never collide with seeded registers.
         const all = await db.systemUser.findMany({ select: { staffCode: true } });
         let next = 1;
         for (const u of all) {
-          const m = /^(STF)-(\d+)$/.exec(u.staffCode);
+          const m = /^STF-(\d+)$/.exec(u.staffCode);
           if (m) next = Math.max(next, Number(m[1]) + 1);
         }
         const mk = () => `STF-${next++}`;
@@ -188,7 +223,7 @@ export async function POST(req: Request) {
           data: { staffCode: mk(), fullName: adminName, roleCode: "CITY_ADMIN", orgUnitId: bureau.id, language: canonicalLang },
         });
 
-        // Optional additional starter team (registrar / stamper desks).
+        // Optional additional starter team (bureau head / registrar / stamper).
         const team: string[] = [
           `${admin.staffCode} · CITY ADMIN — full authority over ${cityCode}`,
         ];
@@ -220,35 +255,79 @@ export async function POST(req: Request) {
   }
 }
 
-// PATCH — activate / deactivate a whole city. Deactivation is soft: data is
-// untouched, the city leaves the login directory and switcher, and its
-// city-scoped officers are refused at sign-in until reactivated.
+// PATCH — two modes (see header). Deactivation is soft: data is untouched,
+// the city leaves the login directory and switcher, and its city-scoped
+// officers are refused at sign-in until reactivated. Editing updates the
+// city identity (trilingual names) and statutory parameters in place.
 export async function PATCH(req: Request) {
   try {
     return await withGuard(
-      req, "city:admin",
-      { action: "CITY_STATUS_CHANGE", entity: "CityConfig", ref: (d: { cityCode: string }) => d.cityCode },
+      req, "city:write",
+      { action: "CITY_UPDATE", entity: "CityConfig", ref: (d: { cityCode: string }) => d.cityCode },
       async () => {
         const input = await body<Record<string, unknown>>(req);
         const cityCode = String(input.cityCode ?? "");
-        const isActive = Boolean(input.isActive);
         const config = await db.cityConfig.findUnique({ where: { cityCode } });
         if (!config) throw new Error(`Unknown city: ${cityCode}`);
-        if (config.isActive === isActive) {
-          throw new Error(`City ${cityCode} is already ${isActive ? "active" : "deactivated"}.`);
-        }
-        if (!isActive) {
-          const activeCount = await db.cityConfig.count({ where: { isActive: true } });
-          if (activeCount <= 1) {
-            throw new Error("At least one active city must remain. Activate another city first.");
+
+        // ---- Mode 1: activate / deactivate --------------------------------
+        if ("isActive" in input) {
+          const isActive = Boolean(input.isActive);
+          if (config.isActive === isActive) {
+            throw new Error(`City ${cityCode} is already ${isActive ? "active" : "deactivated"}.`);
           }
+          if (!isActive) {
+            const activeCount = await db.cityConfig.count({ where: { isActive: true } });
+            if (activeCount <= 1) {
+              throw new Error("At least one active city must remain. Activate another city first.");
+            }
+          }
+          const updated = await db.cityConfig.update({ where: { cityCode }, data: { isActive } });
+          return {
+            cityCode: updated.cityCode, isActive: updated.isActive,
+            message: isActive
+              ? `City ${updated.nameEn} reactivated — officers can sign in again.`
+              : `City ${updated.nameEn} deactivated — its officers can no longer sign in; all data is preserved.`,
+          };
         }
-        const updated = await db.cityConfig.update({ where: { cityCode }, data: { isActive } });
+
+        // ---- Mode 2: edit identity + statutory parameters ------------------
+        const data: Record<string, unknown> = {};
+        if (input.nameEn !== undefined) {
+          const v = String(input.nameEn).trim();
+          if (!v) throw new Error("City name (English) cannot be empty.");
+          data.nameEn = v;
+        }
+        if (input.nameAm !== undefined) data.nameAm = String(input.nameAm).trim() || config.nameEn;
+        if (input.nameOm !== undefined) data.nameOm = String(input.nameOm).trim() || config.nameEn;
+        if (input.canonicalLang !== undefined) {
+          const v = String(input.canonicalLang);
+          if (!["am", "en", "om"].includes(v)) throw new Error("Language must be am, en or om.");
+          data.canonicalLang = v;
+        }
+        if (input.complaintDecisionDays !== undefined) {
+          const v = AS_INT(input.complaintDecisionDays, config.complaintDecisionDays);
+          data.complaintDecisionDays = v;
+        }
+        if (input.appealDays !== undefined) {
+          const v = AS_INT(input.appealDays, config.appealDays);
+          data.appealDays = v;
+        }
+        if (input.currency !== undefined) {
+          data.currency = String(input.currency).slice(0, 8).toUpperCase() || config.currency;
+        }
+        if (input.workWeek !== undefined) {
+          data.workWeek = String(input.workWeek) === "MON-SAT" ? "MON-SAT" : "MON-FRI";
+        }
+        if (Object.keys(data).length === 0) {
+          throw new Error("Nothing to update — send the fields to edit (names, language, statutory days).");
+        }
+        const updated = await db.cityConfig.update({ where: { cityCode }, data });
         return {
-          cityCode: updated.cityCode, isActive: updated.isActive,
-          message: isActive
-            ? `City ${updated.nameEn} reactivated — officers can sign in again.`
-            : `City ${updated.nameEn} deactivated — its officers can no longer sign in; all data is preserved.`,
+          cityCode: updated.cityCode, nameEn: updated.nameEn,
+          canonicalLang: updated.canonicalLang,
+          complaintDecisionDays: updated.complaintDecisionDays, appealDays: updated.appealDays,
+          message: `City ${updated.nameEn} (${cityCode}) updated — changes apply to its configuration immediately; operational data is untouched.`,
         };
       },
     );

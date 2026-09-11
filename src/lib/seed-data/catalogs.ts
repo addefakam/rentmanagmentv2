@@ -37,6 +37,9 @@ export const ROLES = [
   { code: "COMMITTEE_MEMBER", nameEn: "Hearing Committee Member", nameAm: "የሰሚያ ኮሚቴ አባል", nameOm: "Miseensa Gargaarsa Dhageetti", tierScope: "CITY_COMMITTEE", legalNote: "Proc. Arts. 24-26: appeals heard within statutory windows." },
   { code: "MINISTRY_ANALYST", nameEn: "Ministry Analyst", nameAm: "የሚኒስትር ተንታኝ", nameOm: "Qorataa Ministeeraa", tierScope: "MINISTRY", legalNote: "Proc. Art. 18: national statistics and publication feed." },
   { code: "SYSTEM_ADMIN", nameEn: "System Administrator", nameAm: "የስርዓት አስተዳዳሪ", nameOm: "Bulchaa Sirnichaati", tierScope: "SYSTEM", legalNote: "Dir. Art. 14(4): IT system administration and configuration." },
+  // SaaS layer — the city super-admin account issued automatically when a
+  // city is onboarded from City Management. Full authority over ONE city.
+  { code: "CITY_ADMIN", nameEn: "City Super-Administrator", nameAm: "የከተማ ዋና አስተዳዳሪ", nameOm: "Bulchaa Waggaa Magaalaa", tierScope: "BUREAU", legalNote: "City Management: full authority over ONE city — staff register, office structure, all city operations; strictly no cross-city access." },
 ];
 
 export const IDENTIFICATION_TYPES = [
