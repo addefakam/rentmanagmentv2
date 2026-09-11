@@ -391,3 +391,21 @@ Stage Summary:
 - S7/S6 overlap fixed and verified visually with production-like data.
 - Panel/DataTable fixes are global: every module tab inherits containment + in-panel scrolling.
 - Owner side: still needs the 4 Vercel settings changes to make the deployment publicly visible.
+
+---
+Task ID: 20 (S2 M2/M3 layout overlap fix + platform-wide sweep)
+Agent: Main agent (Super Z)
+Task: Owner reported screen overlap on S2 Properties & Contract (M2, M3) after the Task 19 S7 fix.
+
+Work Log:
+- Confirmed eb2f102 (Task 19) already on origin/main; 942c499 (worklog append) was still unpushed.
+- Root cause identical class: panels-s2s3.tsx used implicit single-column `grid gap-*` stacks inside Panel (auto track = min-content sizing; wide unbreakable content blows the stack past the card). Task 19 hardened only panels-s6s7.tsx; every other panel file still carried the pattern.
+- Swept ALL platform components: panels-s2s3 (6), panels-s4s5 (6), panels-s1 (4), panels-p5 (3), panels-p6 (3), panels-p7 (2), panels-p8 (2), panels-evidence (2), console (2), kit.Field (1) — `grid gap-X` -> `grid grid-cols-1 gap-X` (minmax(0,1fr) track, kills min-content blowout). kit.DataTable wrapper gained min-w-0.
+- Verified with production build + seeded sqlite data + headless browser: S2 @1280 clean, S2 @1024 clean, S7 @1024 clean, S2 @390 (mobile) clean single column; documentElement.scrollWidth - clientWidth = 0 on every tab tested (S2/S6/S7).
+- Restored nothing (sqlite build was used throughout); killed temp server on 3120.
+- Committed fadda1d, pushed eb2f102..fadda1d (942c499 + fadda1d together).
+
+Stage Summary:
+- Every platform tab is now immune to the panel-overlap class of bug, not just S6/S7.
+- Verification screenshots in /home/z/my-project/download/: s2-after-fix-{1280,1024,390}.png, s7-after-fix-1024.png.
+- Owner side: Vercel will auto-deploy fadda1d if Git integration is live; otherwise redeploy from dashboard. The 4 Vercel settings from Task 19 are still required for public visibility.
