@@ -373,3 +373,21 @@ Work Log:
 Stage Summary:
 - English is now unambiguously the primary presented language; Amharic/Oromo remain selectable and data stays trilingual in the DB (legal requirement CR-01 intact).
 - Owner next: Vercel redeploy of f2a4460, hard refresh.
+
+---
+Task ID: 19 (S7 M10/M11 layout overlap fix)
+Agent: Main agent (Super Z)
+Task: Owner reported overlapped screen layout in S7 Data & Reports (M10, M11); also resolved the Vercel visibility mystery (deployment protection).
+
+Work Log:
+- Diagnosed owner's "can't see output": their URL is a DEPLOYMENT URL behind Vercel Authentication (Login - Vercel page served); bare project domain 404s = no production deployment. Gave 4-step Vercel fix (verify repo, production branch=main, disable Vercel Authentication, DATABASE_URL Production scope).
+- Reproduced the overlap faithfully: local next start against NEON (full data), headless-browser screenshot of S7 tab. Found: replication table's Status column, Run button and inputs painted ~120px past the left panel boundary into the Backup panel.
+- Root cause: panel content used `grid gap-2` with NO explicit column track -> implicit auto track sized to the wide table's max-content (long unbreakable tokens like REGISTRY_ENTRY AA-BOLE-W03/2026/0007) -> every child stretched past the card; Radix ScrollArea wrapper did not constrain; Panel had no overflow clipping.
+- Fix (3 layers): kit.Panel Card min-w-0 overflow-hidden (global overlap killer); kit.DataTable native div overflow-auto replaces Radix ScrollArea (tables scroll inside panels); panels-s6s7 inner grids grid-cols-1 (= minmax(0,1fr), kills min-content blowout) - 6 occurrences incl. S6 M7 panels.
+- Verified by screenshot: S7 clean (everything contained; wide table scrolls horizontally inside), S6 clean (forms + 400px/1fr grid unaffected).
+- Restored sqlite client; committed eb2f102, pushed f2a4460..eb2f102.
+
+Stage Summary:
+- S7/S6 overlap fixed and verified visually with production-like data.
+- Panel/DataTable fixes are global: every module tab inherits containment + in-panel scrolling.
+- Owner side: still needs the 4 Vercel settings changes to make the deployment publicly visible.
