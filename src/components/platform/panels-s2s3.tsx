@@ -129,7 +129,7 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
                 </Field>
               </div>
               <Field label="New English content"><TextField value={amend.contentEn} onChange={(e) => setAmend({ ...amend, contentEn: e.target.value })} /></Field>
-              <Field label="አዲስ የአማርኛ ይዘት"><TextField value={amend.contentAm} onChange={(e) => setAmend({ ...amend, contentAm: e.target.value })} /></Field>
+              <Field label="New Amharic content (አዲስ የአማርኛ ይዘት)"><TextField value={amend.contentAm} onChange={(e) => setAmend({ ...amend, contentAm: e.target.value })} /></Field>
               <Field label="Fe'ee Afaan Oromoo haaraa"><TextField value={amend.contentOm} onChange={(e) => setAmend({ ...amend, contentOm: e.target.value })} /></Field>
               <ActionButton onClick={amendContract} disabled={!amend.sectionCode || !amend.newVersion}>Issue amended version</ActionButton>
               <RuleNote lang={lang} />

@@ -17,6 +17,23 @@ type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> 
 const orgName = (o: { nameEn: string; nameAm: string; nameOm: string }, lang: Lang) =>
   lang === "am" ? o.nameAm : lang === "om" ? o.nameOm || o.nameEn : o.nameEn;
 
+// English-first dual-line name cell: primary name per selected UI language,
+// with the Amharic (or English, when Amharic is selected) shown small underneath.
+function OrgNameDual({ o, lang }: { o: { nameEn: string; nameAm: string; nameOm: string }; lang: Lang }) {
+  const primary = orgName(o, lang);
+  const secondary = lang === "am" ? o.nameEn : o.nameAm;
+  return (
+    <div className="leading-tight">
+      <div>{primary}</div>
+      {secondary && secondary !== primary ? (
+        <div className="text-[10px] text-muted-foreground" dir="rtl" style={{ textAlign: "left" }}>
+          {secondary}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // Phase 5 RBAC: every mutating call carries the acting officer's staff code.
 // Default is the woreda registrar; privileged panels pass an explicit actor
 // (see STF map in types.ts) so the console demonstrates role separation.
@@ -64,7 +81,7 @@ export function AdminPanel({ boot, lang, refresh }: PanelProps) {
           <DataTable
             headers={["Woreda", "Code", "Register status", "Basis"]}
             rows={woredas.map((w) => [
-              orgName(w, lang),
+              <OrgNameDual key={`n-${w.id}`} o={w} lang={lang} />,
               <span key={w.id} className="font-mono text-[10px]">{w.code}</span>,
               w.confirmationStatus === "CONFIRMED"
                 ? <StatusBadge key={`c-${w.id}`} value="CONFIRMED" />
@@ -81,7 +98,7 @@ export function AdminPanel({ boot, lang, refresh }: PanelProps) {
           <DataTable
             headers={["Role", "Scope", "Legal note"]}
             rows={boot.roles.map((r) => [
-              `${orgName(r, lang)}`,
+              <OrgNameDual key={`r-${r.id}`} o={r} lang={lang} />,
               <Badge key={r.id} variant="outline" className="text-[10px]">{r.tierScope}</Badge>,
               <span key={`n-${r.id}`} className="line-clamp-1 max-w-[260px]">{r.legalNote}</span>,
             ])}
@@ -92,7 +109,7 @@ export function AdminPanel({ boot, lang, refresh }: PanelProps) {
             headers={["Staff", "Role", "Org unit", "UI language"]}
             rows={boot.staff.map((s) => [
               s.fullName,
-              orgName(s.role, lang),
+              <OrgNameDual key={`sr-${s.id}`} o={s.role} lang={lang} />,
               <span key={s.id} className="font-mono text-[10px]">{s.orgUnit.code}</span>,
               s.language.toUpperCase(),
             ])}

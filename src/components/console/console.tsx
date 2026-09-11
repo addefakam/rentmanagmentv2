@@ -51,9 +51,12 @@ export default function Console({ data }: { data: ConsoleData }) {
     return lang === "am" ? r.am : lang === "om" ? (r.om || r.en) : r.en;
   };
 
-  const langOptions: { code: Lang; label: string }[] = data.languages
-    .sort((a, b) => a.code.localeCompare(b.code))
-    .map((l) => ({ code: l.code as Lang, label: l.nameNative }));
+  // English first, then Amharic, then Afan Oromo (fixed presentation order,
+  // independent of the alphabetical accident of the language codes).
+  const langOrder: Record<string, number> = { en: 0, am: 1, om: 2 };
+  const langOptions: { code: Lang; label: string; title: string }[] = data.languages
+    .sort((a, b) => (langOrder[a.code] ?? 9) - (langOrder[b.code] ?? 9))
+    .map((l) => ({ code: l.code as Lang, label: l.nameNative, title: l.nameEn }));
 
   const tabs = [
     { id: "overview" as const, label: t("app.phase", "Overview"), short: "Overview" },
@@ -86,8 +89,13 @@ export default function Console({ data }: { data: ConsoleData }) {
                   <button
                     key={o.code}
                     onClick={() => setLang(o.code)}
-                    className={`px-3 py-1.5 text-sm transition-colors ${
-                      lang === o.code ? "bg-emerald-500 text-emerald-950 font-semibold" : "bg-transparent hover:bg-emerald-900"
+                    title={o.title}
+                    className={`transition-colors ${
+                      o.code === "en"
+                        ? "px-3 py-1.5 text-sm" // English is the primary interface language
+                        : "px-2.5 py-1 text-xs opacity-80" // Amharic / Oromo: secondary, smaller
+                    } ${
+                      lang === o.code ? "bg-emerald-500 text-emerald-950 font-semibold opacity-100" : "bg-transparent hover:bg-emerald-900"
                     }`}
                     aria-pressed={lang === o.code}
                   >
@@ -136,7 +144,7 @@ export default function Console({ data }: { data: ConsoleData }) {
       <footer className="mt-auto bg-white border-t border-stone-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 text-xs text-stone-500 flex flex-col sm:flex-row justify-between gap-1">
           <span>Rent Control and Administration System Project · Phase 3 deliverable · SRS v1.1 (CR-01)</span>
-          <span>Release v0.3.0 · Trilingual: አማርኛ · English · Afaan Oromoo</span>
+          <span>Release v0.3.0 · Trilingual platform: English · Amharic · Afan Oromo</span>
         </div>
       </footer>
     </div>

@@ -359,7 +359,7 @@ export function ConfigurationPanel({ data, lang, t }: { data: ConsoleData; lang:
                 <thead className="bg-stone-50 sticky top-0">
                   <tr>
                     <th className="text-left px-3 py-2 font-medium text-stone-500">Key</th>
-                    <th className="text-left px-3 py-2 font-medium text-stone-500">አማርኛ</th>
+                    <th className="text-left px-3 py-2 font-medium text-stone-500">Amharic (አማርኛ)</th>
                     <th className="text-left px-3 py-2 font-medium text-stone-500">English</th>
                     <th className="text-left px-3 py-2 font-medium text-stone-500">Afaan Oromoo</th>
                   </tr>

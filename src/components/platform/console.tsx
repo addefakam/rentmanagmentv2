@@ -81,9 +81,9 @@ export default function PlatformConsole() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="am">አማርኛ</SelectItem>
                 <SelectItem value="en">English</SelectItem>
-                <SelectItem value="om">Afaan Oromoo</SelectItem>
+                <SelectItem value="am">አማርኛ · Amharic</SelectItem>
+                <SelectItem value="om">Afaan Oromoo · Oromo</SelectItem>
               </SelectContent>
             </Select>
           </div>
