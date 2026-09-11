@@ -45,7 +45,7 @@ export function Stat({ label, value, hint }: { label: string; value: string | nu
 
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="grid gap-1">
+    <div className="grid grid-cols-1 gap-1">
       <Label className="text-xs text-muted-foreground">{label}</Label>
       {children}
     </div>
@@ -108,7 +108,7 @@ export function DataTable({ headers, rows, empty }: { headers: string[]; rows: R
     // Native scroll area (not Radix ScrollArea): wide tables scroll horizontally
     // inside the panel instead of stretching the panel grid and overlapping
     // neighbouring cards; tall tables scroll vertically past max-h-96.
-    <div className="max-h-96 w-full overflow-auto">
+    <div className="max-h-96 w-full min-w-0 overflow-auto">
       <Table>
         <TableHeader><TableRow>{headers.map((h) => <TableHead key={h} className="text-xs whitespace-nowrap">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>

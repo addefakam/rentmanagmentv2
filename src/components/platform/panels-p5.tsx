@@ -73,7 +73,7 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
   const cityPeak = data.perf.profiles.find((p) => (p as { profile: string }).profile === "CITY_PEAK") as { p95?: number } | undefined;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Compliance matrix" value={`${data.summary.pass}/${data.summary.rows}`} hint="legal rules passing (no failed rule at G5)" />
         <Stat label="Automated battery" value={`${data.summary.testTotals.pass} pass`} hint={`${data.summary.testTotals.fail} fail · 5 suites`} />
@@ -107,7 +107,7 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Security assessment · ASVS L2" subtitle="Access control between tiers (V4) and audit-trail integrity (V7) enforced at the API guard.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <p className="text-xs text-muted-foreground">
               {data.capabilities.length} capabilities enforced over 13 roles; anonymous calls refused (403);
               wrong-tier roles refused; stamping separated from certification (Dir. Art. 9).
@@ -124,7 +124,7 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
           </div>
         </Panel>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <Panel title="Performance vs NFR-01" subtitle={`Generated ${data.perf.generatedAt.slice(0, 19).replace("T", " ")} · sandbox scaled; report documents projection to 500 VUs.`}>
             <DataTable
               headers={["Profile", "VUs", "Requests", "p50 ms", "p95 ms", "p99 ms", "RPS", "Err %"]}

@@ -85,7 +85,7 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
   );
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Legacy migration" value={`${data.migrations.length}/${data.books.length} rows`} hint="Dir. Art. 8(2) annotated intake" />
         <Stat label="Reconciliation" value={`${data.latestByWoreda.filter((r) => r.balanced).length}/${data.latestByWoreda.length} woredas balanced`} hint="Dir. Art. 13 custody" />
@@ -180,7 +180,7 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
               <Badge key={`s-${d.id}`} variant={d.severity === "NONE" ? "outline" : d.severity === "SEV4" ? "secondary" : "destructive"} className="text-[9px]">{d.severity}</Badge>,
             ]) ?? []}
           />
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className={`rounded-md border p-3 ${exit.ready ? "border-green-600/40 bg-green-50" : "border-red-600/40 bg-red-50"}`}>
               <p className="text-xs font-bold">Gate G7 exit check — {exit.ready ? "ALL CRITERIA MET" : "NOT READY"}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">

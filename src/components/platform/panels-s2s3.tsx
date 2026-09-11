@@ -51,10 +51,10 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
         <Panel title="M2 · Register property" subtitle="Proc. Arts. 2, 10; Dir. Art. 6: at the house woreda. Status sets the exemption clock (new 4y / vacant 2y).">
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Woreda">
                 <SelectField value={pf.woredaId} onChange={(v) => set("woredaId", v)}
@@ -116,7 +116,7 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
       <Panel title="M3 · Model contract studio" subtitle="Proc. Art. 5; Dir. Art. 4: the Bureau amends and distributes the template; versions are immutable and superseded, never edited.">
         {boot.activeContract ? (
           <div className="grid gap-3 lg:grid-cols-[380px_1fr]">
-            <div className="grid gap-2">
+            <div className="grid grid-cols-1 gap-2">
               <div className="rounded border bg-muted/30 p-3 text-xs">
                 <div className="font-semibold">Active: {boot.activeContract.version} · {boot.activeContract.status} · canonical {boot.activeContract.canonicalLang.toUpperCase()}</div>
                 <div className="text-muted-foreground">{boot.activeContract.sections.length} sections · issued by {boot.activeContract.issuedBy}</div>
@@ -186,10 +186,10 @@ export function RegistrationPanel({ boot, lang, refresh }: PanelProps) {
   const sel = boot.files.find((f) => f.id === selId) ?? boot.files[0];
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
         <Panel title="M4 · Present registration file" subtitle="Proc. Arts. 4, 6, 12, 13: ≥2-year term, ≤2 months advance, electronic payment, three witnesses. Legacy contracts carry the Art. 7 30+3-day annotation.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Woreda">
                 <SelectField value={ff.woredaId} onChange={(v) => set("woredaId", v)}
@@ -241,7 +241,7 @@ export function RegistrationPanel({ boot, lang, refresh }: PanelProps) {
         </Panel>
 
         <Panel title="M4 · Registrar workflow" subtitle="Nine-point checklist (Dir. Arts. 6-9) → certification → stamping desk → registration in the numbered registry book.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <Field label="Select file">
               <SelectField value={sel?.id ?? ""} onChange={setSelId}
                 options={boot.files.slice(0, 50).map((f) => ({ value: f.id, label: `${f.fileNumber} · ${f.status}` }))} placeholder="Pick file" />

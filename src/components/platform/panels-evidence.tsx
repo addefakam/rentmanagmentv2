@@ -51,7 +51,7 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <Panel
         title="Gate G4 · Exit checklist"
         subtitle="Plan §5.5: all seven increments demonstrated; functionally complete against the SRS; no severity-1/2 defects open."
@@ -73,7 +73,7 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
         title="Phase 3 evidence · Staged promotion (re-runnable)"
         subtitle="Plan §5.4 exit: staged promotion runs end to end; seeded hierarchy matches the official structure. Re-running here proves the Phase 4 schema still passes the same validation battery."
       >
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <div>
             <Button size="sm" onClick={promote} disabled={running}>
               {running ? "Promoting…" : t("act.run", lang) + " staged promotion"}

@@ -98,7 +98,7 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
   const wave1Live = wave1?.status === "LIVE";
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="Wave rollout" value={`${data.waves.filter((w) => w.status === "LIVE").length} live / ${data.waves.length} waves`} hint={wave1Live ? "Wave 1 live under the G8 order" : "pilot \u2192 sub-city \u2192 city-wide \u2192 replication prep"} />
         <Stat label="Cutover checklist" value={`${greenCount}/${greenTotal} GREEN`} hint={wave1Live ? "Wave 1 executed; Wave 2 prepared, order pending" : `Wave 1 status: ${wave1?.status ?? "-"}`} />
@@ -261,7 +261,7 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="Configuration freeze & authentication posture" subtitle="The governed configuration set is hash-frozen; the DEF-06-01 read-path hardening is armed and drilled.">
-          <div className="grid gap-2 text-[11px]">
+          <div className="grid grid-cols-1 gap-2 text-[11px]">
             <p><span className="font-medium">Freeze:</span> {data.freeze.frozen ? `${data.freeze.version} · ${data.freeze.itemCount} items · hash ${data.freeze.hash?.slice(0, 16)}… · ${data.freeze.matches ? "verified" : "MISMATCH"}` : "not frozen"}</p>
             <p><span className="font-medium">Auth mode:</span> <span className="font-mono">{data.authMode}</span> {data.authMode === "demo" ? "(console review surface open; production enforcement armed)" : "(production sessions required on guarded reads)"}</p>
             <p><span className="font-medium">Latest drills:</span> RESTORE {latestDrill("RESTORE")?.result ?? "-"} · ROLLBACK {latestDrill("ROLLBACK")?.result ?? "-"} · SESSION_HARDENING {latestDrill("SESSION_HARDENING")?.result ?? "-"} · PERF_RERUN {latestDrill("PERF_RERUN")?.result ?? "-"}</p>

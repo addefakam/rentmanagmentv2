@@ -105,7 +105,7 @@ export default function PlatformConsole() {
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-4">
         {loading || !boot ? (
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-64 w-full" />
             <p className="text-center text-xs text-muted-foreground">{tr("state.loading")}</p>
@@ -151,7 +151,7 @@ function OverviewPanel({ boot, lang, onTab }: { boot: BootPayload; lang: Lang; o
     { key: "S7", name: "Data & Reporting", modules: "M10, M11", highlight: "Tier replication, backups; aggregation, dashboards, publication feed", tab: "data", count: boot.replications.length },
   ];
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         <Stat label="Registered contracts" value={boot.counts.registeredFiles} />
         <Stat label="Properties" value={boot.counts.properties} />

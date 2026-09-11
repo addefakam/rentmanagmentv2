@@ -79,7 +79,7 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
   const ls = data.legalSession;
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Stat label="UAT battery" value={run ? `${run.summary.scenariosPassed}/${run.summary.scenarios} scenarios` : "not run"} hint={run ? `${run.summary.stepsPassed}/${run.summary.stepsTotal} steps · ${run.summary.verdict}` : "run the battery to attach results"} />
         <Stat label="Legal walkthrough" value={`${ls.counts.confirmed + ls.counts.confirmedWithDisposition}/${ls.counts.rows}`} hint={`${ls.counts.confirmedWithDisposition} with disposition · ${ls.counts.deviations} deviations`} />
@@ -146,7 +146,7 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
               <span key={`n-${w.id}`} className="block max-w-[300px] text-[10px] text-muted-foreground">{w.note}</span>,
             ])}
           />
-          <div className="grid gap-3">
+          <div className="grid grid-cols-1 gap-3">
             <div className="rounded-md border bg-muted/30 p-3">
               <p className="text-xs font-semibold">Memorandum {ls.memorandum.reference} — {ls.memorandum.subject}</p>
               <p className="mt-1 text-[11px] text-muted-foreground">{t("lang.fallback", lang)}</p>
@@ -197,7 +197,7 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
           </div>
         </Panel>
 
-        <div className="grid gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <Panel title="Trilingual catalogue (CR-01 / NFR-06)" subtitle="Seeded localization surface rehearsed by UAT-08.">
             <DataTable
               headers={["Language", "Native name", "Status"]}

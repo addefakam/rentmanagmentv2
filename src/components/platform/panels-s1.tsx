@@ -65,7 +65,7 @@ export function AdminPanel({ boot, lang, refresh }: PanelProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel title="M13 · Organization hierarchy" subtitle="Directive Arts. 2, 6: Ministry → Bureau → Sub-city → Woreda. Register at the woreda where the house is located (Dir. Art. 6).">
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Field label="Sub-city">
             <SelectField
               value={subCityId || subCities[0]?.id || ""}
@@ -93,7 +93,7 @@ export function AdminPanel({ boot, lang, refresh }: PanelProps) {
         </div>
       </Panel>
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Panel title="M13 · Role catalogue" subtitle="SRS actor definitions, tier-scoped, trilingual (CR-01).">
           <DataTable
             headers={["Role", "Scope", "Legal note"]}
@@ -159,7 +159,7 @@ export function PartiesPanel({ boot, lang, refresh }: PanelProps) {
   return (
     <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
       <Panel title="M1 · Onboard party" subtitle="Proc. Arts. 4, 7; Dir. Art. 7: identification original + copy; proxy needs two witnesses. Deaf-party data feeds the interpreter flow (Dir. Art. 8).">
-        <div className="grid gap-3">
+        <div className="grid grid-cols-1 gap-3">
           <Field label="Party type">
             <SelectField value={form.type} onChange={(v) => set("type", v)}
               options={[{ value: "LANDLORD", label: "Landlord" }, { value: "TENANT", label: "Tenant" }, { value: "AGENT", label: "Agent / Proxy" }]} />
@@ -183,7 +183,7 @@ export function PartiesPanel({ boot, lang, refresh }: PanelProps) {
           </div>
           <BoolField checked={form.isDeaf} onChange={(v) => set("isDeaf", v)} label="Deaf party (uses sign language)" />
           {form.type === "AGENT" && (
-            <div className="grid gap-2 rounded border bg-muted/30 p-2">
+            <div className="grid grid-cols-1 gap-2 rounded border bg-muted/30 p-2">
               <p className="text-[11px] font-medium">Proxy documentation (Dir. Art. 7)</p>
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Proxy name"><TextField value={form.proxyName} onChange={(e) => set("proxyName", e.target.value)} /></Field>

@@ -50,10 +50,10 @@ export function RentPanel({ boot, lang, refresh }: PanelProps) {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M5 · Annual adjustment" subtitle="Proc. Art. 8; Dir. Art. 11: publish June 1, effect June 30; pre-effect amendment check during June; 30-working-day amendment window after effect.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Year"><TextField type="number" value={adj.year} onChange={(e) => setAdj({ ...adj, year: e.target.value })} /></Field>
               <Field label="Percentage"><TextField type="number" value={adj.percentage} onChange={(e) => setAdj({ ...adj, percentage: e.target.value })} /></Field>
@@ -91,7 +91,7 @@ export function RentPanel({ boot, lang, refresh }: PanelProps) {
 
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M6 · Record payment" subtitle="Proc. Art. 13: only bank / legal electronic channels. A cash entry is flagged and auto-computes the 10% referral case (Dir. Art. 22). Prepayment cap 2 months (Art. 12).">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <SelectField value={pay.fileId} onChange={(v) => {
               const f = registered.find((x) => x.id === v);
               setPay({ ...pay, fileId: v, amount: f ? String(f.monthlyRent) : pay.amount });
@@ -172,10 +172,10 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
   };
 
   return (
-    <div className="grid gap-4">
+    <div className="grid grid-cols-1 gap-4">
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M8 · Intake complaint" subtitle="Dir. Arts. 17-19: eight-grounds checklist, multichannel (written / verbal / telephone / online), completeness check, complaint register.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Channel">
                 <SelectField value={cf.channel} onChange={(v) => set("channel", v)}
@@ -222,7 +222,7 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
 
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M8 · File appeal" subtitle="Proc. Art. 24: within 15 days of the decision; the window is validated and expired filings are rejected.">
-          <div className="grid gap-2">
+          <div className="grid grid-cols-1 gap-2">
             <SelectField value={ap.complaintId} onChange={(v) => setAp({ ...ap, complaintId: v })}
               options={decided.map((c) => ({ value: c.id, label: `${c.refNumber} (${c.decision})` }))} placeholder="Decided complaint" />
             <Field label="Appellant name"><TextField value={ap.appellantName} onChange={(e) => setAp({ ...ap, appellantName: e.target.value })} /></Field>
