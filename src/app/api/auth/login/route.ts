@@ -23,10 +23,22 @@ export async function POST(req: Request) {
     }
     const [units, configs] = await Promise.all([
       db.orgUnit.findMany({ orderBy: { code: "asc" } }),
-      db.cityConfig.findMany({ where: { isActive: true } }),
+      db.cityConfig.findMany({ orderBy: { cityCode: "asc" } }),
     ]);
     const cityCode = cityCodeForOrgUnit(units as never, configs as never, user.orgUnitId);
     const national = isNationalRole(user.roleCode);
+    // City fleet administration: a deactivated city refuses sign-in for its
+    // own officers (soft suspension — data is untouched, reactivation restores
+    // access). National officers are never city-bound, so they pass through.
+    if (!national && cityCode) {
+      const cfg = configs.find((c) => c.cityCode === cityCode);
+      if (cfg && !cfg.isActive) {
+        return Response.json(
+          { ok: false, error: `${cfg.nameEn} is currently deactivated by the system administrator. Contact the Ministry help desk.` },
+          { status: 403 },
+        );
+      }
+    }
     const officer = {
       staffCode: user.staffCode,
       fullName: user.fullName,

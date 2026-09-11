@@ -11,7 +11,7 @@ export interface IdType { id: string; code: string; nameEn: string; nameAm: stri
 export interface StatusType { id: string; code: string; nameEn: string; nameAm: string; nameOm: string; exemptionMonths: number | null; legalBasis?: string | null; }
 export interface Ground { id: string; code: string; nameEn: string; nameAm: string; nameOm: string; legalBasis: string; }
 export interface CityConfig { id: string; cityCode: string; nameEn: string; nameAm: string; nameOm: string; currency: string; workWeek: string; minLeaseYears: number; maxPrepayMonths: number; canonicalLang: string; complaintDecisionDays: number; appealDays: number; bureauId?: string | null; }
-export interface CityInfo { cityCode: string; nameEn: string; nameAm: string; nameOm: string; bureauCode: string; currency?: string; canonicalLang?: string; }
+export interface CityInfo { cityCode: string; nameEn: string; nameAm: string; nameOm: string; bureauCode: string; currency?: string; canonicalLang?: string; isActive?: boolean; }
 export interface Staff { id: string; fullName: string; roleCode: string; language: string; role: Role; orgUnit: OrgUnit; }
 export interface ContractSection { id: string; orderNo: number; code: string; titleEn: string; titleAm: string; titleOm: string; contentEn?: string | null; contentAm?: string | null; contentOm?: string | null; certificationStatus: string; legalBasis?: string | null; }
 export interface ModelContract { id: string; version: string; status: string; issuedBy: string; legalBasis: string; effectiveFrom: string; canonicalLang: string; sections: ContractSection[]; }

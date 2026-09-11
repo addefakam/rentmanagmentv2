@@ -68,6 +68,7 @@ export const CAPABILITIES: Record<string, string[]> = {
   "setting:manage": ["SYSTEM_ADMIN"], // platform settings incl. auth_mode switch
   // Multi-city administration (per-city rule sets, Dir. Art. 14)
   "city:manage": ["BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // city identity + statutory params
+  "city:admin": ["MINISTRY_ANALYST", "SYSTEM_ADMIN"], // fleet-level: onboard / activate / deactivate whole cities
   "ladder:manage": ["BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // penalty ladder values
   "org:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // sub-city / woreda register
   // Read capabilities enforced when auth_mode = production (DEF-06-01)

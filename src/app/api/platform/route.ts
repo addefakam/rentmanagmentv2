@@ -9,18 +9,32 @@
 import { db } from "@/lib/db";
 import { ok, fail } from "@/lib/api";
 import { cityScope } from "@/lib/city";
+import { currentOfficer } from "@/lib/auth/officer";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
     const requested = new URL(req.url).searchParams.get("city");
+    const officer = await currentOfficer();
 
     // --- scope resolution -------------------------------------------------
     const allUnits = await db.orgUnit.findMany({ orderBy: { code: "asc" } });
-    const configs = await db.cityConfig.findMany({ where: { isActive: true }, orderBy: { cityCode: "asc" } });
+    const allConfigs = await db.cityConfig.findMany({ orderBy: { cityCode: "asc" } });
+    // A deactivated city stays browsable only for national officers (ministry
+    // / system admin oversight); a city-scoped officer gets a 403, which the
+    // console shell translates into a fresh sign-in.
+    const requestedCity = requested ?? officer?.cityCode ?? null;
+    const requestedCfg = allConfigs.find((c) => c.cityCode === requestedCity);
+    if (requestedCfg && !requestedCfg.isActive && !officer?.national) {
+      return Response.json(
+        { ok: false, error: `${requestedCfg.nameEn} is deactivated. Sign in again or contact the system administrator.` },
+        { status: 403 },
+      );
+    }
+    const configs = officer?.national ? allConfigs : allConfigs.filter((c) => c.isActive);
     const activeCity =
-      configs.find((c) => c.cityCode === requested)?.cityCode ?? configs[0]?.cityCode ?? "AA";
+      configs.find((c) => c.cityCode === requestedCity)?.cityCode ?? configs[0]?.cityCode ?? "AA";
     const scope = cityScope(allUnits as never, configs as never, activeCity);
     const { woredaIds, subCityIds, unitIds } = scope;
 
@@ -122,7 +136,7 @@ export async function GET(req: Request) {
       return {
         cityCode: c.cityCode, nameEn: c.nameEn, nameAm: c.nameAm, nameOm: c.nameOm,
         bureauCode: bureau?.code ?? "—", currency: c.currency,
-        canonicalLang: c.canonicalLang,
+        canonicalLang: c.canonicalLang, isActive: c.isActive,
       };
     });
 

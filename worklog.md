@@ -430,3 +430,26 @@ Stage Summary:
 - One deployment now runs many cities; onboarding = seed org tree + CityConfig + contract (Adama is the worked example).
 - Every operation moved from the crowded single page to its own URL with role-aware navigation.
 - Owner: Vercel redeploy picks this up; login codes listed on the login card. Old tab URL / still works (dashboard).
+
+---
+Task ID: 22
+Agent: main (Super Z)
+Task: City Management — system admin can onboard new cities with one configuration form and activate/deactivate any city
+
+Work Log:
+- Added city:admin capability (MINISTRY_ANALYST read, SYSTEM_ADMIN full) in src/lib/security/authz.ts
+- New /api/cities route: GET fleet list (all cities incl. inactive + usage stats), POST onboard (org skeleton bureau→Central→W01 + CityConfig + cloned model contract + optional auto-coded starter team), PATCH activate/deactivate (soft suspension; last-active-city guard)
+- Login route now loads ALL city configs and rejects city-scoped officers of a deactivated city (403, named message); national officers pass
+- Platform boot: 403 for non-national viewing a deactivated city; cities payload carries isActive
+- shell.tsx: boot 403 → toast + redirect /login; switcher marks "(deactivated)"; Globe2 icon
+- rbac-pages: /cities → MINISTRY_ANALYST + SYSTEM_ADMIN; nav item in admin group; i18n nav.cities (en/am/om)
+- New panels-cities.tsx (fleet table + onboard form with two-click confirm + success card) + (console)/cities/page.tsx
+- Fixed global bug in call() (panels-s1): GET/HEAD requests no longer attach a fetch body (TypeError made every GET silently fail); network errors now toast
+- E2E browser-verified: onboarded HAW Hawassa (HAW-BUREAU→HAW-CENTRAL→W01, STF-1006 Tigist Alemu head, STF-1007 Yonas Girma registrar, contract HAW-1.0 with 10 sections); HAW staff login works & isolated; deactivate HAW → removed from login directory + API 403 for its staff; reactivate restores; city:admin denies bureau head/registrar; /cities 403 card for registrar; zero horizontal overflow at 390/1280
+- Regenerated Prisma client for SQLite (stale postgres client from previous session broke all APIs)
+
+Stage Summary:
+- New city onboarding = one form, zero code: available immediately in sign-in directory and national switcher
+- Deactivation is a soft suspension preserving all data; guarded so one active city always remains
+- Hawassa left ACTIVE as a live third-city demo (reactivate/deactivate anytime from /cities)
+- Screenshots: download/cities-desktop.png, download/cities-mobile.png

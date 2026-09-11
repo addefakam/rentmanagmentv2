@@ -23,6 +23,7 @@ const D: Dict = {
   "nav.data": ["S7 · Data & Reports (M10, M11)", "S7 · ዳታ እና ሪፖርት (M10, M11)", "S7 · Daataa fi Gabaasa (M10, M11)"],
   "nav.dashboard": ["Dashboard", "ዳሽቦርድ", "Gabatee Dalallaa"],
   "nav.settings": ["City Settings", "የከተማ ቅንብሮች", "Qindaa'ina Magaalaa"],
+  "nav.cities": ["City Management", "የከተማ አስተዳደር", "Bulchiinsa Magaalota"],
   "nav.evidence_p": ["Evidence & Gates", "ማስረጃዎች እና ጌቶች", "Ragaafi fi Dalaloota"],
   "nav.group.overview": ["Overview", "አጠቃላይ", "Ilaalcha"],
   "nav.group.registry": ["Registry", "ምዝገባ", "Galmee"],

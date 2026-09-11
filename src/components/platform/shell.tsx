@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Building2, FileCheck2, Banknote, MessageSquareWarning,
   ShieldAlert, BarChart3, Settings, FolderGit2, LogOut, Languages, MapPin,
-  Menu, ClipboardCheck, Truck, Rocket, FlaskConical,
+  Menu, ClipboardCheck, Truck, Rocket, FlaskConical, Globe2,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -57,7 +57,7 @@ const GROUP_ICONS: Record<string, typeof LayoutDashboard> = {
   "/": LayoutDashboard, "/parties": Users, "/properties": Building2,
   "/registration": FileCheck2, "/rent": Banknote, "/complaints": MessageSquareWarning,
   "/enforcement": ShieldAlert, "/reports": BarChart3, "/settings": Settings,
-  "/project": FolderGit2, "/project/testing": FlaskConical,
+  "/cities": Globe2, "/project": FolderGit2, "/project/testing": FlaskConical,
   "/project/uat": ClipboardCheck, "/project/pilot": Truck, "/project/golive": Rocket,
 };
 
@@ -77,6 +77,13 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
     try {
       const target = cityCode ?? city;
       const res = await fetch(`/api/platform?city=${encodeURIComponent(target)}`, { cache: "no-store" });
+      if (res.status === 403) {
+        // The officer's city was deactivated by the system administrator —
+        // the session can no longer resolve a live city, so re-authenticate.
+        toast.error("Your city access was deactivated. Please sign in again.");
+        window.location.href = "/login";
+        return;
+      }
       const json = await res.json();
       if (json.ok) {
         setBoot(json.data as BootPayload);
@@ -180,7 +187,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
                   <SelectContent>
                     {boot.cities.map((c) => (
                       <SelectItem key={c.cityCode} value={c.cityCode}>
-                        {c.nameEn} · {c.cityCode}
+                        {c.nameEn} · {c.cityCode}{!c.isActive ? " (deactivated)" : ""}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -48,15 +48,19 @@ export function setCallContext(ctx: Partial<CallContext>) {
 }
 
 export async function call(url: string, method: string, payload: unknown, actor?: string) {
+  const m = method.toUpperCase();
   const res = await fetch(url, {
-    method,
+    method: m,
     headers: {
       "Content-Type": "application/json",
       "x-staff-code": actor ?? callCtx.staffCode ?? DEFAULT_ACTOR,
       ...(callCtx.cityCode ? { "x-city-code": callCtx.cityCode } : {}),
     },
-    body: JSON.stringify(payload),
-  });
+    // GET/HEAD requests cannot carry a body — fetch throws TypeError if one
+    // is attached, so payload is only serialized for mutating methods.
+    ...(m === "GET" || m === "HEAD" ? {} : { body: JSON.stringify(payload) }),
+  }).catch(() => null);
+  if (!res) { toast.error("Network error — the request did not reach the server."); return null; }
   const json = await res.json();
   if (!json.ok) {
     toast.error(json.rule ? `${json.rule} — ${json.error}` : String(json.error ?? "Request failed"));
