@@ -409,3 +409,24 @@ Stage Summary:
 - Every platform tab is now immune to the panel-overlap class of bug, not just S6/S7.
 - Verification screenshots in /home/z/my-project/download/: s2-after-fix-{1280,1024,390}.png, s7-after-fix-1024.png.
 - Owner side: Vercel will auto-deploy fadda1d if Git integration is live; otherwise redeploy from dashboard. The 4 Vercel settings from Task 19 are still required for public visibility.
+
+---
+Task ID: 21 (Multi-city architecture + multi-page console)
+Agent: Main agent (Super Z)
+Task: Owner requested (1) simply customizable for many cities — most things were hardcoded; (2) stop cramming all operations onto one page. Answers: one system many cities (Adama first), sidebar+routes, Settings = identity/params/ladder/org editor, P5-P8 under /project, role-gated pages, styled interface.
+
+Work Log:
+- Schema (both sqlite+postgres): CityConfig +bureauId/canonicalLang/complaintDecisionDays/appealDays; ModelContract +cityCode; RentAdjustment +cityCode with @@unique([cityCode,year]). Neon pushed (--accept-data-loss), sqlite pushed, client regenerated.
+- src/lib/city.ts: bureau-subtree scoping (cityScope, descendantIds, bureauOf). A city = one BUREAU org unit + CityConfig row.
+- src/lib/auth/officer.ts + /api/auth/{staff,login,logout}: HMAC-signed rc_officer HttpOnly cookie; staff-code sign-in; national roles MINISTRY_ANALYST/SYSTEM_ADMIN may switch cities. Fixed Next 16 async cookies().
+- rbac-pages.ts: route->role map; sidebar filters + ModuleFrame enforces (403 card). New capabilities city:manage/ladder:manage/org:manage in authz.ts.
+- /api/platform rewritten: ?city= scopes orgUnits(staff/parties/teams), woredas(properties/files/visits/penalties), unitIds(complaints/publications/replications/snapshots); payments/appeals/deadlines filtered via file->woreda and subject refs; per-city activeContract/adjustments; returns cities+cityConfig+penaltyParams.
+- New APIs: /api/settings PATCH, /api/penalty-ladder POST/PATCH/DELETE (deactivate-if-referenced), /api/org-units POST/PATCH (O-7 pending register). createAdjustment(cityCode,...); publishAdjustment bureau from city; amendModelContract carries cityCode; PUB-CEILING-<city>-<year>.
+- Seed: Adama City Administration (AD-BUREAU, AD-CENTRAL 9 + AD-EAST 5 woredas, CityConfig canonicalLang=om, model contract AD-1.0 canonical om, 5 officers STF-1001..1005, demo 4 parties + 2 properties PRP-AD-CENTRAL-W01-*). Full reseed verified.
+- Frontend: shell.tsx (BootProvider + GO-1 graphite/orange sidebar + topbar city switcher + language + officer chip); (console) route group with 14 pages incl. settings; login page with city->officer->code flow; panels-dashboard.tsx (sprint cards deep-link); panels-settings.tsx (4 editors); call() now session-aware (x-staff-code from signed-in officer + x-city-code); old single-page console retired from /.
+- E2E verified (agent-browser, production build): root 307->/login; Adama registrar sees scoped data w/o settings/reports; /settings 403 for woreda role; AA bureau head saves city config; ministry switches AA<->AD with data swap; mobile 390px zero overflow; dev/prod log clean.
+
+Stage Summary:
+- One deployment now runs many cities; onboarding = seed org tree + CityConfig + contract (Adama is the worked example).
+- Every operation moved from the crowded single page to its own URL with role-aware navigation.
+- Owner: Vercel redeploy picks this up; login codes listed on the login card. Old tab URL / still works (dashboard).
