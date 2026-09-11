@@ -324,3 +324,21 @@ Stage Summary:
 - GitHub main is up to date: d91faca (Vercel checklist + check-neon fixes) is public, plus 2 benign sync commits.
 - Token not persisted anywhere; owner must REVOKE it now (GitHub -> Settings -> Developer settings -> Tokens).
 - Repo fully deploy-ready; remaining owner action unchanged: set DATABASE_URL on Vercel (pooled + pgbouncer=true) and Redeploy latest commit.
+
+---
+Task ID: 16 (Browser console 404 diagnosis + favicon fix)
+Agent: Main agent (Super Z)
+Task: Owner reported browser console "Failed to load resource: 404" after deployment went live.
+
+Work Log:
+- Interpreted the single-resource 404 as PROGRESS: a page now loads on the deployment (previously the whole domain was a dead 404).
+- Audited static assets: public/ had only logo.svg + robots.txt; no favicon.ico anywhere in src/app or public -> browser's automatic /favicon.ico request 404s.
+- Second finding: layout.tsx metadata pointed the icon at the Z.ai scaffold CDN (z-cdn.chatglm.cn/z-ai/static/logo.svg) - wrong branding for a government platform (CDN URL itself returns 200, not the 404 source).
+- Generated a proper platform favicon (scripts/make_favicon.py, PIL): graphite #1A2330 rounded square, white house silhouette, orange #D4875A door; multi-size ICO (16/32/48/64) at src/app/favicon.ico + public/favicon.ico.
+- Removed the icons.icons CDN block from layout.tsx - app-router file convention now serves /favicon.ico natively.
+- Verified locally: npm run build OK; next start -> /favicon.ico 200 image/x-icon, auto-injected <link rel="icon"> present, home 200.
+- Committed b741e98. Push blocked again (no credentials) - owner PAT requested.
+
+Stage Summary:
+- Console 404 was the missing favicon; fix committed (b741e98), push pending PAT.
+- After push: owner redeploy on Vercel + hard refresh; console should be clean.
