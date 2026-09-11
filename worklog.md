@@ -356,3 +356,20 @@ Work Log:
 Stage Summary:
 - Future pushes from this sandbox work without the owner pasting a token (credential store). Caveat recorded: sandbox resets wipe ~/.git-credentials; token remains owner's responsibility to rotate/revoke.
 - Owner next: Vercel Redeploy (latest commit) + hard refresh; console 404 gone; tab shows the GO-1 house icon.
+
+---
+Task ID: 18 (English-first language presentation)
+Agent: Main agent (Super Z)
+Task: Owner asked to "make it in english"; clarification answered: app language menu English-first (English + Amharic data names).
+
+Work Log:
+- Extensive audit first: app already defaulted to lang="en" everywhere; SSR shell 0 Amharic; README/docs 0 Amharic; DB English fields clean. Root visual cause: language menu listed Amharic first (alphabetical code sort in console/console.tsx; hardcoded am-first SelectItems in platform/console.tsx - the LIVE console per src/app/page.tsx).
+- platform/console.tsx: dropdown reordered en, am, om; bilingual labels (English / Amharic (am-haric glyphs) / Oromo).
+- console/console.tsx: fixed langOrder en=0,am=1,om=2; English button primary (text-sm px-3), Amharic/Oromo compact secondary (text-xs, opacity-80, title=nameEn); footer tagline now "Trilingual platform: English - Amharic - Afan Oromo" (no Ethiopic glyphs).
+- platform/panels-s1.tsx: OrgNameDual component - English primary, Amharic small underneath (dir=rtl left-aligned), applied to woredas, role catalogue, staff role cells; select options keep single-line.
+- console/panels.tsx localization table header: "Amharic (am-haric)"; platform/panels-s2s3.tsx editor label: "New Amharic content (am-haric)".
+- Build PASS, home 200, SSR shell 0 Amharic groups. Committed f2a4460, pushed 151f6a9..f2a4460 (stored credential helper worked).
+
+Stage Summary:
+- English is now unambiguously the primary presented language; Amharic/Oromo remain selectable and data stays trilingual in the DB (legal requirement CR-01 intact).
+- Owner next: Vercel redeploy of f2a4460, hard refresh.
