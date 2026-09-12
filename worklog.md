@@ -574,3 +574,25 @@ Work Log:
 
 Stage Summary:
 - PRODUCTION FIXED: Vercel build auto-provisioned Neon (schema + 1193-row verified demo state) and deployed healthy code. Login page fully functional. Root causes were: (a) DATABASE_URL missing on the Vercel project (owner fixed via env var), (b) npx-based CLI invocation failing under bun-run build (fixed via direct node invocation, cda9b51).
+
+---
+Task ID: 26
+Agent: main (Super Z)
+Task: MULTI-TENANT SaaS transformation (owner's accepted spec) — all 10 phases.
+
+Work Log:
+- Phase 1 audit: mapped existing architecture (CityConfig≈tenant, SYSTEM_ADMIN≈platform admin, CITY_ADMIN≈tenant admin, cityContext scope wall, /cities fleet console) against the spec; gaps = tenant identity/branding/module fields, backend module gates, tenant service catalog, subdomain routing, white-label, automated cross-tenant tests.
+- Phase 2 DB: CityConfig extended into the full tenant in BOTH schemas (slug unique, status, country/region/timezone, contactEmail/Phone/Address, logoUrl/faviconUrl, primary/secondary/accent colors, portalTitle, welcomeMessage, modulesJson, configurationJson, customDomainsJson, createdAt/updatedAt with @default(now()) so existing rows migrate); new tenant-scoped ServiceDefinition model; additive push on SQLite verified.
+- Phase 3: src/lib/tenant.ts (server-only tenant context: requireModule, requireModuleForRequest, requirePlatformAdmin, themeOf, findTenantForRequest) + pure client-safe src/lib/tenant-modules.ts; fail() now maps every SecurityError subclass to 403.
+- Phase 4: login embeds tenantSlug; suspended (status) tenants refused at sign-in like deactivated ones.
+- Phase 5: public /api/tenant/branding (?city/?slug/x-tenant-slug/Host incl. custom domains; deactivated=404, suspended keeps theme+banner), tenant-theme.tsx loader (CSS vars --tenant-*), login page + console rebranded dynamically (no hardcoded city identity left in accents).
+- Phase 6: 12-module catalogue enforced at the API layer (gates wired into complaints/appeals/payments/registration-files/publications/analytics GETs + ctx-level for mutations; disabled = 403 MODULE_DISABLED); /api/services tenant-scoped CRUD (service:manage = CITY_ADMIN own city / SYSTEM_ADMIN fleet) + /services console page; onboarding seeds a 4-service starter catalog (tenant data, not code).
+- Phase 7: /api/cities POST returns slug + creates full tenant; PATCH mode 3 (city:manage) lets a tenant admin white-label/configure ONLY their own city (scope wall), Ministry blocked from tenant config, lifecycle stays city:write; panels-cities gained the Tenant editor (branding pickers, logo/favicon, welcome, contact, slug, custom domains, 12 module switches) + status column.
+- Phase 8: src/middleware.ts sets x-tenant-slug from subdomains (skips www/app/api/admin/platform, IPs, localhost, *.vercel.app); custom domains resolved server-side in the branding API.
+- Phase 9: scripts/backfill-tenants.mjs (idempotent; slug/status/colors/AA-blue AD-green DR-slate/modules; fixes stale ACTIVE label on deactivated cities) + same backfill inlined in provision-neon.mjs for both additive and re-provision paths; prod-snapshot.json re-exported (66 models, 1,235 rows, round-trip PASS); existing cities = tenants #1-3, zero data loss.
+- Phase 10: scripts/test-tenant-isolation.mjs — 40-assertion HTTP battery. Caught and fixed real bugs: double body-read in PATCH /api/cities; stale-default color guard (schema defaults masked null checks); directory leak for deactivated cities (now returns empty staff); 400-vs-403 mapping for scope errors. FINAL: 40/40 PASS (themes AA-blue vs AD-green, slug+subdomain resolution, module gate on/off per tenant, cross-tenant denial BOTH directions, tenant-admin boundaries, suspend/deactivate/refuse/reactivate, full onboarding with immediate isolation).
+- Committed 278f93b, pushed cda9b51..278f93b to origin/main.
+
+Stage Summary:
+- All 10 phases implemented, tested locally end-to-end (production-equivalent build + 40/40 security battery).
+- Vercel deploy of 278f93b had NOT gone live ~36 min after push: public alias still serves the previous build (staff:200, old login HTML, new route 404). Old app remains healthy — production is NOT broken. Needs owner to check the Vercel deploy log for 278f93b (build may have failed/queued); if the log shows a [provision] or compile error, paste it in chat.
