@@ -610,3 +610,17 @@ Work Log:
 
 Stage Summary:
 - Open item unchanged from Task 26: newest deployments (278f93b / e191c87) not live yet (~50 min for the first). Owner must read the LATEST deployment's build log (topmost entry in Vercel Deployments, commit e191c87/278f93b), not the old red ones. Everything verifiable from my side is healthy.
+
+---
+Task ID: 26-c
+Agent: main (Super Z)
+Task: Owner pasted the REAL current build failure — fix it and get the SaaS deploy live.
+
+Work Log:
+- Real failure identified: additive `prisma db push` on Neon refused to add CityConfig.slug @unique ("A unique constraint covering the columns [slug] ... will be added. If there are existing duplicate values, this will fail." -> exit 1 -> provisioner died -> build failed). False positive: the column is brand new, all values NULL at push time, NULLs never collide in a unique index. Only [slug] triggers the warning (ServiceDefinition @@unique is part of a new table).
+- FIX (scripts/provision-neon.mjs): new idempotent preSyncDdl() runs BEFORE the additive push on the current-database path: ALTER TABLE "CityConfig" ADD COLUMN IF NOT EXISTS "slug" TEXT; CREATE UNIQUE INDEX IF NOT EXISTS "CityConfig_slug_key" ON "CityConfig"("slug"); push then applies the remaining columns + ServiceDefinition table additively with no warnings. --accept-data-loss deliberately NOT blanket-enabled so future destructive changes still fail the build loudly; die() message now points to preSyncDdl for future unique-constraint migrations.
+- Offline verification: node --check OK; SQLite no-op path intact; prisma migrate diff --from-empty confirms Prisma generates byte-identical DDL (CREATE UNIQUE INDEX "CityConfig_slug_key" ON "CityConfig"("slug"), slug TEXT) so push sees the pre-created index as in-sync.
+- Committed and pushed to origin/main; new Vercel build provisions Neon (slug index + backfill tenants + starter catalogs) then bundles the SaaS app.
+
+Stage Summary:
+- Provisioner unblocked for the SaaS schema; production DB gains tenant columns/catalogs on next build; deployment expected to go live — verify via /api/tenant/branding no longer 404 and tenant-branded login.

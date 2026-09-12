@@ -68,6 +68,24 @@ const scalarCount = async (sql) => {
   return Number(rows[0]?.n ?? 0);
 };
 
+// --- Pre-sync DDL: apply the changes that `prisma db push` refuses to make
+// without --accept-data-loss even though they are provably safe. Adding a
+// UNIQUE constraint on a NEW column is flagged as potential data loss
+// ("if there are existing duplicate values, this will fail") — but a brand
+// new column holds only NULLs and NULLs never collide in a unique index.
+// Creating those objects idempotently here keeps the additive push below
+// warning-free, while genuinely destructive changes still fail the build
+// loudly (we never pass --accept-data-loss on the additive path).
+//
+// Maintenance rule: whenever the schema gains another @unique on an existing
+// table, extend this function with the matching idempotent statements and
+// keep the names identical to Prisma's convention (<table>_<column>_key).
+async function preSyncDdl() {
+  // SaaS Phase 2: CityConfig.slug — tenant URL identity (subdomain routing).
+  await db.$executeRawUnsafe(`ALTER TABLE "CityConfig" ADD COLUMN IF NOT EXISTS "slug" TEXT`);
+  await db.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "CityConfig_slug_key" ON "CityConfig"("slug")`);
+}
+
 // --- Phase 9 SaaS backfill (idempotent): every existing city becomes a full
 // tenant — slug, lifecycle status, white-label colors, module flags and a
 // starter service catalog. Fills ONLY empty fields; safe on every deploy.
@@ -160,10 +178,11 @@ const stale = cityConfigTable === 0 || isActiveColumn === 0 || cityCount < 2;
 // --- 3a. Current database: additive schema sync only ------------------------
 if (!stale) {
   log("database is current — syncing schema (additive only)...");
+  await preSyncDdl();
   const push = spawnSync(process.execPath, [prismaCli, "db", "push", "--schema", "prisma/schema.postgres.prisma", "--skip-generate"],
     { stdio: "inherit", env: { ...process.env, DATABASE_URL: directUrl } });
   if (push.status !== 0)
-    die("schema sync failed (destructive change?). Re-provision by emptying the database, or run scripts/refresh-neon.sh locally.");
+    die("schema sync failed (destructive change, or a unique-constraint migration not covered by preSyncDdl?). Re-provision by emptying the database, or run scripts/refresh-neon.sh locally.");
   log("schema in sync.");
   await backfillTenants();
   await db.$disconnect();
