@@ -30,6 +30,10 @@ c=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/platform/management")
 curl -s -c "$JAR8" -H "Content-Type: application/json" -d '{"staffCode":"STF-0008","city":"AA"}' "$BASE/api/auth/login" > /dev/null
 c=$(curl -s -b "$JAR8" -o /dev/null -w "%{http_code}" "$BASE/platform/management")
 [ "$c" = "200" ] && ok "super user opens /platform/management (200)" || bad "super user -> $c"
+c=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/")
+[ "$c" = "307" ] && ok "no session -> dashboard / redirected to sign-in (307)" || bad "dashboard no session -> $c"
+c=$(curl -s -b "$JAR8" -o /dev/null -w "%{http_code}" "$BASE/")
+[ "$c" = "200" ] && ok "super user opens the dashboard / (general-information hub)" || bad "super user dashboard -> $c"
 
 echo "== B. National API scoping (/api/national) =="
 r=$(api STF-0008)

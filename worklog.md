@@ -806,3 +806,43 @@ Stage Summary:
 - The super user's console is now a PLATFORM console: National Management (stats + duties + regulations + contract propagation) plus City Management, Settings, Services, Reports and the /admin portal. Registry, Operations and Project tools are gone from his navigation and shell (server capabilities were already tier-scoped; city officers keep every registry/operations surface).
 - Regulations/modifications/model changes added by the super user are reflected to ALL cities through one national register (read by every city console) and fleet-wide contract propagation with parity tracking.
 - Reusable artifacts: scripts/verify-super-user-console.sh + scripts/cleanup-national-test.ts.
+
+---
+Task ID: 34
+Agent: Main agent (Super Z)
+Task: Owner directive — "remove insight and add same else if needed": take Insights (Data & Reports) out of the super user's console and add something else in its place if needed.
+
+Work Log:
+- rbac-pages.ts: SYSTEM_ADMIN removed from INSIGHT_ROLES (the Insights group now renders nothing for STF-0008; /reports stays with city tiers + ministry analyst); new SYSTEM_ADMIN-only page "/platform/audit" + nav item; header comment records the directive.
+- NEW /api/audit (GET, SYSTEM_ADMIN-only; anyone else incl. ministry analyst and bureau heads -> generic 403): recent audit events fleet-wide with actor / free-text / city (org-unit prefix) / limit filters (JS-side filtering over the 1 000 most recent events for SQLite/Postgres portability), plus on-demand full hash-chain integrity walk (verifyAuditChain) via ?verify=1. Read-only — no mutation surface.
+- NEW /platform/audit page + panels-audit.tsx (AuditTrailPage): chain overview stats (total, window, latest event, integrity verdict), filter bar, event table (Seq/Time/Actor/Action/Entity·Ref/Unit/Summary); the integrity verdict persists across filter reloads (client-side chainState, fixed after first browser pass showed Apply resetting it).
+- Nav wiring: i18n "nav.audit" (en/am/om), ScrollText icon in shell.tsx GROUP_ICONS; STF-0008 sidebar is now Dashboard / City Settings / Service Catalog / National Management / Audit Trail / City Management — no Insights group, no Data & Reports.
+- verify-super-user-console.sh: new section C2 (+8 assertions -> 33 local / 22 remote): /platform/audit page gate (307 anonymous, 200 super user), payload shape, full chain walk INTACT, 403 matrix (STF-0007 / STF-0005 / anonymous).
+- Lint clean (pre-existing login-form warning only); build PASS (ƒ /platform/audit, ƒ /api/audit); local :3210: super-user-console 33/33 + portal 23/23 + adama 17/17 + single-admin 13/13 + isolation 41/41; test tenant TSVG cleaned via cleanup-test-tenants.mjs; stray tee artifact "3210" removed.
+- Agent Browser (local): /admin -> /platform/management; sidebar confirms no Insights/Data & Reports and new Audit Trail; /platform/audit rendered 111 events; Verify chain -> INTACT (111 of 111); actor filter STF-0008 -> 98 shown; screenshots in download/ (platform-audit-trail.png).
+- Commit 15ba731 pushed (e5fc7b7..15ba731); all 6 Vercel projects deployed; production: console suite 22/22 (remote mode) + portal 23/23 + adama 17/17 + single-admin 13/13 = 75 assertions green.
+- Agent Browser (production): /admin sign-in -> /platform/audit live with 21 production events; Verify chain -> INTACT (21 of 21); screenshot download/platform-audit-trail-production.png.
+- POST-SESSION NOTE: the sandbox was later found rolled back to a pre-Task-30 snapshot (old git lineage, empty SQLite DB, verify scripts and audit routes missing). Recovered by git reset --hard origin/main (= 15ba731, the deployed Task 34 state), reseeded prisma/seed.ts (AA active + DR deactivated, 9 officers, 56 parties — the exact Task 33/34 local baseline), and re-appended this entry. No committed work was lost — origin/main and production always held 15ba731.
+
+Stage Summary:
+- The super user's console no longer contains Insights (city Data & Reports) — matching Registry, Operations and Project tools as removed surfaces. In its place he received the Platform Audit Trail (/platform/audit): fleet-wide, tamper-evident oversight of every state-changing action in every city, with filters and on-demand SHA-256 chain-integrity proof — the administrative counterpart to the city analytics he no longer sees.
+- Enforcement stays server-side: /api/audit is SYSTEM_ADMIN-only (403 for every other role), while city officers and the ministry analyst keep /reports unchanged (single-admin suite re-verified STF-0007 /reports 200).
+- Reusable artifact: scripts/verify-super-user-console.sh now also guards the audit surface in local and remote modes.
+
+---
+Task ID: 35
+Agent: Main agent (Super Z)
+Task: Owner directive — "customize the dashboard use it to present general information": turn the "/" landing page into a general-information presentation for the super user.
+
+Work Log:
+- SANDBOX RECOVERY FIRST: the workspace was found rolled back to a pre-Task-30 snapshot (old git lineage at e1a4556, empty SQLite DB, verify scripts and Task 34 audit routes missing). origin/main still held the deployed state (15ba731). Recovery: preserved the in-flight dashboard edit to /tmp, git reset --hard origin/main, re-applied the edit, re-appended the lost Task 34 worklog entry, reseeded prisma/seed.ts AND pushed the schema (npm run db:push — the restored db file lacked CityConfig.slug), then bun scripts/backfill-tenants.mjs (slugs addis-ababa/dire-dawa + colors + starter services). Isolation-suite leftovers TSVA/TSVB/TSVD cleaned. All suites re-green before any new work.
+- panels-dashboard.tsx is now ROLE-AWARE: SYSTEM_ADMIN renders SuperUserGeneralInfo — General information card (platform identity + legal basis, the super user's mandate, tenant fleet state, federal state), Platform at a glance (12 fleet-wide stats), Federal regulation register — latest (top 5 active), Management duties snapshot (live statuses), Your working surfaces (5 quick links). All other roles keep the original city KPI + seven-sprint dashboard untouched.
+- Data source: one GET /api/national (SYSTEM_ADMIN scope) — no new endpoints needed.
+- verify-super-user-console.sh section A: +2 assertions (dashboard / 307 anonymous, 200 super user) -> 35 local / 24 remote.
+- Lint clean; build PASS; local :3210: super-user-console 35/35 + portal 23/23 + adama 17/17 + single-admin 13/13 + isolation 41/41.
+- Agent Browser: STF-0008 via /admin -> dashboard shows the general-information hub (verified with a demo regulation added via API: register card listed it immediately; archived + cleaned afterwards); STF-0001 via /login still sees the operational "Addis Ababa — Incremental Module Construction" dashboard with S1 sprint links. Screenshot download/dashboard-general-info.png (full page).
+- Commit c380283 (includes the recovered Task 34 worklog entry).
+
+Stage Summary:
+- The super user's dashboard now PRESENTS GENERAL INFORMATION — what the platform is, how the whole fleet stands, the federal register highlights, live duty health and one-click entry into every working surface. City officers' dashboards are unchanged.
+- Local workspace fully restored to the deployed lineage + reseeded; recovery documented in the Task 34 post-session note.
