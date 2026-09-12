@@ -71,9 +71,14 @@ export const CAPABILITIES: Record<string, string[]> = {
   // City staff register — the city super-admin adds/moves/deactivates the
   // officers of ONE city; the system admin does it fleet-wide.
   "staff:manage": ["CITY_ADMIN", "SYSTEM_ADMIN"],
-  // Multi-city administration (per-city rule sets, Dir. Art. 14)
-  "city:manage": ["BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // city identity + statutory params
-  "city:admin": ["MINISTRY_ANALYST", "SYSTEM_ADMIN"], // fleet-level READ: fleet table + regional overview
+  // Multi-city administration (per-city rule sets, Dir. Art. 14).
+  // Owner directive (single-admin policy): exactly ONE administrator — the
+  // SYSTEM_ADMIN — manages cities. The ministry analyst is oversight-only:
+  // no city settings, no fleet reads, no city directory. City-bound officers
+  // keep their OWN-city self-administration via city:manage (+ CITY_ADMIN
+  // auto-grant below, scope-walled to their city).
+  "city:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // city identity + statutory params (own city; scope-walled)
+  "city:admin": ["SYSTEM_ADMIN"], // fleet-level READ: City Management table — the one supreme admin only
   "city:write": ["SYSTEM_ADMIN"], // fleet-level WRITE: onboard / edit / activate / deactivate cities
   // SaaS tenant service catalog — city admin manages own city, system admin fleet-wide
   "service:manage": ["CITY_ADMIN", "SYSTEM_ADMIN"],

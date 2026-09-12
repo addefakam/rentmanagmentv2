@@ -71,7 +71,7 @@ const GROUP_ICONS: Record<string, typeof LayoutDashboard> = {
   "/": LayoutDashboard, "/parties": Users, "/properties": Building2,
   "/registration": FileCheck2, "/rent": Banknote, "/complaints": MessageSquareWarning,
   "/enforcement": ShieldAlert, "/reports": BarChart3, "/settings": Settings,
-  "/cities": Globe2, "/project": FolderGit2, "/project/testing": FlaskConical,
+  "/platform/cities": Globe2, "/project": FolderGit2, "/project/testing": FlaskConical,
   "/project/uat": ClipboardCheck, "/project/pilot": Truck, "/project/golive": Rocket,
 };
 

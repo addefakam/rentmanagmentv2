@@ -55,11 +55,12 @@ const num = (n: number) => n.toLocaleString("en-US");
 
 export function CitiesAdmin({ readOnly = false }: { readOnly?: boolean }) {
   const { officer, refresh } = useBoot();
-  // Platform super-powers require BOTH the role (SYSTEM_ADMIN) and a management
-  // surface. /cities is the read-only directory for lower tiers (e.g. the
-  // ministry analyst); /platform is the single management URL reserved for the
-  // platform administrator. The server still enforces every mutation
-  // independently (city:write = SYSTEM_ADMIN) — the UI never grants rights.
+  // Platform super-powers require the role (SYSTEM_ADMIN). Owner directive:
+  // exactly ONE administrator manages cities, at the dedicated URL
+  // /platform/cities (the legacy /cities and /platform URLs redirect there).
+  // The server still enforces every read and mutation independently
+  // (city:write and city:admin = SYSTEM_ADMIN; city:manage no longer includes
+  // the ministry analyst) — the UI never grants rights.
   const canWrite = !readOnly && officer.roleCode === "SYSTEM_ADMIN";
   const [rows, setRows] = useState<CityRow[] | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
@@ -513,7 +514,7 @@ export function CitiesAdmin({ readOnly = false }: { readOnly?: boolean }) {
         subtitle="City management (onboarding, tenant configuration, lifecycle) is reserved for the Platform Administrator."
       >
         <p className="py-2 text-sm text-muted-foreground">
-          You are viewing the read-only city directory. The platform administrator manages cities at <span className="font-mono">/platform</span> — onboard a new city, edit tenant branding and modules, or suspend/reactivate a city there.
+          You are viewing the read-only city directory. The platform administrator manages cities at <span className="font-mono">/platform/cities</span> — onboard a new city, edit tenant branding and modules, or suspend/reactivate a city there.
         </p>
       </Panel>
       )}

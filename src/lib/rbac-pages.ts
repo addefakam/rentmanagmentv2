@@ -1,7 +1,14 @@
 // ============================================================================
 // rbac-pages.ts — Which role codes may open which console page. The sidebar
-// filters by this map and the console layout enforces it server-side. API
+// filters by this map and the console shell (ModuleFrame) enforces it; API
 // mutations stay guarded separately by authz.ts capabilities.
+//
+// Owner directive — SINGLE-ADMIN CITY MANAGEMENT: exactly one administrator
+// (STF-0008, SYSTEM_ADMIN) manages cities, with power over every other user.
+// City Management lives at its own dedicated URL /platform/cities; the legacy
+// /cities and /platform URLs survive as redirect shims for old bookmarks. The
+// ministry analyst (STF-0007) keeps ministry analytics/publications duties
+// but has NO city-management page or capability anymore.
 // ============================================================================
 
 const ALL_ROLES = [
@@ -12,10 +19,9 @@ const ALL_ROLES = [
 const REGISTRY_ROLES = ALL_ROLES; // every officer may read the registry pages
 const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER");
 const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
-const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
+const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN", "SYSTEM_ADMIN"]; // city self-administration — ministry analyst is oversight-only
 const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
-const CITY_ADMIN_ROLES = ["MINISTRY_ANALYST", "SYSTEM_ADMIN"]; // City Directory (read-only tier)
-const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the one high-power platform administrator
+const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the ONE high-power platform administrator — sole manager of cities
 const PROJECT_ROLES = ["BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
 
 export const PAGE_ACCESS: Record<string, string[]> = {
@@ -29,8 +35,9 @@ export const PAGE_ACCESS: Record<string, string[]> = {
   "/reports": INSIGHT_ROLES,
   "/settings": SETTINGS_ROLES,
   "/services": SERVICES_ROLES,
-  "/cities": CITY_ADMIN_ROLES,
-  "/platform": PLATFORM_ADMIN_ROLES,
+  "/platform/cities": PLATFORM_ADMIN_ROLES, // City Management — the dedicated URL of the one supreme admin
+  "/cities": PLATFORM_ADMIN_ROLES, // legacy URL — redirect shim to /platform/cities
+  "/platform": PLATFORM_ADMIN_ROLES, // legacy URL — redirect shim to /platform/cities
   "/project": PROJECT_ROLES,
   "/project/evidence": PROJECT_ROLES,
   "/project/testing": PROJECT_ROLES,
@@ -63,8 +70,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reports", labelKey: "nav.data", labelEn: "Data & Reports (M10, M11)", group: "insights" },
   { href: "/settings", labelKey: "nav.settings", labelEn: "City Settings", group: "admin" },
   { href: "/services", labelKey: "nav.services", labelEn: "Service Catalog", group: "admin" },
-  { href: "/platform", labelKey: "nav.platform", labelEn: "Platform Administration", group: "admin" },
-  { href: "/cities", labelKey: "nav.cityDirectory", labelEn: "City Directory", group: "admin" },
+  { href: "/platform/cities", labelKey: "nav.cities", labelEn: "City Management", group: "admin" },
   { href: "/project", labelKey: "nav.evidence", labelEn: "Evidence & Gates", group: "project" },
   { href: "/project/testing", labelKey: "nav.p5", labelEn: "Testing & Compliance", group: "project" },
   { href: "/project/uat", labelKey: "nav.p6", labelEn: "UAT & Legal Validation", group: "project" },
