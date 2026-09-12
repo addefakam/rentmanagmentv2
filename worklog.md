@@ -784,3 +784,25 @@ Stage Summary:
 - The super user now has a SEPARATE URL: https://rentmanagmentv2-ndhb.vercel.app/admin — Addis-Ababa-bound, SYSTEM_ADMIN-exclusive, roster-free and discreet (not linked from /login, robots-disallowed).
 - Public /login remains unchanged for every other officer; national sign-in rules and the Adama removal policy all still verified green (51 production assertions this task).
 - Enforcement is server-side (role check in /api/auth/super), so the page being discreet is defense-in-depth, not the security boundary.
+
+---
+Task ID: 33
+Agent: Main agent (Super Z)
+Task: Owner directive — super user (STF-0008) gets (1) important statistics + management tasks, (2) power to add regulations/modifications/model changes reflected to ALL cities, (3) Registry, Operations and Project tools REMOVED from his console.
+
+Work Log:
+- rbac-pages.ts: SYSTEM_ADMIN removed from REGISTRY_ROLES, OPERATIONS_ROLES, PROJECT_ROLES (sidebar + shell no longer show parties/properties/registration/rent/complaints/enforcement or /project/* for the super user); new page "/platform/management" (PLATFORM_ADMIN_ROLES) + nav item + i18n key + Landmark icon.
+- authz.ts: two new capabilities — "regulation:manage" and "modelcontract:propagate", both SYSTEM_ADMIN-only.
+- NEW /api/national: GET for SYSTEM_ADMIN returns fleet stats (cities/officers/parties/properties/files/payments/complaints/adjustments/publications/audit-30d/deadlines), management-duty statuses (backup, deadline sweep, tenant lifecycle, model-contract parity, auth posture, register size), per-city management rows and federal contract sections; GET for ANY officer returns ONLY the national regulation register (that IS the reflect-to-all-cities surface); POST actions ADD_REGULATION / ARCHIVE_REGULATION (PlatformSetting NATIONAL_REGULATIONS JSON) and PROPAGATE_MODEL_CONTRACT (amends EVERY active city's contract into <CITY>-<suffix> via amendModelContract, per-city try/catch results, optional cities targeting for surgical tests).
+- NEW /platform/management page + panels-national.tsx: fleet stat cards, duties list, per-city table, regulation register manager (add/archive), contract propagation form with per-city result table.
+- panels-settings.tsx: every city's Settings page now opens with the read-only "National regulations & model changes (federal)" card fed by /api/national — the register is visible in ALL cities automatically.
+- /admin super-user portal now lands on /platform/management (page redirect + form success URL); verify-super-admin-portal.sh updated (23 assertions).
+- NEW scripts/verify-super-user-console.sh (25 assertions local incl. mutations + auto-restore via scripts/cleanup-national-test.ts; 14 in remote mode, mutations skipped) — suite bugs fixed along the way (blank curl arg, missing -w flags, section codes are SEC-* not CL-*).
+- Lint clean; build PASS (ƒ /api/national, ƒ /platform/management); local: super-user-console 25/25 + portal 23/23 + adama 17/17 + single-admin 13/13 + isolation 41/41, test tenant cleaned.
+- Agent Browser: /admin → /platform/management; sidebar for STF-0008 shows ONLY Dashboard / Data & Reports / City Settings / Service Catalog / National Management / City Management (no Registry, Operations, Project groups); live stats rendered (2 cities, 9 officers, 56 parties, 28 files, 98 audit events, 2 overdue deadlines flagged); regulation added via UI, seen reflected on the city Settings page, archived via UI; screenshots saved (national-management-register.png).
+- Commit e5fc7b7 pushed (69ad247..e5fc7b7); Vercel deployed; production: console suite 14/14 + portal 23/23 + adama 17/17 + single-admin 13/13.
+
+Stage Summary:
+- The super user's console is now a PLATFORM console: National Management (stats + duties + regulations + contract propagation) plus City Management, Settings, Services, Reports and the /admin portal. Registry, Operations and Project tools are gone from his navigation and shell (server capabilities were already tier-scoped; city officers keep every registry/operations surface).
+- Regulations/modifications/model changes added by the super user are reflected to ALL cities through one national register (read by every city console) and fleet-wide contract propagation with parity tracking.
+- Reusable artifacts: scripts/verify-super-user-console.sh + scripts/cleanup-national-test.ts.
