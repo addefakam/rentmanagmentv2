@@ -497,3 +497,16 @@ Stage Summary:
 - Demo state now: AA + AD active, DR deactivated (full SaaS lifecycle showcase: reactivate is one click, STF-2001 works after, deactivate again restores).
 - SaaS conditions from the owner all verified live: create on demand / edit / deactivate-activate / super-power data views at regional + city level / one locked-to-city admin per city / strict no-mix isolation.
 - 3 commits were pending push (PAT loss after sandbox reset); this commit added on top — push attempted at end of task.
+
+---
+Task ID: 24-push
+Agent: main (Super Z)
+Task: Publish the 4 pending commits after the owner supplied a fresh GitHub PAT.
+
+Work Log:
+- Owner provided PAT in chat; used it inline for a single `git push` (never written to ~/.git-credentials or git config).
+- Push succeeded: 0e8923b..31226db main -> main on addefakam/rentmanagmentv3.
+- Verified origin/main == local main (HEAD 31226db); token hygiene checked (no persisted credential artifacts).
+
+Stage Summary:
+- GitHub now carries the complete SaaS city-governance module incl. Dire Dawa demo deactivated city + verification battery. Owner-side remains: Neon `prisma db push` (CityConfig.isActive) + Vercel redeploy.
