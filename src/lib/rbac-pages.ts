@@ -14,7 +14,8 @@ const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER");
 const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
 const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
 const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
-const CITY_ADMIN_ROLES = ["MINISTRY_ANALYST", "SYSTEM_ADMIN"]; // fleet-level city management
+const CITY_ADMIN_ROLES = ["MINISTRY_ANALYST", "SYSTEM_ADMIN"]; // City Directory (read-only tier)
+const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the one high-power platform administrator
 const PROJECT_ROLES = ["BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
 
 export const PAGE_ACCESS: Record<string, string[]> = {
@@ -29,6 +30,7 @@ export const PAGE_ACCESS: Record<string, string[]> = {
   "/settings": SETTINGS_ROLES,
   "/services": SERVICES_ROLES,
   "/cities": CITY_ADMIN_ROLES,
+  "/platform": PLATFORM_ADMIN_ROLES,
   "/project": PROJECT_ROLES,
   "/project/evidence": PROJECT_ROLES,
   "/project/testing": PROJECT_ROLES,
@@ -61,7 +63,8 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/reports", labelKey: "nav.data", labelEn: "Data & Reports (M10, M11)", group: "insights" },
   { href: "/settings", labelKey: "nav.settings", labelEn: "City Settings", group: "admin" },
   { href: "/services", labelKey: "nav.services", labelEn: "Service Catalog", group: "admin" },
-  { href: "/cities", labelKey: "nav.cities", labelEn: "City Management", group: "admin" },
+  { href: "/platform", labelKey: "nav.platform", labelEn: "Platform Administration", group: "admin" },
+  { href: "/cities", labelKey: "nav.cityDirectory", labelEn: "City Directory", group: "admin" },
   { href: "/project", labelKey: "nav.evidence", labelEn: "Evidence & Gates", group: "project" },
   { href: "/project/testing", labelKey: "nav.p5", labelEn: "Testing & Compliance", group: "project" },
   { href: "/project/uat", labelKey: "nav.p6", labelEn: "UAT & Legal Validation", group: "project" },

@@ -53,9 +53,14 @@ const EMPTY_FORM = {
 
 const num = (n: number) => n.toLocaleString("en-US");
 
-export function CitiesAdmin() {
+export function CitiesAdmin({ readOnly = false }: { readOnly?: boolean }) {
   const { officer, refresh } = useBoot();
-  const canWrite = officer.roleCode === "SYSTEM_ADMIN";
+  // Platform super-powers require BOTH the role (SYSTEM_ADMIN) and a management
+  // surface. /cities is the read-only directory for lower tiers (e.g. the
+  // ministry analyst); /platform is the single management URL reserved for the
+  // platform administrator. The server still enforces every mutation
+  // independently (city:write = SYSTEM_ADMIN) — the UI never grants rights.
+  const canWrite = !readOnly && officer.roleCode === "SYSTEM_ADMIN";
   const [rows, setRows] = useState<CityRow[] | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
   const [busy, setBusy] = useState(false);
@@ -416,7 +421,8 @@ export function CitiesAdmin() {
         </DialogContent>
       </Dialog>
 
-      {/* Onboard form ----------------------------------------------------- */}
+      {/* Onboard form — platform administrator only ----------------------- */}
+      {canWrite ? (
       <Panel
         title="Onboard a new city"
         subtitle="When a new city requests the system, configure it here once — org skeleton, statutory parameters, model contract and the city super-admin are created in one step. The city appears in the sign-in directory immediately."
@@ -501,6 +507,16 @@ export function CitiesAdmin() {
           ) : null}
         </div>
       </Panel>
+      ) : (
+      <Panel
+        title="City directory — view only"
+        subtitle="City management (onboarding, tenant configuration, lifecycle) is reserved for the Platform Administrator."
+      >
+        <p className="py-2 text-sm text-muted-foreground">
+          You are viewing the read-only city directory. The platform administrator manages cities at <span className="font-mono">/platform</span> — onboard a new city, edit tenant branding and modules, or suspend/reactivate a city there.
+        </p>
+      </Panel>
+      )}
     </div>
   );
 }
