@@ -638,3 +638,22 @@ Work Log:
 
 Stage Summary:
 - Multi-tenant SaaS release LIVE: tenant-branded login (blue AA / green AD), server-side tenant pinning, module gates, service catalogs, /cities tenant editor. Production healthy; owner guidance delivered: STF-0008 -> City Management (/cities) -> "Onboard a new city".
+
+---
+Task ID: 26-e
+Agent: main (Super Z)
+Task: Owner request — one user with HIGHER city-management power than the other, at a DEDICATED URL.
+
+Work Log:
+- Gap found: /cities page (CITY_ADMIN_ROLES = MINISTRY_ANALYST + SYSTEM_ADMIN) rendered the FULL onboard form to ministry analysts (server 403s the submit — city:write = SYSTEM_ADMIN — but the UI offered it anyway); canWrite only gated the table Action column.
+- Implemented two explicit tiers:
+  * NEW /platform page — "Platform Administration", PAGE_ACCESS ["SYSTEM_ADMIN"]: the single management surface (onboard cities, tenant editor, lifecycle). ModuleFrame enforces canAccess per route.
+  * /cities retitled "City Directory" — renders <CitiesAdmin readOnly />: fleet table + regional totals stay, Action column shows "view only", onboard form REPLACED by a view-only note pointing to /platform.
+  * panels-cities.tsx: CitiesAdmin({readOnly}) prop; canWrite = !readOnly && roleCode==="SYSTEM_ADMIN" — one gate drives table actions AND the onboard form.
+  * rbac-pages.ts: PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; nav gains "Platform Administration" (/platform) and /cities relabeled "City Directory" (new labelKeys fall back to labelEn).
+- Server-side authority unchanged and independent of the UI: POST/PATCH /api/cities still gate city:write (SYSTEM_ADMIN) / city:manage (own-city tenant admin).
+- Local production build PASS (route table includes /platform + /cities). Committed 8e26d2e, pushed ef6e058..8e26d2e.
+- Live verification plan: STF-0007 valid onboard body -> 403; STF-0008 invalid body -> 400 (passed the permission gate); /platform HTML 200.
+
+Stage Summary:
+- Two-tier national model shipped: STF-0008 = Platform Administrator at /platform (high power); STF-0007 = read-only City Directory at /cities. UI and API enforce independently.
