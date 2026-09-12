@@ -846,3 +846,25 @@ Work Log:
 Stage Summary:
 - The super user's dashboard now PRESENTS GENERAL INFORMATION — what the platform is, how the whole fleet stands, the federal register highlights, live duty health and one-click entry into every working surface. City officers' dashboards are unchanged.
 - Local workspace fully restored to the deployed lineage + reseeded; recovery documented in the Task 34 post-session note.
+
+---
+Task ID: 36
+Agent: Main agent (Super Z)
+Task: Owner directive — "remove servicer catalog and city setting": take City Settings (/settings) and the Service Catalog (/services) out of the super user's console.
+
+Work Log:
+- Housekeeping first: dropped an accidental UUID-message commit (4bdcb6a — only contained the Task 35 production screenshot) and recommitted the PNG under a proper message (ef4cc51). Task 35's dashboard commit e0a3b46 was still local; both rode along with this task's push.
+- rbac-pages.ts: SYSTEM_ADMIN removed from SETTINGS_ROLES and SERVICES_ROLES (sidebar filters + ModuleFrame enforcement pick it up automatically); header comment records SUPER-USER CONSOLE SCOPE II — the super user's console is now exactly Dashboard / National Management / Audit Trail / City Management. Pages and APIs stay fully available to the city tiers (same philosophy as the Task 33 removals).
+- panels-dashboard.tsx: the "Your working surfaces" card drops the /settings and /services links (5 -> 3) and its subtitle now says city settings and service catalogs stay with the city tiers.
+- verify-super-user-console.sh: new section C3 (+4 assertions): super user /settings + /services still serve 200 with the client-rendered role refusal (enforcement model unchanged — middleware 307 for anonymous, ModuleFrame card for wrong role), and bureau head STF-0005 KEEPS both pages (over-removal guard). Suite now 39 local / 28 remote.
+- Lint clean (pre-existing login-form warning only); build PASS. Sandbox note: background servers are reaped between tool calls here — server + suites now run inside single calls.
+- Local :3210: super-user-console 39/39 + portal 23/23 + adama-removed 17/17 + single-admin 13/13 + tenant-isolation 41/41 = 133 assertions green; isolation test tenant TSVB cleaned.
+- Agent Browser (local): /admin -> /platform/management; sidebar census Dashboard 1 / National Management 2 / Audit Trail 1 / City Management 1, City Settings 0, Service Catalog 0; direct /settings renders "Not available for your role"; dashboard DOM census: /settings -> 0 links, /services -> 0 links, the three platform surfaces -> 2 links each (sidebar + card); no page errors. Screenshots in download/ (super-user-console-task36-sidebar/-settings-refused/-dashboard.png).
+- Commit 6f14417 pushed; all 6 Vercel projects deployed (statuses polled to success).
+- Production (rentmanagmentv2-ndhb): console suite 28/28 (remote) + portal 23/23 + adama-removed 17/17 + single-admin 13/13 = 81 assertions green; browser confirmed live sidebar without City Settings / Service Catalog (download/super-user-console-task36-production.png).
+
+Stage Summary:
+- The super user's console is reduced to his four platform surfaces: Dashboard (general information), National Management, Audit Trail, City Management. City Settings and Service Catalog join Registry, Operations, Project tools and Insights as removed surfaces — they belong to the city tiers that operate them.
+- City tiers keep both surfaces untouched (bureau head verified 200 on production), and the pages' APIs stay tier-scoped as before — no capability changes were made, only console scope.
+- Reusable artifact: scripts/verify-super-user-console.sh section C3 guards the removal in local and remote modes.
+- SECURITY NOTE: the GitHub PAT remains exposed in chat history — owner should revoke/rotate it after this session.
