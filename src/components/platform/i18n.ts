@@ -38,7 +38,7 @@ const D: Dict = {
   "login.subtitle": ["Pick your city, pick your name, enter your staff code.", "ከተማዎን፣ ስምዎን ይምረጡ፣ የሠራተኛ ኮድዎን ያስገቡ።", "Magaalaa keessan, maqaa keessan filadhaa; koodii hojjetaa keessan galchi."],
   "login.staffcode": ["Staff code", "የሠራተኛ ኮድ", "Koodii Hojjetaa"],
   "login.signin": ["Sign in", "ግባ", "Seeni"],
-  "login.hint": ["Demo codes: STF-0001 woreda registrar · STF-0005 bureau head · STF-0007 ministry · STF-1001 Adama registrar · STF-0008 system admin", "የሙከራ ኮዶች፦ STF-0001 …", "Koodii demo: STF-0001 …"],
+  "login.hint": ["Demo codes: STF-0001 woreda registrar · STF-0005 bureau head · STF-0007 ministry · STF-0008 system admin", "የሙከራ ኮዶች፦ STF-0001 …", "Koodii demo: STF-0001 …"],
   "nav.evidence": ["Evidence & Gates", "ማስረጃዎች እና ጌቶች", "Ragaafi fi Dalaloota"],
   "nav.p5": ["P5 · Testing & Compliance", "P5 · ሙከራ እና ሕጋዊነት", "P5 · Qormaata fi Seera-qabeenya"],
   "nav.p6": ["P6 · UAT & Legal Validation", "P6 · የተጠቃሚ ተቀባይነት እና ሕጋዊ ማረጋገጫ", "P6 · Simannaa Fayyadamaa fi Mirkaneessa Seeraa"],

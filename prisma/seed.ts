@@ -8,7 +8,7 @@
 import { PrismaClient } from "@prisma/client";
 
 import {
-  MINISTRY, BUREAU, SUB_CITIES, ADAMA_BUREAU, ADAMA_SUB_CITIES,
+  MINISTRY, BUREAU, SUB_CITIES,
   DIRE_DAWA_BUREAU, DIRE_DAWA_SUB_CITIES,
 } from "../src/lib/seed-data/orgTree";
 import {
@@ -79,36 +79,10 @@ async function seedOrgTree() {
     }
   }
 
-  // Multi-city: Adama City Administration bureau under the same Ministry.
-  const adamaBureau = await prisma.orgUnit.create({
-    data: {
-      code: ADAMA_BUREAU.code, tier: "BUREAU",
-      nameEn: ADAMA_BUREAU.nameEn, nameAm: ADAMA_BUREAU.nameAm, nameOm: ADAMA_BUREAU.nameOm,
-      parentId: ministry.id, confirmationStatus: "CONFIRMED",
-      sourceNote: "Adama City Administration (Oromia special zone); same federal Proclamation 1320/2016.",
-    },
-  });
-  for (const sc of ADAMA_SUB_CITIES) {
-    const subCity = await prisma.orgUnit.create({
-      data: {
-        code: sc.code, tier: "SUB_CITY",
-        nameEn: sc.nameEn, nameAm: sc.nameAm, nameOm: sc.nameOm,
-        parentId: adamaBureau.id, confirmationStatus: "CONFIRMED",
-        sourceNote: "Adama city administrative structure (provisional, O-7).",
-      },
-    });
-    for (let w = 1; w <= sc.woredas.count; w++) {
-      const wnum = String(w).padStart(2, "0");
-      await prisma.orgUnit.create({
-        data: {
-          code: `${sc.code}-W${wnum}`, tier: "WOREDA",
-          nameEn: `Woreda ${wnum}`, nameAm: `ወረዳ ${wnum}`, nameOm: `Woredaa ${wnum}`,
-          parentId: subCity.id, confirmationStatus: "PENDING_OFFICIAL_REGISTER",
-          sourceNote: sc.woredas.note,
-        },
-      });
-    }
-  }
+  // (Owner directive: Adama City Administration was removed from the platform
+  // entirely — it is purged from databases by scripts/purge-cities.mjs and is
+  // no longer part of the shipped seed. Re-onboard via /platform/cities if
+  // the city ever returns.)
 
   // Multi-city SaaS demo: Dire Dawa — onboarded, then DEACTIVATED by the
   // system admin. The full subtree, config and model contract exist, so
@@ -222,29 +196,6 @@ async function seedModelContract() {
       issuedBy: MODEL_CONTRACT_V1.issuedBy,
       legalBasis: MODEL_CONTRACT_V1.legalBasis,
       canonicalLang: MODEL_CONTRACT_V1.canonicalLang,
-      effectiveFrom: new Date(MODEL_CONTRACT_V1.effectiveFrom),
-      sections: {
-        create: CONTRACT_SECTIONS.map((s) => ({
-          orderNo: s.orderNo, code: s.code,
-          titleEn: s.titleEn, titleAm: s.titleAm, titleOm: s.titleOm,
-          contentEn: s.contentEn, contentAm: s.contentAm, contentOm: s.contentOm,
-          certificationStatus: "PENDING_LEGAL_REVIEW",
-          legalBasis: s.legalBasis,
-        })),
-      },
-    },
-  });
-
-  // Adama city model contract — same federal agreement text, canonical Afaan
-  // Oromoo rendering (Adama onboarding decision), immutable version string.
-  await prisma.modelContract.create({
-    data: {
-      cityCode: "AD",
-      version: "AD-1.0",
-      status: "ACTIVE",
-      issuedBy: "Adama City Administration Rent Control Bureau",
-      legalBasis: MODEL_CONTRACT_V1.legalBasis,
-      canonicalLang: "om",
       effectiveFrom: new Date(MODEL_CONTRACT_V1.effectiveFrom),
       sections: {
         create: CONTRACT_SECTIONS.map((s) => ({
@@ -395,55 +346,7 @@ export async function runSeed(): Promise<{
   const p7 = await seedPhase7();
   const p8 = await seedPhase8();
   const p8b = await seedPhase8B();
-  const adama = await seedAdamaDemo();
-  return { seededAt: new Date(), counts, phase7: p7, phase8: p8, phase8b: p8b, adama };
-}
-
-// ---------------------------------------------------------------------------
-// Multi-city demo: a small Adama dataset so the city switcher shows a living
-// city on day one (2 verified landlords, 2 tenants, 2 properties). The Adama
-// woreda desk registers contracts live during owner demos.
-// ---------------------------------------------------------------------------
-async function seedAdamaDemo() {
-  const woreda = await prisma.orgUnit.findUnique({ where: { code: "AD-CENTRAL-W01" } });
-  const idType = await prisma.identificationType.findFirst({ orderBy: { code: "asc" } });
-  const statusNew = await prisma.propertyStatusType.findUnique({ where: { code: "PS-NEW" } });
-  const statusOcc = await prisma.propertyStatusType.findUnique({ where: { code: "PS-OCCUPIED" } });
-  if (!woreda || !idType || !statusNew || !statusOcc) throw new Error("Adama demo seed: missing configuration.");
-
-  const mkParty = (n: number, type: string, fullName: string, idNumber: string) =>
-    prisma.party.create({
-      data: {
-        partyCode: `PPL-AD-${String(n).padStart(4, "0")}`, type, fullName,
-        idTypeId: idType.id, idNumber,
-        idOriginalSeen: true, idCopyAttached: true, verificationStatus: "VERIFIED",
-        verifiedAt: new Date(), phone: `+2519${String(10000000 + n * 137).slice(0, 8)}`,
-        registeredAtOrgUnitId: woreda.id,
-      },
-    });
-
-  const landlord1 = await mkParty(1, "LANDLORD", "Girma Woldeyos", "AD-ID-44512");
-  const landlord2 = await mkParty(2, "LANDLORD", "Tadelech Assefa", "AD-ID-44513");
-  await mkParty(3, "TENANT", "Kedir Yusuf", "AD-ID-44514");
-  await mkParty(4, "TENANT", "Zeyneba Aliyi", "AD-ID-44515");
-
-  const mkProperty = (n: number, landlordId: string, statusTypeId: string, months: number, basis: string) =>
-    prisma.property.create({
-      data: {
-        propertyCode: `PRP-${woreda.code}-${String(n).padStart(4, "0")}`,
-        woredaId: woreda.id, landlordId,
-        kebele: `Kebele 0${n}`, houseNo: `AD-H-${200 + n}`,
-        ownershipEvidence: "HOLDING_CERT", evidenceRef: `AD-HOLD-${9000 + n}`,
-        statusTypeId, rooms: 3, areaSqm: 96 + n * 8,
-        statusSetAt: new Date(Date.now() - months * 30 * 24 * 3600 * 1000),
-        exemptionEndsAt: new Date(Date.now() + (48 - months) * 30 * 24 * 3600 * 1000),
-        exemptionBasis: basis,
-      },
-    });
-
-  await mkProperty(1, landlord1.id, statusNew.id, 10, "Proc. Art. 10(1): 4-year exemption from completion (Adama demo).");
-  await mkProperty(2, landlord2.id, statusOcc.id, 0, "Proc. Arts. 2, 10: occupied; within adjustment regime.");
-  return { parties: 4, properties: 2 };
+  return { seededAt: new Date(), counts, phase7: p7, phase8: p8, phase8b: p8b };
 }
 
 // ---------------------------------------------------------------------------

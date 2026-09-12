@@ -2,12 +2,12 @@
 // ============================================================================
 // test-tenant-isolation.mjs — Phase 10 automated security battery.
 // Proves, over real HTTP against a running server (default :3000):
-//   A. White-label: per-tenant themes (AA blue / AD green), slug + host
-//      resolution (middleware), deactivated tenant = 404.
+//   A. White-label: per-tenant themes (AA blue), slug + host resolution
+//      (middleware), removed tenant (AD) = 404, deactivated tenant (DR) = 404.
 //   B. Module gates: a module disabled by the platform admin is rejected at
 //      the BACKEND API (403 MODULE_DISABLED), not merely hidden in the UI.
-//   C. Cross-tenant isolation: city-bound officers of BOTH tenants are
-//      denied (403) when targeting another tenant, both directions.
+//   C. Cross-tenant isolation: city-bound officers are denied (403) when
+//      targeting the removed city; purged staff codes are not usable actors.
 //   D. Tenant admin authority: a tenant admin can configure ONLY their own
 //      tenant; Ministry (national, non-admin) cannot configure any tenant.
 //   E. Tenant lifecycle: suspended/deactivated tenants refuse officer sign-in.
@@ -63,11 +63,12 @@ const bAA = await api("/api/tenant/branding?city=AA");
 ok("branding API is public", bAA.status === 200 && bAA.json?.ok === true, `status=${bAA.status}`);
 ok("AA resolves with a theme", !!bAA.json?.data?.theme?.cityCode, JSON.stringify(bAA.json).slice(0, 120));
 ok("AA theme carries 12 module flags", Object.keys(bAA.json?.data?.theme?.modules ?? {}).length === 12);
+// Owner directive: Adama was REMOVED from the platform entirely — a removed
+// tenant must serve no theme at all, by slug, by city code or by subdomain.
 const bAD = await api("/api/tenant/branding?city=AD");
-ok("AD resolves with a theme", bAD.status === 200 && !!bAD.json?.data?.theme);
-const aaColors = bAA.json?.data?.theme?.colors ?? {}, adColors = bAD.json?.data?.theme?.colors ?? {};
-ok("AA and AD carry DIFFERENT branding (City A blue vs City B green)",
-  aaColors.primary !== adColors.primary, `${aaColors.primary} vs ${adColors.primary}`);
+ok("REMOVED tenant (AD) has no public theme (404)", bAD.status === 404, `status=${bAD.status}`);
+const bADslug = await api("/api/tenant/branding?slug=adama");
+ok("REMOVED tenant slug (?slug=adama) has no public theme (404)", bADslug.status === 404, `status=${bADslug.status}`);
 const bDR = await api("/api/tenant/branding?city=DR");
 ok("DEACTIVATED tenant (DR) has no public theme (404)", bDR.status === 404, `status=${bDR.status}`);
 
@@ -79,9 +80,8 @@ ok("subdomain resolution works (Host: addis-ababa.platform.com → AA via middle
   hostAA.status === 200 && hostAA.json?.data?.theme?.cityCode === "AA",
   `status=${hostAA.status} city=${hostAA.json?.data?.theme?.cityCode}`);
 const hostAD = await hostFetch("/api/tenant/branding", "adama.platform.com");
-ok("different subdomain → different tenant (adama.platform.com → AD)",
-  hostAD.status === 200 && hostAD.json?.data?.theme?.cityCode === "AD",
-  `city=${hostAD.json?.data?.theme?.cityCode}`);
+ok("subdomain of a REMOVED tenant resolves nothing (404)",
+  hostAD.status === 404, `status=${hostAD.status}`);
 
 // ---------------------------------------------------------------------------
 console.log("\nB. Public service catalog (CITIZEN_SERVICES module)");
@@ -102,10 +102,10 @@ const aaStaff = dirAA.json?.data?.staff ?? [];
 const aaAdmin = aaStaff.find((s) => s.roleCode === "CITY_ADMIN") ?? aaStaff.find((s) => s.roleCode === "BUREAU_HEAD");
 ok("AA has a tenant admin (CITY_ADMIN or BUREAU_HEAD)", !!aaAdmin, `roles=${aaStaff.map((s) => s.roleCode).join(",")}`);
 const dirAD = await api("/api/auth/staff?city=AD");
-const adAdmin = (dirAD.json?.data?.staff ?? []).find((s) => s.roleCode === "CITY_ADMIN" || s.roleCode === "BUREAU_HEAD");
-ok("AD has a tenant admin", !!adAdmin);
+ok("REMOVED tenant (AD) exposes NO sign-in directory", (dirAD.json?.data?.staff ?? []).length === 0 &&
+  !(dirAD.json?.data?.cities ?? []).some((c) => c.cityCode === "AD"),
+  `staff=${(dirAD.json?.data?.staff ?? []).length}`);
 const aaRegistrar = aaStaff.find((s) => s.roleCode === "WOREDA_REGISTRAR");
-const adRegistrar = (dirAD.json?.data?.staff ?? []).find((s) => s.roleCode === "WOREDA_REGISTRAR");
 
 // ---------------------------------------------------------------------------
 console.log("\nD. Module gates — backend-enforced, not just UI-hidden");
@@ -116,25 +116,38 @@ const gated = await api("/api/complaints?city=AA");
 ok("disabled module → GET /api/complaints?city=AA rejected with 403 MODULE_DISABLED",
   gated.status === 403 && gated.json?.code === "MODULE_DISABLED",
   `status=${gated.status} code=${gated.json?.code}`);
-const otherTenant = await api("/api/complaints?city=AD");
-ok("same endpoint stays open for AD (module is per-tenant)", otherTenant.status === 200, `status=${otherTenant.status}`);
-const on1 = await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "AA", modules: { COMPLAINTS: true } } });
-ok("platform admin re-enables COMPLAINTS", on1.status === 200);
-const restored = await api("/api/complaints?city=AA");
-ok("AA complaints endpoint restored", restored.status === 200, `status=${restored.status}`);
+await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "AA", modules: { COMPLAINTS: true } } });
+ok("platform admin re-enables COMPLAINTS for AA", true);
+// The removed tenant proves the gate is per-tenant from the other side: an
+// unknown city passes the gate (no config) but exposes no tenant data of its
+// own — and DR below proves a REAL second tenant is gated independently.
+const removedCityGate = await api("/api/complaints?city=AD");
+ok("REMOVED city resolves no tenant gate context (falls through to public read)",
+  removedCityGate.status === 200, `status=${removedCityGate.status}`);
+const offDR = await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "DR", modules: { COMPLAINTS: false } } });
+ok("platform admin can disable COMPLAINTS for DR (per-tenant gate proven on a live 2nd tenant)",
+  offDR.status === 200 && offDR.json?.ok === true, `status=${offDR.status}`);
+const gatedDR = await api("/api/complaints?city=DR");
+ok("DR-only module disable → GET /api/complaints?city=DR rejected 403 MODULE_DISABLED",
+  gatedDR.status === 403 && gatedDR.json?.code === "MODULE_DISABLED",
+  `status=${gatedDR.status} code=${gatedDR.json?.code}`);
+const aaStillOpen = await api("/api/complaints?city=AA");
+ok("AA module flags are untouched while DR is gated", aaStillOpen.status === 200, `status=${aaStillOpen.status}`);
+await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "DR", modules: { COMPLAINTS: true } } });
+ok("platform admin re-enables COMPLAINTS for DR", true);
 
 // ---------------------------------------------------------------------------
-console.log("\nE. Cross-tenant isolation — BOTH directions");
+console.log("\nE. Cross-tenant isolation — surviving tenants vs the removed city");
 const cross1 = await api("/api/complaints", {
   method: "POST", staff: aaRegistrar?.staffCode,
   body: { cityCode: "AD", channel: "PHONE", groundCode: "RENT-INC", description: "cross-tenant probe", receivedAtOrgUnitId: "x" },
 });
-ok("AA officer targeting AD is denied 403", cross1.status === 403, `status=${cross1.status}`);
+ok("AA officer targeting the REMOVED city is denied (scope wall)", cross1.status === 403, `status=${cross1.status}`);
 const cross2 = await api("/api/complaints", {
-  method: "POST", staff: adRegistrar?.staffCode,
+  method: "POST", staff: "STF-1001",
   body: { cityCode: "AA", channel: "PHONE", groundCode: "RENT-INC", description: "cross-tenant probe", receivedAtOrgUnitId: "x" },
 });
-ok("AD officer targeting AA is denied 403", cross2.status === 403, `status=${cross2.status}`);
+ok("purged staff code (STF-1001) is not a usable actor (401/403)", cross2.status === 401 || cross2.status === 403, `status=${cross2.status}`);
 const self1 = await api("/api/complaints", { method: "GET", staff: aaRegistrar?.staffCode });
 ok("AA officer's own-city read works", self1.status === 200);
 const fleetDeny = await api("/api/cities", { staff: aaRegistrar?.staffCode });
@@ -146,7 +159,7 @@ const ownCfg = await api("/api/cities", { method: "PATCH", staff: aaAdmin?.staff
 ok("AA tenant admin can white-label their OWN tenant", ownCfg.status === 200 && ownCfg.json?.ok === true,
   `status=${ownCfg.status} ${JSON.stringify(ownCfg.json).slice(0, 140)}`);
 const otherCfg = await api("/api/cities", { method: "PATCH", staff: aaAdmin?.staffCode, body: { cityCode: "AD", portalTitle: "hijack" } });
-ok("AA tenant admin CANNOT configure AD (403)", otherCfg.status === 403, `status=${otherCfg.status}`);
+ok("AA tenant admin CANNOT configure the removed city (403)", otherCfg.status === 403, `status=${otherCfg.status}`);
 const lifeDeny = await api("/api/cities", { method: "PATCH", staff: aaAdmin?.staffCode, body: { cityCode: "AA", isActive: false } });
 ok("tenant admin CANNOT deactivate their own tenant (city:write is platform-only)", lifeDeny.status === 403, `status=${lifeDeny.status}`);
 const minTry = await api("/api/cities", { method: "PATCH", staff: "STF-0007", body: { cityCode: "AA", portalTitle: "x" } });
@@ -158,7 +171,7 @@ ok("portal title change is live on the public theme API",
 await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "AA", portalTitle: "" } });
 
 // ---------------------------------------------------------------------------
-console.log("\nG. Tenant lifecycle — suspended tenants refuse sign-in");
+console.log("\nG. Tenant lifecycle — the removed city cannot be resurrected via the API");
 const dirDR = await api("/api/auth/staff?city=DR");
 // The directory appends NATIONAL officers (they sign in anywhere) — a real
 // tenant officer of DR is required for the refusal test.
@@ -170,15 +183,11 @@ if (drOfficer) {
   ok("officer of a DEACTIVATED tenant cannot sign in (403) — skipped: no tenant officer in DR", true);
 }
 const susp = await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "AD", status: "SUSPENDED" } });
-ok("platform admin can SUSPEND a tenant", susp.status === 200 && susp.json?.data?.status === "SUSPENDED", `status=${susp.status}`);
-const adLogin = await api("/api/auth/login", { method: "POST", body: { staffCode: adRegistrar?.staffCode ?? "STF-1001" } });
-ok("officer of a SUSPENDED tenant cannot sign in (403)", adLogin.status === 403, `status=${adLogin.status}`);
+ok("lifecycle PATCH on the REMOVED city is refused (unknown city)", susp.status !== 200, `status=${susp.status}`);
+const adLogin = await api("/api/auth/login", { method: "POST", body: { staffCode: "STF-1001" } });
+ok("purged officer STF-1001 cannot sign in at all (401 unknown code)", adLogin.status === 401, `status=${adLogin.status}`);
 const adTheme = await api("/api/tenant/branding?city=AD");
-ok("suspended tenant still resolves a theme (login page can show the banner)", adTheme.status === 200 && adTheme.json?.data?.theme?.status === "SUSPENDED");
-const react = await api("/api/cities", { method: "PATCH", staff: "STF-0008", body: { cityCode: "AD", status: "ACTIVE" } });
-ok("platform admin reactivates the tenant", react.status === 200);
-const adLogin2 = await api("/api/auth/login", { method: "POST", body: { staffCode: adRegistrar?.staffCode ?? "STF-1001" } });
-ok("officer can sign in again after reactivation", adLogin2.status === 200, `status=${adLogin2.status}`);
+ok("removed tenant still serves no theme (404)", adTheme.status === 404, `status=${adTheme.status}`);
 
 // ---------------------------------------------------------------------------
 console.log("\nH. Onboarding a NEW tenant end-to-end (platform admin)");

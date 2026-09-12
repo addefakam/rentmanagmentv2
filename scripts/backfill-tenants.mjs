@@ -16,7 +16,6 @@ const db = new PrismaClient();
 
 const COLORS = {
   AA: { primary: "#1D4ED8", secondary: "#0F766E", accent: "#2563EB" }, // Addis Ababa — blue
-  AD: { primary: "#059669", secondary: "#065F46", accent: "#10B981" }, // Adama — green
   DR: { primary: "#475569", secondary: "#334155", accent: "#64748B" }, // Dire Dawa — slate
 };
 const FALLBACK = { primary: "#1D4ED8", secondary: "#0F766E", accent: "#2563EB" };

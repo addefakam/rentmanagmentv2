@@ -39,7 +39,6 @@ const slugify = (s: string) =>
 const HEX = /^#[0-9a-fA-F]{6}$/;
 const COLOR_PRESETS: Record<string, { primary: string; secondary: string; accent: string }> = {
   AA: { primary: "#1D4ED8", secondary: "#0F766E", accent: "#2563EB" }, // Addis Ababa — blue
-  AD: { primary: "#059669", secondary: "#065F46", accent: "#10B981" }, // Adama — green
   DR: { primary: "#475569", secondary: "#334155", accent: "#64748B" }, // Dire Dawa — slate
   HAW: { primary: "#7C3AED", secondary: "#5B21B6", accent: "#8B5CF6" },
 };

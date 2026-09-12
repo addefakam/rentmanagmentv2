@@ -205,7 +205,7 @@ function OrgEditor() {
             <SelectField value={unit.tier} onChange={(v) => setUnit({ ...unit, tier: v })}
               options={[{ value: "WOREDA", label: "Woreda" }, { value: "SUB_CITY", label: "Sub-city" }]} />
           </Field>
-          <Field label="Code"><TextField value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value.toUpperCase() })} placeholder="AD-CENTRAL-W15" /></Field>
+          <Field label="Code"><TextField value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value.toUpperCase() })} placeholder="AA-BOLE-W15" /></Field>
           <Field label="Name (English)"><TextField value={unit.nameEn} onChange={(e) => setUnit({ ...unit, nameEn: e.target.value })} /></Field>
           <Field label="ስም (አማርኛ)"><TextField value={unit.nameAm} onChange={(e) => setUnit({ ...unit, nameAm: e.target.value })} /></Field>
           <Field label="Maqaa (Oromoo)"><TextField value={unit.nameOm} onChange={(e) => setUnit({ ...unit, nameOm: e.target.value })} /></Field>

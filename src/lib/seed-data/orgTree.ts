@@ -101,31 +101,7 @@ export function totalConfiguredWoredas(): number {
 }
 
 // ---------------------------------------------------------------------------
-// Multi-city: Adama City Administration (Oromia special zone). Same federal
-// law (Proc. 1320/2016) applies; the city runs its own bureau, sub-cities and
-// woredas with code prefix "AD-". Structure is PROVISIONAL until the O-7
-// official establishment register confirms the woreda partition.
-// ---------------------------------------------------------------------------
-export const ADAMA_BUREAU = {
-  code: "AD-BUREAU",
-  nameEn: "Adama City Administration Rent Control Bureau",
-  nameAm: "የአዳማ ከተማ አስተዳደር የቤት ኪራይ ቁጥጥር ቢሮ",
-  nameOm: "Bu'aa Too'annaa Kiraalaa Manaa Magaalaa Adaamaa",
-};
-
-export const ADAMA_SUB_CITIES: SubCitySeedSpec[] = [
-  {
-    code: "AD-CENTRAL", nameEn: "Adama Central Sub-city", nameAm: "አዳማ ማዕከላዊ ክፍለ ከተማ", nameOm: "Adaama Giddugaleessa",
-    woredas: { count: 9, basis: "PROVISIONAL", note: "Urban woredas 01-09 of Adama city; provisional pending O-7 register." },
-  },
-  {
-    code: "AD-EAST", nameEn: "Adama East Sub-city", nameAm: "አዳማ ምሥራቅ ክፍለ ከተማ", nameOm: "Adaama Bahaattino",
-    woredas: { count: 5, basis: "PROVISIONAL", note: "Peri-urban woredas 10-14 of Adama city; provisional pending O-7 register." },
-  },
-];
-
-// ---------------------------------------------------------------------------
-// Multi-city demo: Dire Dawa Administration — seeded DEACTIVATED. This city
+// Multi-city: Dire Dawa Administration — seeded DEACTIVATED. This city
 // demonstrates the SaaS city lifecycle end to end: it appears in City
 // Management as CLOSED, its officers cannot sign in while deactivated, and
 // the system admin can reactivate it (after which its city administrator

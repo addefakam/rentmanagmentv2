@@ -10,10 +10,13 @@
 //
 //   1. If the Neon schema/data is already current -> plain `prisma db push`
 //      (additive sync only; destructive sync fails the build loudly).
-//   2. If the database is empty or stale (no isActive column, or fewer than
-//      2 cities) -> full re-provision: drop schema, push the current schema,
+//   2. If the database is empty or stale (no isActive column, or zero
+//      cities) -> full re-provision: drop schema, push the current schema,
 //      load scripts/prod-snapshot.json (the committed verified demo state),
 //      realign autoincrement sequences, verify counts.
+//   3. On every run, purge any city listed in scripts/purge-cities.mjs
+//      (owner directive: Adama removed entirely; one-shot marker keeps a
+//      future re-onboarded city with the same code safe from auto-purge).
 //
 // Local development is untouched: with a SQLite DATABASE_URL the script
 // exits immediately. DDL and data load use the DIRECT Neon endpoint
@@ -173,7 +176,10 @@ try {
 }
 log(`state: CityConfig table=${cityConfigTable ? "yes" : "no"}, isActive column=${isActiveColumn ? "yes" : "no"}, cities=${cityCount}`);
 
-const stale = cityConfigTable === 0 || isActiveColumn === 0 || cityCount < 2;
+// Sanity floor is ONE city: the platform ships Addis Ababa; any further
+// cities exist only because they were onboarded (or, as with the deactivated
+// Dire Dawa demo, shipped in the snapshot).
+const stale = cityConfigTable === 0 || isActiveColumn === 0 || cityCount < 1;
 
 // --- 3a. Current database: additive schema sync only ------------------------
 if (!stale) {
@@ -184,6 +190,10 @@ if (!stale) {
   if (push.status !== 0)
     die("schema sync failed (destructive change, or a unique-constraint migration not covered by preSyncDdl?). Re-provision by emptying the database, or run scripts/refresh-neon.sh locally.");
   log("schema in sync.");
+  // Owner-directed city removal runs BEFORE tenant backfill so the backfill
+  // never re-seeds a service catalog for a city that must not exist.
+  const { purgeRemovedCities } = await import("./purge-cities.mjs");
+  await purgeRemovedCities(db, log);
   await backfillTenants();
   await db.$disconnect();
   process.exit(0);
@@ -270,8 +280,10 @@ for (const key of ["CityConfig", "OrgUnit", "SystemUser", "Party", "Property", "
 if (mismatches.length > 0) {
   die(`row-count mismatch for: ${mismatches.map(([n, c]) => `${n} (${loaded[n] ?? 0}/${c})`).join(", ")}`);
 }
-if ((loaded.CityConfig ?? 0) < 2) die("CityConfig did not load — refusing to ship a broken login.");
+if ((loaded.CityConfig ?? 0) < 1) die("CityConfig did not load — refusing to ship a broken login.");
 
+const purge = await import("./purge-cities.mjs");
+await purge.purgeRemovedCities(db, log);
 await backfillTenants();
 await db.$disconnect();
 log("DONE — Neon now matches the verified demo state. The deployment will serve the full login directory.");

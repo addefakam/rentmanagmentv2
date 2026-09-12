@@ -160,7 +160,7 @@ export function LoginForm({ initialSlug, initialCity }: { initialSlug?: string; 
 
           <p className="rounded-lg bg-muted/60 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
             Demo codes — Addis Ababa: STF-0001 (woreda registrar), STF-0002 (stamping desk), STF-0005 (bureau head),
-            STF-0007 (ministry), STF-0008 (system admin). Adama: STF-1001 (registrar), STF-1005 (bureau head).
+            STF-0007 (ministry), STF-0008 (system admin).
           </p>
         </div>
       </div>

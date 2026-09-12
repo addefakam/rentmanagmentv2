@@ -3,12 +3,10 @@
 # refresh-neon.sh — bring the Neon production database to the CURRENT shipped
 # state (multi-city SaaS platform) from the freshly-seeded local SQLite.
 #
-# Why: Neon still holds the 2026-09-11 single-city state (131 org units, no
-# Adama/Dire Dawa, no CityConfig.isActive, no CITY_ADMIN role). The deployed
-# code queries the new schema, so /api/auth/staff fails and the login page
-# shows no cities/officers. This script replaces the old state with the
-# verified current one (AA + AD active, DR deactivated demo, 152 org units,
-# 14 staff, full Phase 7/8 record, intact audit chain).
+# Why: Neon may still hold an older state than the shipped snapshot. This
+# script replaces the old state with the verified current one (AA active,
+# DR deactivated demo, Adama REMOVED by owner directive, 135 org units,
+# 9 staff, full Phase 7/8 record, intact audit chain).
 #
 # Usage:
 #   NEON_URL='postgresql://USER:PASS@ep-xxx.neon.tech/neondb?sslmode=require' \
