@@ -32,6 +32,19 @@ const schema = isPostgres ? "prisma/schema.postgres.prisma" : "prisma/schema.pri
 const runner = (process.platform === "win32") ? "npx.cmd" : "npx";
 
 console.log(`[build] DATABASE_URL scheme: ${isPostgres ? "postgresql" : "sqlite (default)"}`);
+
+// Cloud (Vercel + Neon): bring the production database to the shipped state
+// before bundling — schema sync, and a full re-provision from the committed
+// snapshot when the database is empty or stale. No-op for local SQLite.
+if (isPostgres) {
+  console.log("[build] provisioning the production database (provision-neon.mjs)...");
+  const prov = spawnSync(runner, ["node", "scripts/provision-neon.mjs"], { stdio: "inherit" });
+  if (prov.status !== 0) {
+    console.error(`[build] database provisioning failed (exit ${prov.status})`);
+    process.exit(prov.status ?? 1);
+  }
+}
+
 console.log(`[build] prisma generate --schema ${schema}`);
 const gen = spawnSync(runner, ["--no-install", "prisma", "generate", "--schema", schema], {
   stdio: "inherit",
