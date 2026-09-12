@@ -21,6 +21,14 @@
 // (/platform/audit): the fleet-wide, tamper-evident oversight of WHO did
 // WHAT in EVERY city (owner directive: "remove insight and add some else
 // if needed").
+//
+// Owner directive — SUPER-USER CONSOLE SCOPE II: City Settings (/settings)
+// and the Service Catalog (/services) are city-tier self-administration
+// surfaces and are REMOVED from the super user's console as well (owner
+// directive: "remove servicer catalog and city setting"). His console is
+// now exactly: Dashboard (general information) · National Management ·
+// Audit Trail · City Management. The pages and their APIs remain fully
+// available to the city tiers that actually run them.
 // ============================================================================
 
 const ALL_ROLES = [
@@ -33,8 +41,8 @@ const ALL_ROLES = [
 const REGISTRY_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN");
 const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN");
 const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // city analytics — super user excluded (owner directive)
-const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN", "SYSTEM_ADMIN"]; // city self-administration — ministry analyst is oversight-only
-const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
+const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN"]; // city self-administration — ministry analyst oversight-only, super user excluded (owner directive)
+const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // service catalog — city-tier desks, super user excluded (owner directive)
 const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the ONE high-power platform administrator — sole manager of cities
 const PROJECT_ROLES = ["BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // project tools — super user excluded
 

@@ -64,12 +64,13 @@ function SuperUserGeneralInfo({ staffCode, fullName }: { staffCode: string; full
     return () => { alive = false; };
   }, [staffCode]);
 
+  // Owner directive: City Settings and the Service Catalog are city-tier
+  // surfaces — removed from the super user's console along with registry,
+  // operations, project tools and Insights.
   const surfaces = [
     { href: "/platform/management", name: "National Management", desc: "Fleet statistics, management duties, the national regulation register and model-contract propagation." },
     { href: "/platform/audit", name: "Audit Trail", desc: "Fleet-wide, tamper-evident oversight of every state-changing action in every city." },
     { href: "/platform/cities", name: "City Management", desc: "Onboard, suspend or deactivate tenant cities — the one supreme-admin URL." },
-    { href: "/settings", name: "City Settings", desc: "Addis Ababa white-label configuration and organizational structure." },
-    { href: "/services", name: "Service Catalog", desc: "The service definitions each tenant city offers." },
   ];
 
   if (!data) return <p className="px-1 py-6 text-sm text-muted-foreground">Loading general platform information…</p>;
@@ -164,7 +165,7 @@ function SuperUserGeneralInfo({ staffCode, fullName }: { staffCode: string; full
         </Panel>
       </div>
 
-      <Panel title="Your working surfaces" subtitle="Everything the System Super User operates — registry, operations and project tools stay with the city tiers by design.">
+      <Panel title="Your working surfaces" subtitle="Everything the System Super User operates — city settings, service catalogs, registry, operations and project tools stay with the city tiers by design.">
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {surfaces.map((surf) => (
             <Link key={surf.href} href={surf.href} className="rounded-xl border bg-white p-4 transition-colors hover:border-[#D4875A]/50 hover:shadow-sm">

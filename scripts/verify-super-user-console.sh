@@ -8,6 +8,8 @@
 #  C2. Platform Audit Trail (/platform/audit + /api/audit) — the replacement
 #     the owner asked for when Insights was removed: SYSTEM_ADMIN-only,
 #     fleet-wide chain read + on-demand integrity verdict.
+#  C3. City Settings & Service Catalog — removed from the super user's
+#     console (owner directive); the city tiers keep both surfaces.
 #  D. Mutations (LOCAL ONLY) — add/archive a regulation, propagate a model
 #     contract version, then restore the local database.
 # Usage: bash scripts/verify-super-user-console.sh <base_url>
@@ -77,6 +79,18 @@ r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0005" "$BASE/api/audit")
 echo "$r" | grep -q "|403" && ok "bureau head refused on /api/audit (403)" || bad "STF-0005 /api/audit -> ${r:0:100}"
 r=$(curl -s -w "|%{http_code}" "$BASE/api/audit")
 echo "$r" | grep -q "|403" && ok "anonymous refused on /api/audit (403)" || bad "anonymous /api/audit -> ${r:0:100}"
+
+echo "== C3. City Settings & Service Catalog — removed from the super user's console =="
+c=$(curl -s -b "$JAR8" -o /dev/null -w "%{http_code}" "$BASE/settings")
+[ "$c" = "200" ] && ok "super user /settings: shell serves 200, ModuleFrame renders the role refusal (browser-verified)" || bad "super user /settings -> $c"
+c=$(curl -s -b "$JAR8" -o /dev/null -w "%{http_code}" "$BASE/services")
+[ "$c" = "200" ] && ok "super user /services: shell serves 200, ModuleFrame renders the role refusal (browser-verified)" || bad "super user /services -> $c"
+JAR5="/tmp/rc_su5.jar"; rm -f "$JAR5"
+curl -s -c "$JAR5" -H "Content-Type: application/json" -d '{"staffCode":"STF-0005","city":"AA"}' "$BASE/api/auth/login" > /dev/null
+c=$(curl -s -b "$JAR5" -o /dev/null -w "%{http_code}" "$BASE/settings")
+[ "$c" = "200" ] && ok "city tier KEEPS City Settings (bureau head 200)" || bad "STF-0005 /settings -> $c"
+c=$(curl -s -b "$JAR5" -o /dev/null -w "%{http_code}" "$BASE/services")
+[ "$c" = "200" ] && ok "city tier KEEPS Service Catalog (bureau head 200)" || bad "STF-0005 /services -> $c"
 
 if [ "$LOCAL" = "1" ]; then
   echo "== D. Local mutations: regulation register + fleet propagation =="
