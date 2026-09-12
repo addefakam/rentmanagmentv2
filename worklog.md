@@ -720,3 +720,25 @@ Stage Summary:
 - Ministry workflow intact: after signing in from the capital, STF-0007 still views/analyses every city's data via the console city switcher (national read scope unchanged).
 - Rule is role-based + home-city based: future onboarded cities automatically get clean local rosters, and future national roles automatically follow the same capital-only sign-in rule.
 - Reusable artifact updated: scripts/verify-admin-city.sh <base_url>.
+
+---
+Task ID: 30
+Agent: Main agent (Super Z)
+Task: Owner directive "remove adama at all from system" — purge the Adama City Administration tenant (AD) from the platform entirely: config, org tree, officers, catalog, contract, data, seed and shipped snapshot.
+
+Work Log:
+- Inspected first: /api/cities (lifecycle PATCH is soft-only — deactivate/suspend keeps data), /api/auth/staff (isActive filter), /api/tenant/branding (deactivated => 404), login route, provision-neon.mjs (FOUND LANDMINE: cityCount<2 "stale" check would full-re-provision Neon — resurrecting Adama — if the city ever went missing), seed.ts + orgTree.ts + catalogs-p4.ts (Adama seed wiring), prod-snapshot.json (AD = 17 org units, 5 staff STF-1001..1005, 4 parties, 2 properties, 4 service definitions, 1 contract + 10 sections, CityConfig row; AuditEvent AD rows = 0).
+- NEW scripts/purge-cities.mjs: REMOVED_CITIES=["AD"], FK-safe delete order (referrals -> control visits/penalties -> file children -> files -> properties -> complaints/parties -> programs -> analytics -> service catalog/contracts/adjustments -> staff -> CityConfig -> org units leaf-first), one interactive transaction, PlatformSetting one-shot marker key REMOVED_CITIES (a future re-onboarded AD city is NEVER auto-purged), refuses AA / last-active-city, post-conditions verify zero AD rows.
+- provision-neon.mjs: purge wired into BOTH provisioning paths (current-DB: purge runs BEFORE backfill so starter services are never re-seeded for a removed city; re-provision path: defensive call after snapshot load); city sanity floor relaxed 2 -> 1 with comment.
+- Seed de-Adama'd: orgTree.ts (ADAMA_BUREAU/ADAMA_SUB_CITIES removed), catalogs-p4.ts (AD CityConfig + STF-1001..1005 removed), seed.ts (bureau/sub-city creation, AD model contract, seedAdamaDemo call+function, imports removed; explanatory comment left).
+- UI/copy cleanup: i18n login hint, login-form demo codes, login page comment, settings org-unit placeholder (AD-CENTRAL-W15 -> AA-BOLE-W15), backfill-tenants.mjs + cities route COLOR_PRESETS AD entries removed (onboard falls back to default palette).
+- Local purge executed on SQLite dev DB (backup db/custom.pre-adama-purge.bak): deleted 17 org units, 5 staff, 4 parties, 2 properties, 4 service definitions, 1 contract + 10 sections, 1 config; verify: cityConfig gone, orgUnits gone, staff remaining=0.
+- prod-snapshot.json REGENERATED post-purge: AA ACTIVE + DR DEACTIVATED, 135 org units, 9 staff, zero AD rows, REMOVED_CITIES marker shipped in snapshot (re-provisions stay Adama-free).
+- scripts/verify-adama-removed.sh NEW (17 assertions: directory, login 401/403s, branding 404s, fleet/switcher); verify-admin-city.sh deleted; test-tenant-isolation.mjs rewritten for the removed-tenant world (AD theme/subdomain/directory gone, DR used as the live 2nd tenant for module-gate proof, lifecycle PATCH on removed city refused, STF-1001 not a usable actor; onboarding test kept as the re-onboard path).
+- Local production build PASS; runtime on :3210: verify-adama-removed 17/17, verify-single-admin 13/13, test-tenant-isolation 41/41. Test tenants TSVF/TSVE cleaned from local DB afterwards.
+- Commit 621bc22 created (all changes staged explicitly; db/ stays untracked).
+- BLOCKER: git push failed — no GitHub credentials in this session (PAT used inline in earlier sessions is not available). Production purge triggers on the Vercel build of commit 621bc22 once pushed.
+
+Stage Summary:
+- Removal is fully implemented, locally purged, tested (71 assertions green across three suites) and committed. The shipped seed + snapshot can no longer produce an Adama city; re-onboarding via /platform/cities remains possible and would be protected from auto-purge by the marker.
+- PRODUCTION (Neon) still holds Adama until commit 621bc22 is pushed and the Vercel build runs the provisioner purge. Need the GitHub PAT (inline push URL) from the owner or a manual push.
