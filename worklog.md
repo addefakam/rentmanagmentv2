@@ -510,3 +510,18 @@ Work Log:
 
 Stage Summary:
 - GitHub now carries the complete SaaS city-governance module incl. Dire Dawa demo deactivated city + verification battery. Owner-side remains: Neon `prisma db push` (CityConfig.isActive) + Vercel redeploy.
+
+---
+Task ID: 25
+Agent: main (Super Z)
+Task: Diagnose owner report "login page credentials not listed down to select" on the Vercel deployment.
+
+Work Log:
+- Probed https://rentmanagmentv2-ndhb-git-main-...vercel.app — blocked by Vercel SSO deployment protection (302 to vercel.com/sso-api), so production APIs cannot be probed from here; owner sees the page but empty dropdowns.
+- Code audit: /api/auth/staff queries CityConfig where isActive:true; login page useEffect silently keeps cities=[] when the API returns !ok — matches the reported symptom exactly.
+- Root cause: Neon still holds the 2026-09-11 single-city schema/state (no CityConfig.isActive column, no AD/DR cities, no CITY_ADMIN). Deployed code (31226db+) queries the new schema -> Postgres 42703 on every /api/auth/staff call -> empty login lists. Same failure will affect /api/cities, /api/platform.
+- Verified remediation assets are committed AND pushed (4850f48 = origin/main): scripts/refresh-neon.sh (drop schema -> db push -> batched ETL -> verify), scripts/etl-sqlite-to-neon.ts (generic DMMF-driven copy incl. CityConfig.isActive), scripts/check-neon.ts (prints counts, no hard asserts).
+- Verified local SQLite holds the pristine demo state to copy: AA+AD active, DR deactivated, 14 active staff, 152 org units.
+
+Stage Summary:
+- Diagnosis confirmed; no code defect. Fix is the one-command Neon refresh: NEON_URL='postgresql://...' bash scripts/refresh-neon.sh (direct endpoint, no -pooler). No Vercel redeploy needed afterwards; hard-reload /login. Owner can alternatively paste the Neon URL in chat for me to run it.
