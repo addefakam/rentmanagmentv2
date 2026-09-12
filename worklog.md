@@ -701,3 +701,22 @@ Stage Summary:
 - STF-0007 (ministry analyst) still visible in every city roster (fleet oversight sign-in) — unchanged by design.
 - Branded tenant portals (?slug=...) now default to their own city's officer list.
 - Reusable artifact: scripts/verify-admin-city.sh <base_url> — 12-assertion regression suite for the admin-city attachment rule.
+
+---
+Task ID: 29
+Agent: Main agent (Super Z)
+Task: Owner directive extension — "still remove STF-0007 from Adama": national accounts (ministry analyst AND system admin) sign in exclusively from the Addis Ababa portal; Adama's roster lists only its own city officers.
+
+Work Log:
+- Inspected first: isNationalRole() = {MINISTRY_ANALYST, SYSTEM_ADMIN} (src/lib/auth/officer.ts) — used for the rule so any future national role is covered automatically; scripts/test-tenant-isolation.mjs uses x-staff-code headers (not login) — unaffected.
+- /api/auth/staff: national append now runs ONLY for PLATFORM_HOME_CITY "AA" — every other city roster is purely that city's own officers. Adama roster no longer lists STF-0007 (nor STF-0008).
+- /api/auth/login: 403 rule generalized via isNationalRole(user.roleCode) — any national officer signing in from a non-AA city context is refused with "National officers (System Admin / Ministry) sign in only from the Addis Ababa administration portal." Contextual (city-less API callers unaffected). isNationalRole was already imported.
+- scripts/verify-admin-city.sh expectations updated: AD excludes BOTH national accounts; STF-0007 via ADAMA -> 403; STF-0007 via AA -> 200. Now 13 assertions.
+- Build PASS; local: 13/13 + single-admin regression 13/13 (port verified free after killing next-server by its real process name). Commit a127da1 pushed (98c00cb..a127da1).
+- Production: polled /api/auth/staff?city=AD until STF-0007 disappeared (poll 6), then 13/13 PASS + single-admin regression 13/13 PASS.
+
+Stage Summary:
+- Production policy NOW: Adama's sign-in directory contains ONLY Adama city officers (STF-1001..STF-1005). Both national accounts (STF-0007 ministry analyst, STF-0008 system admin) appear and sign in exclusively under Addis Ababa; attempts from other city contexts are refused 403 with a clear message.
+- Ministry workflow intact: after signing in from the capital, STF-0007 still views/analyses every city's data via the console city switcher (national read scope unchanged).
+- Rule is role-based + home-city based: future onboarded cities automatically get clean local rosters, and future national roles automatically follow the same capital-only sign-in rule.
+- Reusable artifact updated: scripts/verify-admin-city.sh <base_url>.
