@@ -36,7 +36,7 @@ export function SuperAdminForm() {
         body: JSON.stringify({ staffCode: code.trim() }),
       });
       const json = await res.json();
-      if (res.ok && json.ok) { window.location.href = "/platform/cities"; return; }
+      if (res.ok && json.ok) { window.location.href = "/platform/management"; return; }
       setError(String(json.error ?? "Access denied."));
     } finally {
       setBusy(false);

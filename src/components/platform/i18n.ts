@@ -24,6 +24,7 @@ const D: Dict = {
   "nav.dashboard": ["Dashboard", "ዳሽቦርድ", "Gabatee Dalallaa"],
   "nav.settings": ["City Settings", "የከተማ ቅንብሮች", "Qindaa'ina Magaalaa"],
   "nav.cities": ["City Management", "የከተማ አስተዳደር", "Bulchiinsa Magaalota"],
+  "nav.management": ["National Management", "ብሔራዊ አስተዳደር", "Bulchiinsa Biyyoolessummaa"],
   "nav.evidence_p": ["Evidence & Gates", "ማስረጃዎች እና ጌቶች", "Ragaafi fi Dalaloota"],
   "nav.group.overview": ["Overview", "አጠቃላይ", "Ilaalcha"],
   "nav.group.registry": ["Registry", "ምዝገባ", "Galmee"],

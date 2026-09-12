@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { t } from "./i18n";
 import { call } from "./panels-s1";
@@ -320,6 +320,7 @@ export function SettingsPage() {
   const canManageStaff = officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
   return (
     <div className="grid grid-cols-1 gap-4">
+      <NationalRegulationsCard />
       {canManageStaff ? (
         <Panel title="Staff register" subtitle="The city’s officers: add new staff, issue sign-in codes, deactivate or reactivate accounts, and move officers between offices. City admin authority stops at this city’s boundary.">
           <StaffRegister />
@@ -335,5 +336,50 @@ export function SettingsPage() {
         <OrgEditor />
       </Panel>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// National regulation register — REFLECTED TO EVERY CITY (owner directive).
+// Regulations, modifications and model changes added by the System Super
+// User land in ONE national register; every city console reads the same
+// entries here. Read-only at city level — the register is managed from the
+// National Management center by the super user.
+// ---------------------------------------------------------------------------
+function NationalRegulationsCard() {
+  const { officer } = useBoot();
+  const [regs, setRegs] = useState<Array<{ id: string; code: string; titleEn: string; type: string; year: number; note?: string; addedBy: string; addedAt: string }> | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    call("/api/national", "GET", null, officer.staffCode).then((d) => {
+      if (!alive) return;
+      if (d && Array.isArray((d as { regulations?: unknown }).regulations)) {
+        setRegs((d as { regulations: Array<{ id: string; code: string; titleEn: string; type: string; year: number; note?: string; addedBy: string; addedAt: string }> }).regulations);
+      }
+    });
+    return () => { alive = false; };
+  }, [officer.staffCode]);
+
+  return (
+    <Panel title="National regulations & model changes (federal)" subtitle="Issued by the System Super User — one national register, automatically in force for EVERY city. Read-only here; managed from the National Management center.">
+      {!regs ? (
+        <p className="py-2 text-sm text-muted-foreground">Loading the national register…</p>
+      ) : regs.length === 0 ? (
+        <p className="py-2 text-sm text-muted-foreground">No national regulations issued yet — the register is maintained by the System Super User.</p>
+      ) : (
+        <DataTable
+          headers={["Code", "Title", "Type", "Year", "Issued"]}
+          empty="—"
+          rows={regs.map((r) => [
+            <span key={r.id} className="font-mono text-xs">{r.code}</span>,
+            <span key={`${r.id}-t`}>{r.titleEn}{r.note ? <span className="block text-xs text-muted-foreground">{r.note}</span> : null}</span>,
+            r.type,
+            String(r.year),
+            `${new Date(r.addedAt).toISOString().slice(0, 10)} · ${r.addedBy}`,
+          ])}
+        />
+      )}
+    </Panel>
   );
 }

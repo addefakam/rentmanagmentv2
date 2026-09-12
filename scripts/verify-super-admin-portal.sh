@@ -43,12 +43,16 @@ echo "$r" | grep -q "|400" && ok "empty body -> 400 staff code required" || bad 
 echo "== 3. The issued session is a real console session =="
 curl -s -c "$JAR" -H "Content-Type: application/json" -d '{"staffCode":"STF-0008"}' "$BASE/api/auth/super" > /dev/null
 grep -q "rc_officer" "$JAR" && ok "rc_officer cookie issued by the portal" || bad "no rc_officer cookie in jar"
+c=$(curl -s -b "$JAR" -o /dev/null -w "%{http_code}" "$BASE/platform/management")
+[ "$c" = "200" ] && ok "cookie opens /platform/management (National Management center)" || bad "/platform/management with cookie -> $c"
 c=$(curl -s -b "$JAR" -o /dev/null -w "%{http_code}" "$BASE/platform/cities")
-[ "$c" = "200" ] && ok "cookie opens /platform/cities (City Management console)" || bad "/platform/cities with cookie -> $c"
+[ "$c" = "200" ] && ok "cookie still opens /platform/cities (City Management)" || bad "/platform/cities with cookie -> $c"
 c=$(curl -s -b "$JAR" -o /dev/null -w "%{http_code}" "$BASE/")
 [ "$c" = "200" ] && ok "cookie opens the console home" || bad "/ with cookie -> $c"
 r=$(curl -s -b "$JAR" -H "x-staff-code: STF-0008" "$BASE/api/cities")
 echo "$r" | grep -q '"ok":true' && ok "fleet API works for the portal session" || bad "fleet API -> ${r:0:120}"
+r=$(curl -s -b "$JAR" -H "x-staff-code: STF-0008" "$BASE/api/national")
+echo "$r" | grep -q '"scope":"SYSTEM_ADMIN"' && ok "national management API answers the portal session" || bad "national API -> ${r:0:120}"
 
 echo "== 4. Regression — public sign-in paths untouched =="
 r=$(curl -s -w "|%{http_code}" -H "Content-Type: application/json" -d '{"staffCode":"STF-0008","city":"AA"}' "$BASE/api/auth/login")
