@@ -543,3 +543,18 @@ Work Log:
 
 Stage Summary:
 - Zero-action fix in flight: the running Vercel build drops+recreates Neon to the verified multi-city demo state, then the login page lists AA + AD (DR hidden). Future schema drift self-heals on every deploy. If the build fails, Vercel log shows [provision] ERROR lines — the build no longer silently succeeds against a broken DB.
+
+---
+Task ID: 25-c
+Agent: main (Super Z)
+Task: Owner pasted Vercel build log — provisioning started (env var worked!) but npx-based prisma generate exited 1; fix the build toolchain.
+
+Work Log:
+- Log analysis: build entered the postgres branch -> DATABASE_URL now set (owner completed the env-var step). Failure: "npx --no-install prisma generate --schema schema.postgres --output node_modules/.prisma-pg" exit 1 on Vercel's bun-run build; bun also warned "Duplicate dependency: prisma" (dependencies line 70 + devDependencies line 96 — earlier bun add had silently placed it in dependencies).
+- package.json: removed the devDependencies duplicate (prisma 6.19.2 stays in dependencies); bun.lock synced.
+- build.mjs: replaced ALL npx calls with direct node invocation (node_modules/prisma/build/index.js, node_modules/next/dist/bin/next); reordered postgres path: prisma generate (postgres) FIRST, then provision-neon.mjs, then next build.
+- provision-neon.mjs: removed the .prisma-pg second-client generate entirely (uses the default @prisma/client generated moments earlier by build.mjs); db push now via the same direct-node runner.
+- Local checks: node --check OK; direct CLI --version OK; sqlite skip-path OK; bun.lock clean.
+
+Stage Summary:
+- Pushed cda9b51 (bd9ef7d..cda9b51). Vercel rebuild will regenerate the pg client, auto-provision Neon (drop + push + 1193-row snapshot + verify), and build. If anything still fails, the log now shows prisma's own error directly above the [provision] ERROR line.
