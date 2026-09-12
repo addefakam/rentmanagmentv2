@@ -60,6 +60,7 @@ server.log
 # local database (regenerate via prisma seed)
 db/*.db
 db/*.db-journal
+db/*.bak
 
 # internal verification artifacts
 /tool-results/
