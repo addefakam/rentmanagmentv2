@@ -12,11 +12,15 @@
 //
 // Owner directive — SUPER-USER CONSOLE SCOPE: the System Super User runs the
 // PLATFORM, not a registry desk. Registry (parties/properties/registration),
-// Operations (rent/complaints/enforcement) and the Project tools are REMOVED
-// from the super user's navigation and shell — those belong to the city
-// tiers. The super user works from the National Management center
-// (/platform/management): fleet statistics, management duties, the national
-// regulation register and fleet-wide model-contract propagation.
+// Operations (rent/complaints/enforcement), the Project tools AND Insights
+// (Data & Reports — city analytics belong to the city tiers) are REMOVED
+// from the super user's navigation and shell. In their place the super user
+// works from the National Management center (/platform/management): fleet
+// statistics, management duties, the national regulation register and
+// fleet-wide model-contract propagation — plus the Platform Audit Trail
+// (/platform/audit): the fleet-wide, tamper-evident oversight of WHO did
+// WHAT in EVERY city (owner directive: "remove insight and add some else
+// if needed").
 // ============================================================================
 
 const ALL_ROLES = [
@@ -28,7 +32,7 @@ const ALL_ROLES = [
 // (owner directive) — every city tier keeps them.
 const REGISTRY_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN");
 const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN");
-const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
+const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // city analytics — super user excluded (owner directive)
 const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN", "SYSTEM_ADMIN"]; // city self-administration — ministry analyst is oversight-only
 const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST", "SYSTEM_ADMIN"];
 const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the ONE high-power platform administrator — sole manager of cities
@@ -46,6 +50,7 @@ export const PAGE_ACCESS: Record<string, string[]> = {
   "/settings": SETTINGS_ROLES,
   "/services": SERVICES_ROLES,
   "/platform/management": PLATFORM_ADMIN_ROLES, // National Management — fleet stats, duties, regulations, model contracts
+  "/platform/audit": PLATFORM_ADMIN_ROLES, // Platform Audit Trail — fleet-wide oversight (replaces Insights for the super user)
   "/platform/cities": PLATFORM_ADMIN_ROLES, // City Management — the dedicated URL of the one supreme admin
   "/cities": PLATFORM_ADMIN_ROLES, // legacy URL — redirect shim to /platform/cities
   "/platform": PLATFORM_ADMIN_ROLES, // legacy URL — redirect shim to /platform/cities
@@ -82,6 +87,7 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/settings", labelKey: "nav.settings", labelEn: "City Settings", group: "admin" },
   { href: "/services", labelKey: "nav.services", labelEn: "Service Catalog", group: "admin" },
   { href: "/platform/management", labelKey: "nav.management", labelEn: "National Management", group: "admin" },
+  { href: "/platform/audit", labelKey: "nav.audit", labelEn: "Audit Trail", group: "admin" },
   { href: "/platform/cities", labelKey: "nav.cities", labelEn: "City Management", group: "admin" },
   { href: "/project", labelKey: "nav.evidence", labelEn: "Evidence & Gates", group: "project" },
   { href: "/project/testing", labelKey: "nav.p5", labelEn: "Testing & Compliance", group: "project" },

@@ -5,6 +5,9 @@
 #     register is readable by EVERY officer (reflected to all cities).
 #  C. Removed surfaces — registry/operations/project pages are out of the
 #     super user's console; their APIs stay tier-scoped as before.
+#  C2. Platform Audit Trail (/platform/audit + /api/audit) — the replacement
+#     the owner asked for when Insights was removed: SYSTEM_ADMIN-only,
+#     fleet-wide chain read + on-demand integrity verdict.
 #  D. Mutations (LOCAL ONLY) — add/archive a regulation, propagate a model
 #     contract version, then restore the local database.
 # Usage: bash scripts/verify-super-user-console.sh <base_url>
@@ -53,6 +56,23 @@ r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0005" -H "Content-Type: app
 echo "$r" | grep -q "|403" && ok "bureau head CANNOT propagate model contracts (403)" || bad "STF-0005 PROPAGATE -> $r"
 r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0008" -H "Content-Type: application/json" -d '{"action":"BOGUS_ACTION"}' "$BASE/api/national")
 echo "$r" | grep -qE "\|(40[03])" && ok "unknown action refused" || bad "BOGUS_ACTION -> $r"
+
+echo "== C2. Platform Audit Trail — the replacement for the removed Insights =="
+c=$(curl -s -o /dev/null -w "%{http_code}" "$BASE/platform/audit")
+[ "$c" = "307" ] && ok "no session -> /platform/audit redirected to sign-in (307)" || bad "/platform/audit no session -> $c"
+c=$(curl -s -b "$JAR8" -o /dev/null -w "%{http_code}" "$BASE/platform/audit")
+[ "$c" = "200" ] && ok "super user opens /platform/audit (200)" || bad "super user /platform/audit -> $c"
+r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0008" "$BASE/api/audit?limit=50")
+echo "$r" | grep -q '"scope":"SYSTEM_ADMIN"' && ok "super user reads the fleet audit trail" || bad "STF-0008 /api/audit -> ${r:0:140}"
+echo "$r" | grep -q '"total"' && echo "$r" | grep -q '"events"' && ok "audit payload carries total + events" || bad "total/events missing: ${r:0:140}"
+r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0008" "$BASE/api/audit?limit=20&verify=1")
+echo "$r" | grep -q '"intact":true' && ok "full hash-chain walk: integrity INTACT" || bad "chain verify -> ${r:0:140}"
+r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0007" "$BASE/api/audit")
+echo "$r" | grep -q "|403" && ok "ministry analyst refused on /api/audit (403)" || bad "STF-0007 /api/audit -> ${r:0:100}"
+r=$(curl -s -w "|%{http_code}" -H "x-staff-code: STF-0005" "$BASE/api/audit")
+echo "$r" | grep -q "|403" && ok "bureau head refused on /api/audit (403)" || bad "STF-0005 /api/audit -> ${r:0:100}"
+r=$(curl -s -w "|%{http_code}" "$BASE/api/audit")
+echo "$r" | grep -q "|403" && ok "anonymous refused on /api/audit (403)" || bad "anonymous /api/audit -> ${r:0:100}"
 
 if [ "$LOCAL" = "1" ]; then
   echo "== D. Local mutations: regulation register + fleet propagation =="

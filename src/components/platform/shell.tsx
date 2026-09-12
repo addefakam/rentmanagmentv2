@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import {
   LayoutDashboard, Users, Building2, FileCheck2, Banknote, MessageSquareWarning,
   ShieldAlert, BarChart3, Settings, FolderGit2, LogOut, Languages, MapPin,
-  Menu, ClipboardCheck, Truck, Rocket, FlaskConical, Globe2, Landmark,
+  Menu, ClipboardCheck, Truck, Rocket, FlaskConical, Globe2, Landmark, ScrollText,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
@@ -71,7 +71,7 @@ const GROUP_ICONS: Record<string, typeof LayoutDashboard> = {
   "/": LayoutDashboard, "/parties": Users, "/properties": Building2,
   "/registration": FileCheck2, "/rent": Banknote, "/complaints": MessageSquareWarning,
   "/enforcement": ShieldAlert, "/reports": BarChart3, "/settings": Settings,
-  "/platform/management": Landmark, "/platform/cities": Globe2, "/project": FolderGit2, "/project/testing": FlaskConical,
+  "/platform/management": Landmark, "/platform/audit": ScrollText, "/platform/cities": Globe2, "/project": FolderGit2, "/project/testing": FlaskConical,
   "/project/uat": ClipboardCheck, "/project/pilot": Truck, "/project/golive": Rocket,
 };
 
