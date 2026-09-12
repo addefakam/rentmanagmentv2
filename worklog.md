@@ -624,3 +624,17 @@ Work Log:
 
 Stage Summary:
 - Provisioner unblocked for the SaaS schema; production DB gains tenant columns/catalogs on next build; deployment expected to go live — verify via /api/tenant/branding no longer 404 and tenant-branded login.
+
+---
+Task ID: 26-d
+Agent: main (Super Z)
+Task: Confirm SaaS deployment live on production; owner Q&A (how to reach city creation; what differs between same-role users of two cities).
+
+Work Log:
+- SaaS PLATFORM IS LIVE on https://rentmanagmentv2-ndhb.vercel.app (build ef6e058): /api/tenant/branding?slug=addis-ababa -> 200 (AA blue #1D4ED8), ?slug=adama -> 200 (AD green #059669), status ACTIVE. NOTE: earlier 404 polls were a wrong-slug probe artifact ("addis-abeba" vs real "addis-ababa") — slugs confirmed from live login payload tenantSlug.
+- Live isolation spot-check with real sessions: STF-0001 (AA WOREDA_REGISTRAR) -> session {cityCode:AA, org AA-BOLE-W01, tenantSlug addis-ababa}, /api/registration-files -> 28 AA files; STF-1001 (AD same role) -> {cityCode:AD, org AD-CENTRAL-W01, tenantSlug adama}, -> 0 files (AA data invisible). City pinned server-side from org unit; tenantSlug embedded in session.
+- /api/platform for a city registrar returns 200 BY DESIGN: route pins city-bound officers to their own city (cities array = own city only, orgUnits filtered to own subtree; fleet list only for national officers; deactivated city -> 403 for city officers). No isolation leak.
+- National accounts STF-0007 (MINISTRY_ANALYST) and STF-0008 (SYSTEM_ADMIN) appear under BOTH cities' rosters (fleet scope) — explains the owner's observation of "similar roles".
+
+Stage Summary:
+- Multi-tenant SaaS release LIVE: tenant-branded login (blue AA / green AD), server-side tenant pinning, module gates, service catalogs, /cities tenant editor. Production healthy; owner guidance delivered: STF-0008 -> City Management (/cities) -> "Onboard a new city".
