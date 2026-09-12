@@ -48,21 +48,19 @@ const directUrl = (() => {
   } catch { return url; }
 })();
 
-const runner = process.platform === "win32" ? "npx.cmd" : "npx";
-const run = (args, extraEnv = {}) => {
-  const r = spawnSync(runner, args, { stdio: "inherit", env: { ...process.env, ...extraEnv } });
-  if (r.status !== 0) die(`command failed (exit ${r.status}): ${args.join(" ")}`);
+const require2 = createRequire(path.join(root, "package.json"));
+const prismaCli = path.join(root, "node_modules", "prisma", "build", "index.js");
+if (!existsSync(prismaCli)) die("prisma CLI not found at node_modules/prisma/build/index.js");
+
+// Direct CLI runner — immune to npx resolution quirks on Vercel.
+const runPrisma = (args, extraEnv = {}) => {
+  const r = spawnSync(process.execPath, [prismaCli, ...args], { stdio: "inherit", env: { ...process.env, ...extraEnv } });
+  if (r.status !== 0) die(`command failed (exit ${r.status}): prisma ${args.join(" ")}`);
 };
 
-const require2 = createRequire(path.join(root, "package.json"));
-const pgClientDir = path.join(root, "node_modules", ".prisma-pg");
-
-// --- 1. PostgreSQL client for this script's own probes + bulk copy ---------
-log("generating the PostgreSQL Prisma client (node_modules/.prisma-pg)...");
-run(["--no-install", "prisma", "generate", "--schema", "prisma/schema.postgres.prisma",
-     "--output", pgClientDir]);
-
-const { PrismaClient: PG, Prisma: PGPrisma } = require2(pgClientDir);
+// The default @prisma/client has ALREADY been generated from the PostgreSQL
+// schema by scripts/build.mjs before this script runs — no extra generate.
+const { PrismaClient: PG, Prisma: PGPrisma } = require2("@prisma/client");
 const db = new PG({ datasourceUrl: directUrl, log: [] });
 
 const scalarCount = async (sql) => {
@@ -90,8 +88,7 @@ const stale = cityConfigTable === 0 || isActiveColumn === 0 || cityCount < 2;
 // --- 3a. Current database: additive schema sync only ------------------------
 if (!stale) {
   log("database is current — syncing schema (additive only)...");
-  const push = spawnSync(runner,
-    ["--no-install", "prisma", "db", "push", "--schema", "prisma/schema.postgres.prisma", "--skip-generate"],
+  const push = spawnSync(process.execPath, [prismaCli, "db", "push", "--schema", "prisma/schema.postgres.prisma", "--skip-generate"],
     { stdio: "inherit", env: { ...process.env, DATABASE_URL: directUrl } });
   if (push.status !== 0)
     die("schema sync failed (destructive change?). Re-provision by emptying the database, or run scripts/refresh-neon.sh locally.");
@@ -112,8 +109,8 @@ await db.$executeRawUnsafe(`DROP SCHEMA public CASCADE`);
 await db.$executeRawUnsafe(`CREATE SCHEMA public`);
 
 log("creating the current schema (prisma db push)...");
-run(["--no-install", "prisma", "db", "push", "--schema", "prisma/schema.postgres.prisma",
-     "--skip-generate", "--accept-data-loss"], { DATABASE_URL: directUrl });
+runPrisma(["db", "push", "--schema", "prisma/schema.postgres.prisma",
+           "--skip-generate", "--accept-data-loss"], { DATABASE_URL: directUrl });
 
 // --- 4. Load the committed snapshot (batched createMany, topo order) --------
 function topoOrder(models) {
