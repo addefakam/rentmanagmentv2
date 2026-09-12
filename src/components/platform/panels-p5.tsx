@@ -3,13 +3,15 @@
 // Renders the /api/quality evidence: compliance matrix with live-attached
 // test results, audit chain verdict, performance profiles vs NFR-01, RBAC
 // capability matrix, integration sandbox inventory, open item dispositions.
+// LINK-FIRST IA: the summary band stays; the evidence zones are
+// link-addressable tabs (/project/testing#compliance · #testing · #items).
 // ============================================================================
 
 "use client";
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Panel, DataTable, StatusBadge, Stat, ActionButton } from "./kit";
+import { Panel, DataTable, StatusBadge, Stat, ActionButton, TabRail, useHashTab } from "./kit";
 import type { Lang } from "./types";
 
 type MatrixRow = {
@@ -40,6 +42,7 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
   const [data, setData] = useState<QualityPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab] = useHashTab(["compliance", "testing", "items"], "compliance");
 
   const load = async () => {
     try {
@@ -81,15 +84,17 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
         <Stat label="Registration E2E p95" value={reg?.p95 != null ? `${reg.p95} ms` : "—"} hint={`target ${reg?.targetMs ?? 5000} ms (NFR-01)`} />
       </div>
 
-      <Panel title="Test plan (V-model levels)" subtitle="Plan §5.6: prove the assembled system against integrations, load, attack, and above all the law.">
-        <DataTable
-          headers={["Level", "Scope", "Suite", "Case IDs"]}
-          rows={TEST_PLAN.map((r) => r.map((c, i) => (
-            <span key={`${r[0]}-${i}`} className={i === 0 ? "text-[11px] font-semibold" : "text-[11px] text-muted-foreground"}>{c}</span>
-          )))}
-        />
-      </Panel>
+      <TabRail
+        active={tab}
+        ariaLabel="Testing and compliance sections"
+        tabs={[
+          { key: "compliance", label: "Legal compliance matrix", count: data.summary.rows, hint: "Every binding rule paired with a named test case" },
+          { key: "testing", label: "Test plan & security", hint: "V-model levels, ASVS L2 assessment, performance, sandboxes" },
+          { key: "items", label: "Open items", count: data.openItems.length, hint: "Dispositions carried at Gate G5" },
+        ]}
+      />
 
+      {tab === "compliance" ? (
       <Panel title="Legal compliance matrix · results attached" subtitle="Every binding rule of Proclamation 1320/2016, Directive 7/2016 and the model agreement paired with a named, executable test case.">
         <DataTable
           headers={["ID", "Source", "Rule", "Module", "Kind", "Status", "Named cases"]}
@@ -102,6 +107,18 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
             <StatusBadge key={`b-${r.id}`} value={r.status === "PASS" ? "REGISTERED" : r.status === "FAIL" ? "REJECTED" : "PENDING"} />,
             <span key={`t-${r.id}`} className="text-[9px] text-muted-foreground">{r.tests.length} case{r.tests.length > 1 ? "s" : ""}</span>,
           ])}
+        />
+      </Panel>
+      ) : null}
+
+      {tab === "testing" ? (
+      <>
+      <Panel title="Test plan (V-model levels)" subtitle="Plan §5.6: prove the assembled system against integrations, load, attack, and above all the law.">
+        <DataTable
+          headers={["Level", "Scope", "Suite", "Case IDs"]}
+          rows={TEST_PLAN.map((r) => r.map((c, i) => (
+            <span key={`${r[0]}-${i}`} className={i === 0 ? "text-[11px] font-semibold" : "text-[11px] text-muted-foreground"}>{c}</span>
+          )))}
         />
       </Panel>
 
@@ -160,7 +177,10 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
           </Panel>
         </div>
       </div>
+      </>
+      ) : null}
 
+      {tab === "items" ? (
       <Panel title="Open item dispositions at Gate G5" subtitle="O-9 closed; O1, O-7, O-8 carried with explicit dispositions (none blocks UAT entry).">
         <DataTable
           headers={["Item", "Title", "Disposition at Phase 5", "Status"]}
@@ -176,6 +196,7 @@ export function QualityPanel({ lang, refresh }: { lang: Lang; refresh?: () => Pr
           <span className="text-[10px] text-muted-foreground">Battery re-runs in CI and via scripts/quality/run-all.ts; the panel always renders the newest attached results.</span>
         </div>
       </Panel>
+      ) : null}
     </div>
   );
 }

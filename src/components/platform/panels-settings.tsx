@@ -1,10 +1,13 @@
 // ============================================================================
 // panels-settings.tsx — City Settings (Dir. Art. 14 per-city rule sets).
-// Four no-code editors for the city administration:
+// LINK-FIRST IA: the editors are link-addressable zones — one per screen,
+// opened on demand (/settings#identity · /settings#federal ·
+// /settings#staff · /settings#ladder · /settings#org):
 //   1. City identity    — trilingual names, currency, work week, canonical lang
-//   2. Statutory params — lease/prepay/deadline parameters (Proc./Dir. driven)
-//   3. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
-//   4. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
+//   2. Federal register — national regulations reflected to every city (read-only)
+//   3. Staff register   — officers of this city (city admin only)
+//   4. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
+//   5. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
 // ============================================================================
 
 "use client";
@@ -14,7 +17,7 @@ import { toast } from "sonner";
 import { t } from "./i18n";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
-import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge, TabRail, useHashTab } from "./kit";
 import type { PenaltyParam } from "./types";
 
 // ---------------------------------------------------------------------------
@@ -316,25 +319,40 @@ function StaffRegister() {
 // ---------------------------------------------------------------------------
 export function SettingsPage() {
   const { boot, officer } = useBoot();
-  if (!boot) return null;
   const canManageStaff = officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
+  const tabs = [
+    { key: "identity", label: "City identity & parameters", hint: "The per-city rule set (Dir. Art. 14)" },
+    { key: "federal", label: "Federal register", hint: "National regulations reflected to every city" },
+    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: "Officers of this city — add, deactivate, reactivate" }] : []),
+    { key: "ladder", label: "Penalty ladder", hint: "M9 offense catalogue values (Dir. Art. 22)" },
+    { key: "org", label: "Organization hierarchy", hint: "Sub-cities and woredas (M13)" },
+  ];
+  const [tab] = useHashTab(tabs.map((x) => x.key), "identity");
+  if (!boot) return null;
   return (
     <div className="grid grid-cols-1 gap-4">
-      <NationalRegulationsCard />
-      {canManageStaff ? (
+      <TabRail active={tab} ariaLabel="City settings sections" tabs={tabs} />
+      {tab === "identity" ? (
+        <Panel title="City identity & statutory parameters" subtitle="Per-city rule set (Dir. Art. 14). Changes take effect immediately; the statutory clock params drive complaints and appeal windows.">
+          <CityConfigForm />
+        </Panel>
+      ) : null}
+      {tab === "federal" ? <NationalRegulationsCard /> : null}
+      {tab === "staff" && canManageStaff ? (
         <Panel title="Staff register" subtitle="The city’s officers: add new staff, issue sign-in codes, deactivate or reactivate accounts, and move officers between offices. City admin authority stops at this city’s boundary.">
           <StaffRegister />
         </Panel>
       ) : null}
-      <Panel title="City identity & statutory parameters" subtitle="Per-city rule set (Dir. Art. 14). Changes take effect immediately; the statutory clock params drive complaints and appeal windows.">
-        <CityConfigForm />
-      </Panel>
-      <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive’s offense catalogue; values are configurable parameters (open item O1). Rows referenced by penalty cases are deactivated, never deleted.">
-        <LadderEditor />
-      </Panel>
-      <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle="Sub-cities and woredas of the city bureau. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7).">
-        <OrgEditor />
-      </Panel>
+      {tab === "ladder" ? (
+        <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive’s offense catalogue; values are configurable parameters (open item O1). Rows referenced by penalty cases are deactivated, never deleted.">
+          <LadderEditor />
+        </Panel>
+      ) : null}
+      {tab === "org" ? (
+        <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle="Sub-cities and woredas of the city bureau. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7).">
+          <OrgEditor />
+        </Panel>
+      ) : null}
     </div>
   );
 }

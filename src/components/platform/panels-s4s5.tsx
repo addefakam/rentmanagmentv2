@@ -1,6 +1,9 @@
 // ============================================================================
 // panels-s4s5.tsx — Sprint S4 (M5 adjustment engine + M6 payment ledger)
 // and Sprint S5 (M8 complaints & appeals + M12 deadline engine).
+// LINK-FIRST IA: zones are link-addressable tabs (/rent#adjustment ·
+// /rent#payments · /complaints#intake · /complaints#appeals ·
+// /complaints#deadlines) instead of stacked content.
 // ============================================================================
 
 "use client";
@@ -9,7 +12,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { t } from "./i18n";
 import type { BootPayload, Lang } from "./types";
-import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge } from "./kit";
+import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, TabRail, useHashTab } from "./kit";
 import { call } from "./panels-s1";
 
 type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> };
@@ -49,8 +52,20 @@ export function RentPanel({ boot, lang, refresh }: PanelProps) {
     }
   };
 
+  const [tab] = useHashTab(["adjustment", "payments"], "adjustment");
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Rent sections"
+        tabs={[
+          { key: "adjustment", label: "Annual adjustment", count: boot.adjustments.length, hint: "M5 — the June calendar engine (Proc. Art. 8)" },
+          { key: "payments", label: "Payments ledger", count: boot.payments.length, hint: "M6 — electronic ledger with cash flagging" },
+        ]}
+      />
+
+      {tab === "adjustment" ? (
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M5 · Annual adjustment" subtitle="Proc. Art. 8; Dir. Art. 11: publish June 1, effect June 30; pre-effect amendment check during June; 30-working-day amendment window after effect.">
           <div className="grid grid-cols-1 gap-2">
@@ -88,7 +103,9 @@ export function RentPanel({ boot, lang, refresh }: PanelProps) {
           />
         </Panel>
       </div>
+      ) : null}
 
+      {tab === "payments" ? (
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M6 · Record payment" subtitle="Proc. Art. 13: only bank / legal electronic channels. A cash entry is flagged and auto-computes the 10% referral case (Dir. Art. 22). Prepayment cap 2 months (Art. 12).">
           <div className="grid grid-cols-1 gap-2">
@@ -128,6 +145,7 @@ export function RentPanel({ boot, lang, refresh }: PanelProps) {
           />
         </Panel>
       </div>
+      ) : null}
     </div>
   );
 }
@@ -171,8 +189,21 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
     }
   };
 
+  const [tab] = useHashTab(["intake", "appeals", "deadlines"], "intake");
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Complaints sections"
+        tabs={[
+          { key: "intake", label: "Intake & decisions", count: boot.complaints.length, hint: "M8 — eight-grounds intake, register, decisions (Proc. Art. 22)" },
+          { key: "appeals", label: "Appeals", count: boot.appeals.length, hint: "M8 — committee hearings (Proc. Arts. 24-26)" },
+          { key: "deadlines", label: "Deadline engine", count: boot.deadlines.length, hint: "M12 — every statutory clock in one register" },
+        ]}
+      />
+
+      {tab === "intake" ? (
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M8 · Intake complaint" subtitle="Dir. Arts. 17-19: eight-grounds checklist, multichannel (written / verbal / telephone / online), completeness check, complaint register.">
           <div className="grid grid-cols-1 gap-2">
@@ -215,11 +246,13 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
                 )}
               </span>,
             ])}
-            empty="No complaints yet — intake a complaint on the left."
+            empty="No complaints yet — intake a complaint above."
           />
         </Panel>
       </div>
+      ) : null}
 
+      {tab === "appeals" ? (
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M8 · File appeal" subtitle="Proc. Art. 24: within 15 days of the decision; the window is validated and expired filings are rejected.">
           <div className="grid grid-cols-1 gap-2">
@@ -248,7 +281,9 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
           />
         </Panel>
       </div>
+      ) : null}
 
+      {tab === "deadlines" ? (
       <Panel title="M12 · Deadline engine" subtitle="Every statutory clock in one register (Proc. Arts. 4, 6, 7, 22, 24; Dir. Arts. 10, 19). Sweep escalates overdue clocks.">
         <div className="mb-2"><ActionButton variant="outline" onClick={sweep}>Sweep and escalate overdue clocks</ActionButton></div>
         <DataTable
@@ -263,6 +298,7 @@ export function DisputesPanel({ boot, lang, refresh }: PanelProps) {
           empty="No clocks running — register a complaint or file to start them."
         />
       </Panel>
+      ) : null}
     </div>
   );
 }

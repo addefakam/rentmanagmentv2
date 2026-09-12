@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Panel, StatusBadge, DataTable } from "./kit";
+import { Panel, StatusBadge, DataTable, TabRail, useHashTab } from "./kit";
 import { t } from "./i18n";
 import type { Lang } from "./types";
 
@@ -50,8 +50,21 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
     }
   };
 
+  const [tab] = useHashTab(["gate4", "promotion", "items"], "gate4");
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Evidence and gates sections"
+        tabs={[
+          { key: "gate4", label: "Gate G4 checklist", hint: "Phase 3→4 exit criteria and their evidence" },
+          { key: "promotion", label: "Staged promotion", hint: "Re-runnable Phase 3 promotion with live checks" },
+          { key: "items", label: "Open items", count: 4, hint: "Honest register carried into Phase 5" },
+        ]}
+      />
+
+      {tab === "gate4" ? (
       <Panel
         title="Gate G4 · Exit checklist"
         subtitle="Plan §5.5: all seven increments demonstrated; functionally complete against the SRS; no severity-1/2 defects open."
@@ -68,7 +81,9 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
           Approving this checklist at Gate G4 releases Phase 5 (Integration, Security and Compliance Testing), where every traced article is exercised by a named test case and the compliance matrix is attached to the test report.
         </p>
       </Panel>
+      ) : null}
 
+      {tab === "promotion" ? (
       <Panel
         title="Phase 3 evidence · Staged promotion (re-runnable)"
         subtitle="Plan §5.4 exit: staged promotion runs end to end; seeded hierarchy matches the official structure. Re-running here proves the Phase 4 schema still passes the same validation battery."
@@ -110,7 +125,9 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
           )}
         </div>
       </Panel>
+      ) : null}
 
+      {tab === "items" ? (
       <Panel title="Open items carried into Phase 5" subtitle="Honest register — none blocks Phase 5 entry.">
         <DataTable
           headers={["Item", "Description", "Disposition"]}
@@ -126,6 +143,7 @@ export function EvidencePanel({ lang }: { lang: Lang }) {
           ])}
         />
       </Panel>
+      ) : null}
     </div>
   );
 }

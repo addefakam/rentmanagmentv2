@@ -18,7 +18,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
-import { Panel, Stat, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { Panel, Stat, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge, TabRail, useHashTab } from "./kit";
 import { t } from "./i18n";
 
 type Stats = {
@@ -48,10 +48,11 @@ const TABS = [
   { key: "contracts", labelKey: "nat.tab.contracts" },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
+const TAB_KEYS: readonly string[] = TABS.map((x) => x.key);
 
 export function NationalManagementPage() {
   const { officer, lang } = useBoot();
-  const [tab, setTab] = useState<TabKey>("overview");
+  const [tab] = useHashTab(TAB_KEYS, "overview");
   const [data, setData] = useState<Payload | null>(null);
   const [propResults, setPropResults] = useState<PropResult[] | null>(null);
 
@@ -82,19 +83,13 @@ export function NationalManagementPage() {
 
   return (
     <div className="grid grid-cols-1 gap-4">
-      {/* Tab rail — the access layer: each zone renders only when opened. */}
-      <div className="flex flex-wrap gap-1.5 rounded-xl border bg-white p-1.5" role="tablist" aria-label="National management sections">
-        {TABS.map((x) => (
-          <button
-            key={x.key} type="button" role="tab" aria-selected={tab === x.key}
-            onClick={() => setTab(x.key)}
-            className={`rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors ${tab === x.key ? "text-white shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
-            style={tab === x.key ? { backgroundColor: "var(--tenant-accent, #D4875A)" } : undefined}
-          >
-            {t(x.labelKey, lang)}
-          </button>
-        ))}
-      </div>
+      {/* Tab rail — the access layer: each zone is a LINK (e.g.
+          /platform/management#regulations) and renders only when opened. */}
+      <TabRail
+        active={tab}
+        ariaLabel="National management sections"
+        tabs={TABS.map((x) => ({ key: x.key, label: t(x.labelKey, lang) }))}
+      />
 
       {tab === "overview" ? (
         <div className="grid grid-cols-1 gap-4">

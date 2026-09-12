@@ -3,6 +3,8 @@
 // Each city manages ITS OWN public service catalog here — nothing is
 // hardcoded. City admins are pinned to their city by the backend scope wall;
 // the system admin manages any city via the top-bar switcher context.
+// LINK-FIRST IA: the catalog and the creation form are separate
+// link-addressable zones (/services#catalog · /services#add).
 // ============================================================================
 
 "use client";
@@ -11,7 +13,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
-import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge, TabRail, useHashTab } from "./kit";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 
 type ServiceRow = {
@@ -125,8 +127,20 @@ export function ServicesAdmin() {
 
   const canCreate = !!form.code.trim() && !!form.nameEn.trim() && !busy;
 
+  const [tab] = useHashTab(["catalog", "add"], "catalog");
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Service catalog sections"
+        tabs={[
+          { key: "catalog", label: "Service catalog", count: rows?.length, hint: "This city's public services — edit, enable, disable, remove" },
+          { key: "add", label: "Add a service", hint: "Create a new service in this city's catalog" },
+        ]}
+      />
+
+      {tab === "catalog" ? (
       <Panel
         title={`Service catalog — ${cityCode || "…"}`}
         subtitle="This city's own public services. Documents, processing time, workflow, SLA, fee and visibility are configurable per service; nothing is hardcoded in the application."
@@ -152,11 +166,13 @@ export function ServicesAdmin() {
                 <ActionButton variant="destructive" disabled={busy} onClick={() => void remove(s)}>Delete</ActionButton>
               </span>,
             ])}
-            empty="No services yet — create the first one below."
+            empty="No services yet — create the first one on the Add tab."
           />
         )}
       </Panel>
+      ) : null}
 
+      {tab === "add" ? (
       <Panel title="Add a service" subtitle="Creates a service in this city's catalog. Required documents: one per line.">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
           <Field label="Code"><TextField value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "-").slice(0, 40) }))} placeholder="PERMIT-X" /></Field>
@@ -190,6 +206,7 @@ export function ServicesAdmin() {
           <ActionButton onClick={create} disabled={!canCreate}>{busy ? "Creating…" : `Add service to ${cityCode || "catalog"}`}</ActionButton>
         </div>
       </Panel>
+      ) : null}
 
       <Dialog open={!!edit} onOpenChange={(o) => { if (!o) setEdit(null); }}>
         <DialogContent className="max-w-lg">

@@ -11,7 +11,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Panel, DataTable, Stat, ActionButton } from "./kit";
+import { Panel, DataTable, Stat, ActionButton, TabRail, useHashTab } from "./kit";
 import { Badge } from "@/components/ui/badge";
 import type { Lang } from "./types";
 import { t } from "./i18n";
@@ -58,6 +58,7 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
   const [data, setData] = useState<P8Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab] = useHashTab(["readiness", "waves", "operations", "closure"], "readiness");
 
   const load = async () => {
     try {
@@ -106,6 +107,18 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
         <Stat label="Gate G9 closure" value={ops.g9.ready ? "READY" : "NOT READY"} hint={ops.g9.ready ? "closure minute drafted — signature requested" : `${ops.g9.checks.filter((c) => !c.pass).length} check(s) failing`} />
       </div>
 
+      <TabRail
+        active={tab}
+        ariaLabel="Go-live and operations sections"
+        tabs={[
+          { key: "readiness", label: "Gate G8 readiness", hint: "Live criteria board behind the go-live order" },
+          { key: "waves", label: "Wave rollout", count: data.waves.length, hint: "Rollout plan and the Wave 1 cutover checklist" },
+          { key: "operations", label: "Operations", hint: "Drills, O-7, support, freeze, awareness" },
+          { key: "closure", label: "Closure & PIR", hint: "Gate G9, hypercare, annual cycle, handover, lessons" },
+        ]}
+      />
+
+      {tab === "readiness" ? (
       <Panel
         title="Gate G8 readiness check (plan §5.9: 'Give go-live order')"
         subtitle="Every criterion is evaluated against live platform state; the go-live order executes only on a fully green board."
@@ -166,7 +179,10 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
           Authentication mode: <span className="font-mono">{data.authMode}</span> · active sessions: {data.sessions} · {t("lang.fallback", lang)}
         </p>
       </Panel>
+      ) : null}
 
+      {tab === "waves" ? (
+      <>
       <Panel
         title="Wave rollout plan (pilot → pilot sub-city → city-wide → replication preparation)"
         subtitle="Wave 0 has been live since the Phase 7 pilot under the owner's authorization; Wave 1 carries the full cutover checklist; Wave 2 is gated on O-7; Wave 3 prepares per-city configuration sets."
@@ -200,7 +216,11 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
           ])}
         />
       </Panel>
+      </>
+      ) : null}
 
+      {tab === "operations" ? (
+      <>
       <Panel
         title="Go-live drills (rollback · restore · session hardening · staging performance re-run)"
         subtitle="Restore and rollback drills execute real platform operations; the hardening drill transcripts the DEF-06-01 production-mode drill; the perf re-run is the standing item carried from the Phase 5 assessment."
@@ -283,7 +303,11 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
           />
         </Panel>
       </div>
+      </>
+      ) : null}
 
+      {tab === "closure" ? (
+      <>
       <Panel
         title="Gate G9 closure check (plan §5.9: 'Close project at Gate G9 with lessons recorded')"
         subtitle="Every criterion evaluates the operational record under the go-live order: hypercare, the annual cycle, enforcement, the Ministry feed, the handover, the PIR and the drafted closure minute."
@@ -426,6 +450,8 @@ export function GoLivePanel({ lang, refresh }: { lang: Lang; refresh?: () => Pro
           </div>
         </Panel>
       )}
+      </>
+      ) : null}
     </div>
   );
 }

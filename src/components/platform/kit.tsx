@@ -1,10 +1,17 @@
 // ============================================================================
 // kit.tsx — Reusable console primitives: panels, stats, labeled fields,
 // data tables, legal-rule badges. Keeps module panels compact and uniform.
+// Owner directive (Task 37): "i prefer links instead of so many content on
+// single page — i need to access based on the need — use the space properly."
+// Every console page therefore organizes its zones behind TabRail: a rail of
+// REAL LINKS (one anchor per zone, e.g. /complaints#appeals) backed by
+// useHashTab, so each zone is addressable, bookmarkable and rendered only
+// when opened — one zone per screen, deep data one click away.
 // ============================================================================
 
 "use client";
 
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -117,6 +124,75 @@ export function DataTable({ headers, rows, empty }: { headers: string[]; rows: R
           ))}
         </TableBody>
       </Table>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// useHashTab — tab state synced to the URL hash. Clicking a TabRail anchor
+// updates the hash; hashchange (clicks, back/forward, pasted links) applies
+// the zone. Unknown hashes are ignored so the default zone always renders.
+// ---------------------------------------------------------------------------
+export function useHashTab(keys: readonly string[], fallback: string): [string, (k: string) => void] {
+  const [tab, setTab] = useState(fallback);
+  const keysJson = useMemo(() => JSON.stringify(keys), [keys]);
+  useEffect(() => {
+    const apply = () => {
+      const h = window.location.hash.replace(/^#/, "");
+      if ((JSON.parse(keysJson) as string[]).includes(h)) setTab(h);
+    };
+    apply();
+    window.addEventListener("hashchange", apply);
+    return () => window.removeEventListener("hashchange", apply);
+  }, [keysJson]);
+  const change = useCallback((k: string) => {
+    setTab(k);
+    if (window.location.hash !== `#${k}`) history.replaceState(null, "", `#${k}`);
+  }, []);
+  return [tab, change];
+}
+
+// ---------------------------------------------------------------------------
+// TabRail — the access layer of a link-first page: each zone renders only
+// when opened, and each tab is an anchor link (shareable URL per zone).
+// ---------------------------------------------------------------------------
+export function TabRail({ tabs, active, ariaLabel, className }: {
+  tabs: { key: string; label: string; count?: number; hint?: string }[];
+  active: string; ariaLabel: string; className?: string;
+}) {
+  return (
+    <div
+      className={cn("flex flex-wrap gap-1.5 rounded-xl border bg-white p-1.5", className)}
+      role="tablist"
+      aria-label={ariaLabel}
+    >
+      {tabs.map((x) => {
+        const on = active === x.key;
+        return (
+          <a
+            key={x.key}
+            href={`#${x.key}`}
+            role="tab"
+            aria-selected={on}
+            title={x.hint}
+            className={`rounded-lg px-3.5 py-1.5 text-[13px] font-medium no-underline transition-colors ${
+              on ? "text-white shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+            style={on ? { backgroundColor: "var(--tenant-accent, #D4875A)" } : undefined}
+          >
+            {x.label}
+            {typeof x.count === "number" ? (
+              <span
+                className={`ml-1.5 rounded-full px-1.5 py-0.5 text-[10px] tabular-nums ${
+                  on ? "bg-white/25 text-white" : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {x.count}
+              </span>
+            ) : null}
+          </a>
+        );
+      })}
     </div>
   );
 }

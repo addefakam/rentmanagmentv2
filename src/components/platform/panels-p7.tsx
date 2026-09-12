@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Panel, DataTable, StatusBadge, Stat, ActionButton } from "./kit";
+import { Panel, DataTable, StatusBadge, Stat, ActionButton, TabRail, useHashTab } from "./kit";
 import type { Lang } from "./types";
 import { t } from "./i18n";
 
@@ -43,6 +43,7 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
   const [data, setData] = useState<P7Payload | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [tab] = useHashTab(["migration", "pilot", "awareness"], "migration");
 
   const load = async () => {
     try {
@@ -93,6 +94,18 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
         <Stat label="Gate G7 exit" value={exit.ready ? "READY" : "NOT READY"} hint={exit.ready ? "no SEV1 · reconciled · replication 100%" : `${exit.checks.filter((c) => !c.pass).length} check(s) failing`} />
       </div>
 
+      <TabRail
+        active={tab}
+        ariaLabel="Migration, training and pilot sections"
+        tabs={[
+          { key: "migration", label: "Migration & training", count: data.books.length, hint: "Legacy book rows (Proc. Art. 7), reconciliation, training records" },
+          { key: "pilot", label: "Pilot operation", count: exit.metrics.daysLogged, hint: "Day logs and the Gate G7 exit check" },
+          { key: "awareness", label: "Awareness materials", count: data.awareness.length, hint: "Trilingual campaign materials (Proc. Arts. 14, 16)" },
+        ]}
+      />
+
+      {tab === "migration" ? (
+      <>
       <Panel
         title="Legacy registry-book migration (Proc. Art. 7; Dir. Art. 8(2))"
         subtitle="Paper book rows of the pilot woredas enter the platform as parties + property + registered file, each carrying the LEGACY_ART7 annotation and its 30+3 day clock."
@@ -161,7 +174,10 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
           />
         </Panel>
       </div>
+      </>
+      ) : null}
 
+      {tab === "pilot" ? (
       <Panel
         title="Pilot operation (plan §5.8)"
         subtitle={data.pilot ? `${data.pilot.subCity.nameEn} · woredas ${data.pilot.woredaCodes} · since ${data.pilot.startedAt.slice(0, 10)} · owner approval ${data.pilot.ownerApprovalRef}` : "No active pilot"}
@@ -198,7 +214,9 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
           </div>
         </div>
       </Panel>
+      ) : null}
 
+      {tab === "awareness" ? (
       <Panel
         title="Public awareness materials (Proc. Arts. 14, 16; CR-01/NFR-06)"
         subtitle="Trilingual by rule — an item cannot exist without Amharic, English and Afan Oromo titles. The owner approves the materials at Gate G7."
@@ -222,6 +240,7 @@ export function PilotPanel({ lang }: { lang: Lang; refresh?: () => Promise<void>
         />
         <p className="mt-2 text-[11px] text-muted-foreground">{t("lang.fallback", lang)}</p>
       </Panel>
+      ) : null}
     </div>
   );
 }

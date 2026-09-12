@@ -1,6 +1,8 @@
 // ============================================================================
 // panels-s1.tsx — Sprint S1 increments: M13 administration (org hierarchy,
 // roles, staff, per-city configuration) and M1 party onboarding.
+// PartiesPanel is LINK-FIRST: the onboarding form and the party register are
+// separate link-addressable zones (/parties#onboard · /parties#register).
 // ============================================================================
 
 "use client";
@@ -10,7 +12,7 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { t } from "./i18n";
 import type { BootPayload, Lang } from "./types";
-import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge } from "./kit";
+import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, TabRail, useHashTab } from "./kit";
 
 type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> };
 
@@ -173,8 +175,21 @@ export function PartiesPanel({ boot, lang, refresh }: PanelProps) {
     }
   };
 
+  const [tab] = useHashTab(["onboard", "register"], "onboard");
+  const pending = boot.parties.filter((p) => p.verificationStatus === "PENDING").length;
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+    <div className="grid grid-cols-1 gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Parties sections"
+        tabs={[
+          { key: "onboard", label: "Onboard party", hint: "Register a landlord, tenant or agent (M1)" },
+          { key: "register", label: "Party register", count: boot.parties.length, hint: `${pending} pending verification` },
+        ]}
+      />
+
+      {tab === "onboard" ? (
       <Panel title="M1 · Onboard party" subtitle="Proc. Arts. 4, 7; Dir. Art. 7: identification original + copy; proxy needs two witnesses. Deaf-party data feeds the interpreter flow (Dir. Art. 8).">
         <div className="grid grid-cols-1 gap-3">
           <Field label="Party type">
@@ -213,7 +228,9 @@ export function PartiesPanel({ boot, lang, refresh }: PanelProps) {
           <ActionButton onClick={submit} disabled={!form.fullName || !form.idNumber}>{t("act.create", lang)}</ActionButton>
         </div>
       </Panel>
+      ) : null}
 
+      {tab === "register" ? (
       <Panel title="M1 · Party register" subtitle="Registrar verification act before any filing (Proc. Art. 4).">
         <DataTable
           headers={["Code", "Name", "Type", "ID", "Docs", "Deaf", "Status", "Act"]}
@@ -235,6 +252,7 @@ export function PartiesPanel({ boot, lang, refresh }: PanelProps) {
           empty={t("state.empty", lang)}
         />
       </Panel>
+      ) : null}
     </div>
   );
 }

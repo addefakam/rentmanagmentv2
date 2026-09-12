@@ -1,6 +1,9 @@
 // ============================================================================
 // panels-s2s3.tsx — Sprint S2 (M2 property registry + M3 contract studio)
 // and Sprint S3 (M4 registration & certification workflow).
+// LINK-FIRST IA: each page's zones are link-addressable tabs
+// (/properties#registry · /properties#contract · /registration#present ·
+// /registration#registrar) instead of stacked content.
 // ============================================================================
 
 "use client";
@@ -10,7 +13,7 @@ import { toast } from "sonner";
 import { t } from "./i18n";
 import type { BootPayload, Lang } from "./types";
 import { NINE_POINT_CHECKLIST } from "@/lib/domain/law";
-import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, RuleNote } from "./kit";
+import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, RuleNote, TabRail, useHashTab } from "./kit";
 import { call } from "./panels-s1";
 
 type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> };
@@ -50,8 +53,20 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
     }
   };
 
+  const [tab] = useHashTab(["registry", "contract"], "registry");
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Properties sections"
+        tabs={[
+          { key: "registry", label: "Property registry", count: boot.properties.length, hint: "M2 — register houses and watch exemption clocks" },
+          { key: "contract", label: "Model contract studio", hint: "M3 — amend the city's template (versions are immutable)" },
+        ]}
+      />
+
+      {tab === "registry" ? (
       <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
         <Panel title="M2 · Register property" subtitle="Proc. Arts. 2, 10; Dir. Art. 6: at the house woreda. Status sets the exemption clock (new 4y / vacant 2y).">
           <div className="grid grid-cols-1 gap-3">
@@ -112,7 +127,9 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
           />
         </Panel>
       </div>
+      ) : null}
 
+      {tab === "contract" ? (
       <Panel title="M3 · Model contract studio" subtitle="Proc. Art. 5; Dir. Art. 4: the Bureau amends and distributes the template; versions are immutable and superseded, never edited.">
         {boot.activeContract ? (
           <div className="grid gap-3 lg:grid-cols-[380px_1fr]">
@@ -146,6 +163,7 @@ export function AssetsPanel({ boot, lang, refresh }: PanelProps) {
           </div>
         ) : <p className="text-sm text-muted-foreground">No active model contract.</p>}
       </Panel>
+      ) : null}
     </div>
   );
 }
@@ -185,10 +203,21 @@ export function RegistrationPanel({ boot, lang, refresh }: PanelProps) {
   const [selId, setSelId] = useState("");
   const sel = boot.files.find((f) => f.id === selId) ?? boot.files[0];
 
+  const [tab] = useHashTab(["present", "registrar"], "present");
+
   return (
     <div className="grid grid-cols-1 gap-4">
-      <div className="grid gap-4 lg:grid-cols-[420px_1fr]">
-        <Panel title="M4 · Present registration file" subtitle="Proc. Arts. 4, 6, 12, 13: ≥2-year term, ≤2 months advance, electronic payment, three witnesses. Legacy contracts carry the Art. 7 30+3-day annotation.">
+      <TabRail
+        active={tab}
+        ariaLabel="Registration sections"
+        tabs={[
+          { key: "present", label: "Present registration file", hint: "Open a file at the woreda (M4)" },
+          { key: "registrar", label: "Registrar workflow", count: boot.files.length, hint: "Checklist, certify, stamp, register in the book" },
+        ]}
+      />
+
+      {tab === "present" ? (
+      <Panel title="M4 · Present registration file" subtitle="Proc. Arts. 4, 6, 12, 13: ≥2-year term, ≤2 months advance, electronic payment, three witnesses. Legacy contracts carry the Art. 7 30+3-day annotation.">
           <div className="grid grid-cols-1 gap-2">
             <div className="grid grid-cols-2 gap-2">
               <Field label="Woreda">
@@ -239,8 +268,10 @@ export function RegistrationPanel({ boot, lang, refresh }: PanelProps) {
             </ActionButton>
           </div>
         </Panel>
+      ) : null}
 
-        <Panel title="M4 · Registrar workflow" subtitle="Nine-point checklist (Dir. Arts. 6-9) → certification → stamping desk → registration in the numbered registry book.">
+      {tab === "registrar" ? (
+      <Panel title="M4 · Registrar workflow" subtitle="Nine-point checklist (Dir. Arts. 6-9) → certification → stamping desk → registration in the numbered registry book.">
           <div className="grid grid-cols-1 gap-2">
             <Field label="Select file">
               <SelectField value={sel?.id ?? ""} onChange={setSelId}
@@ -303,11 +334,11 @@ export function RegistrationPanel({ boot, lang, refresh }: PanelProps) {
                 f.certificateNumber ?? "—",
                 fmtDate(f.registeredAt),
               ])}
-              empty="No files yet — present a registration file on the left."
+              empty="No files yet — present a registration file on the Present tab."
             />
           </div>
         </Panel>
-      </div>
+      ) : null}
     </div>
   );
 }

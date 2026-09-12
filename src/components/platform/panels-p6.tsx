@@ -10,7 +10,7 @@
 
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Panel, DataTable, StatusBadge, Stat, ActionButton, SelectField } from "./kit";
+import { Panel, DataTable, StatusBadge, Stat, ActionButton, SelectField, TabRail, useHashTab } from "./kit";
 import type { Lang } from "./types";
 import { t } from "./i18n";
 
@@ -42,6 +42,7 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<string>("UAT-01");
+  const [tab] = useHashTab(["battery", "legal", "defects", "gate"], "battery");
 
   const load = async () => {
     try {
@@ -87,6 +88,18 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
         <Stat label="Defect log" value={`${data.defects.log.length} entries`} hint={`${data.defects.openSev12} open SEV-1/2 (gate-blocking)`} />
       </div>
 
+      <TabRail
+        active={tab}
+        ariaLabel="UAT and legal validation sections"
+        tabs={[
+          { key: "battery", label: "UAT battery", count: data.scenarios.length, hint: "Role-based scripts executed over the live API" },
+          { key: "legal", label: "Legal validation", hint: "Article-by-article walkthrough and the memorandum" },
+          { key: "defects", label: "Defect triage", count: data.defects.log.length, hint: "Severity framework and fix schedules" },
+          { key: "gate", label: "Gate G6 checklist", hint: "Trilingual catalogue and the exit checklist" },
+        ]}
+      />
+
+      {tab === "battery" ? (
       <Panel
         title="Role-based UAT battery (plan §5.7, activity 1)"
         subtitle="Scripts derived from the SRS use-case registry, executed by the real roles over the live API with their staff codes - refusals included."
@@ -131,7 +144,9 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
           </div>
         )}
       </Panel>
+      ) : null}
 
+      {tab === "legal" ? (
       <Panel
         title="Legal validation session (plan §5.7, activity 2)"
         subtitle={`${ls.session.date} · ${ls.session.venue} — article-by-article walkthrough of the compliance matrix with the Bureau's legal function.`}
@@ -172,9 +187,10 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
           </div>
         </div>
       </Panel>
+      ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Defect triage (plan §5.7, activity 3)" subtitle="Severity definitions with fix schedules; any failed UAT step is triaged here and blocks the gate while open.">
+      {tab === "defects" ? (
+      <Panel title="Defect triage (plan §5.7, activity 3)" subtitle="Severity definitions with fix schedules; any failed UAT step is triaged here and blocks the gate while open.">
           <DataTable
             headers={["Severity", "Definition", "Fix schedule"]}
             rows={data.defects.severityDefs.map((d) => [
@@ -196,7 +212,10 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
             />
           </div>
         </Panel>
+      ) : null}
 
+      {tab === "gate" ? (
+      <div className="grid gap-4 lg:grid-cols-2">
         <div className="grid grid-cols-1 gap-4">
           <Panel title="Trilingual catalogue (CR-01 / NFR-06)" subtitle="Seeded localization surface rehearsed by UAT-08.">
             <DataTable
@@ -223,6 +242,7 @@ export function UatPanel({ lang }: { lang: Lang; refresh?: () => Promise<void> }
           </Panel>
         </div>
       </div>
+      ) : null}
     </div>
   );
 }

@@ -20,7 +20,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
-import { Panel, Stat, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { Panel, Stat, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge, TabRail, useHashTab } from "./kit";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
 
 type CityRow = {
@@ -225,8 +225,26 @@ export function CitiesAdmin({ readOnly = false }: { readOnly?: boolean }) {
   const teamOk = !form.seedTeam || (!!form.bureauHeadName.trim() && !!form.registrarName.trim());
   const canSubmit = codeOk && !!form.nameEn.trim() && !!form.cityAdminName.trim() && teamOk && !busy;
 
+  // LINK-FIRST IA: the fleet (regional overview + per-city table) and the
+  // onboarding form are separate link-addressable zones. Read-only viewers
+  // (ministry analyst) keep the full fleet view without the rail.
+  const [tab] = useHashTab(["fleet", "onboard"], "fleet");
+
   return (
     <div className="grid grid-cols-1 gap-4">
+      {canWrite ? (
+      <TabRail
+        active={tab}
+        ariaLabel="City management sections"
+        tabs={[
+          { key: "fleet", label: "City fleet", count: rows?.length, hint: "Regional overview and the per-city management table" },
+          { key: "onboard", label: "Onboard a city", hint: "One form creates the org skeleton, config, contract and city super-admin" },
+        ]}
+      />
+      ) : null}
+
+      {tab === "fleet" ? (
+      <>
       {/* Regional overview ------------------------------------------------- */}
       <Panel
         title="Regional overview — all cities combined"
@@ -422,8 +440,11 @@ export function CitiesAdmin({ readOnly = false }: { readOnly?: boolean }) {
         </DialogContent>
       </Dialog>
 
+      </>
+      ) : null}
+
       {/* Onboard form — platform administrator only ----------------------- */}
-      {canWrite ? (
+      {canWrite ? (tab === "onboard" ? (
       <Panel
         title="Onboard a new city"
         subtitle="When a new city requests the system, configure it here once — org skeleton, statutory parameters, model contract and the city super-admin are created in one step. The city appears in the sign-in directory immediately."
@@ -508,7 +529,7 @@ export function CitiesAdmin({ readOnly = false }: { readOnly?: boolean }) {
           ) : null}
         </div>
       </Panel>
-      ) : (
+      ) : null) : (
       <Panel
         title="City directory — view only"
         subtitle="City management (onboarding, tenant configuration, lifecycle) is reserved for the Platform Administrator."

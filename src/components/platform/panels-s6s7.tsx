@@ -1,6 +1,8 @@
 // ============================================================================
 // panels-s6s7.tsx — Sprint S6 (M7 control & monitoring + M9 penalty ladder)
 // and Sprint S7 (M10 replication & backup + M11 analytics & publication).
+// LINK-FIRST IA: zones are link-addressable tabs (/enforcement#control ·
+// /enforcement#penalties · /reports#replication · /reports#analytics).
 // ============================================================================
 
 "use client";
@@ -9,7 +11,7 @@ import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { t } from "./i18n";
 import type { BootPayload, Lang } from "./types";
-import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, Stat } from "./kit";
+import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, Stat, TabRail, useHashTab } from "./kit";
 import { call } from "./panels-s1";
 
 type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> };
@@ -41,8 +43,20 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
     }
   };
 
+  const [tab] = useHashTab(["control", "penalties"], "control");
+
   return (
     <div className="grid gap-4">
+      <TabRail
+        active={tab}
+        ariaLabel="Enforcement sections"
+        tabs={[
+          { key: "control", label: "Control & visits", count: boot.visits.length, hint: "M7 — teams, visits, vacancy monitoring (Proc. Art. 20)" },
+          { key: "penalties", label: "Penalty cases", count: boot.penalties.length, hint: "M9 — the fine ladder with 3-month cap (Proc. Arts. 29-32)" },
+        ]}
+      />
+
+      {tab === "control" ? (
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M7 · Control team & visit" subtitle="Proc. Art. 20: own-initiative and complaint-based control. Dir. Art. 20: team identification duty; vacancy monitoring beyond six months.">
           <div className="grid grid-cols-1 gap-2">
@@ -92,7 +106,9 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
           />
         </Panel>
       </div>
+      ) : null}
 
+      {tab === "penalties" ? (
       <div className="grid gap-4 lg:grid-cols-[400px_1fr]">
         <Panel title="M9 · Compute penalty" subtitle="Proc. Arts. 29-32: fines capped at 3 months' rent. Dir. Art. 22: configurable ladder (O1), cash referral 10%, vacancy surcharge 5-25% of annual rent by band.">
           <div className="grid grid-cols-1 gap-2">
@@ -135,6 +151,7 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
           />
         </Panel>
       </div>
+      ) : null}
     </div>
   );
 }
@@ -164,6 +181,8 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
 
   const bureauTotal = boot.snapshots.find((s) => s.sourceTier === "BUREAU" || s.sourceTier === "MINISTRY");
 
+  const [tab] = useHashTab(["replication", "analytics"], "replication");
+
   return (
     <div className="grid gap-4">
       {bureauTotal && (
@@ -175,6 +194,17 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
           <Stat label="Penalties imposed (ETB)" value={bureauTotal.penaltiesImposed.toLocaleString()} />
         </div>
       )}
+
+      <TabRail
+        active={tab}
+        ariaLabel="Data and reporting sections"
+        tabs={[
+          { key: "replication", label: "Replication & backups", count: boot.replications.length, hint: "M10 — upward change propagation (Dir. Art. 13)" },
+          { key: "analytics", label: "Analytics & publications", count: boot.publications.length, hint: "M11 — aggregation snapshots and the public feed (Proc. Art. 18)" },
+        ]}
+      />
+
+      {tab === "replication" ? (
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="M10 · Tier replication" subtitle="Dir. Art. 13: woreda → sub-city → Bureau → Ministry upward change propagation. Registry registrations enqueue automatically.">
           <div className="grid grid-cols-1 gap-2">
@@ -227,7 +257,9 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
           </div>
         </Panel>
       </div>
+      ) : null}
 
+      {tab === "analytics" ? (
       <div className="grid gap-4 lg:grid-cols-2">
         <Panel title="M11 · Aggregation snapshots" subtitle="Proc. Art. 18; Dir. Art. 13: sub-city aggregation duty; Bureau city analytics; Ministry national feed.">
           <div className="grid grid-cols-1 gap-2">
@@ -279,6 +311,7 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
           </div>
         </Panel>
       </div>
+      ) : null}
     </div>
   );
 }
