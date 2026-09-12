@@ -657,3 +657,25 @@ Work Log:
 
 Stage Summary:
 - Two-tier national model shipped: STF-0008 = Platform Administrator at /platform (high power); STF-0007 = read-only City Directory at /cities. UI and API enforce independently.
+
+---
+Task ID: 27
+Agent: Main agent (Super Z)
+Task: Owner directive "remove one, only one admin can manage the system" — single-admin city management at a different URL: strip STF-0007 (MINISTRY_ANALYST) of ALL city-management rights, make STF-0008 (SYSTEM_ADMIN) the sole supreme administrator, and move City Management to a dedicated URL.
+
+Work Log:
+- Inspected first (standing rule): rbac-pages.ts (/cities = MINISTRY_ANALYST+SYSTEM_ADMIN), /api/cities route (GET=city:admin, POST/PATCH=city:write, PATCH tenant-config mode=city:manage), authz.ts capability map, /api/settings (PATCH=city:manage), /api/platform boot route (no capability deps — safe), panels-cities.tsx (readOnly prop, canWrite), shell.tsx (GROUP_ICONS, nav filter via canAccess), i18n.ts (nav.cities "City Management" translations already exist), tests/ (no old-policy assertions), login route (rc_officer cookie).
+- authz.ts: city:admin -> ["SYSTEM_ADMIN"] (fleet read locked to supreme admin); city:manage -> ["BUREAU_HEAD","SYSTEM_ADMIN"] (MINISTRY_ANALYST removed; CITY_ADMIN auto-grant loop untouched, scope-walled to own city); city:write unchanged (SYSTEM_ADMIN).
+- rbac-pages.ts: NEW PAGE_ACCESS["/platform/cities"]=PLATFORM_ADMIN_ROLES; "/cities" and "/platform" kept as PLATFORM_ADMIN_ROLES (redirect shims); SETTINGS_ROLES dropped MINISTRY_ANALYST (city self-admin page hidden); NAV_ITEMS replaced /platform + /cities entries with single { href: "/platform/cities", labelKey: "nav.cities", labelEn: "City Management" }.
+- Pages: created (console)/platform/cities/page.tsx (full CitiesAdmin, SYSTEM_ADMIN only); rewrote (console)/cities/page.tsx and (console)/platform/page.tsx as server-side redirect() shims to /platform/cities (no broken bookmarks; destination guard blocks non-admins).
+- shell.tsx GROUP_ICONS: "/platform/cities": Globe2. panels-cities.tsx: comment + read-only banner URL updated.
+- Wrote scripts/verify-single-admin.sh (13 assertions, parameterized BASE). Local build PASS (route table shows /platform/cities; /cities + /platform dynamic). Local runtime (next start :3210): 13/13 PASS; STF-0005 bureau head own-city settings PATCH ok, cross-city 403 AUTH_CITY_SCOPE.
+- Commit 5667f53 pushed (inline PAT URL, 8e26d2e..5667f53); Vercel auto-deployed.
+- Production verification 13/13 PASS: STF-0008 GET /api/cities 200 + /platform/cities 200; STF-0007 fleet read 403 AUTH_FORBIDDEN, settings PATCH 403, lifecycle PATCH 403, boot/reports still 200 (ministry work intact); /cities and /platform 307 -> /platform/cities for the admin; STF-0005 cross-city scope wall intact. No production data mutated (denial checks + reads only).
+
+Stage Summary:
+- Production policy NOW: exactly ONE administrator (STF-0008, SYSTEM_ADMIN) manages cities — sole holder of city:admin + city:write, and the only one with the City Management page at the NEW URL /platform/cities.
+- STF-0007 (MINISTRY_ANALYST) stripped of city powers: no City Management nav/page (old URLs redirect-then-block), no fleet read, no city settings edits. Ministry analytics, publications, services, project tools preserved (no-break honored).
+- City-bound officers unchanged: bureau heads/city admins keep own-city settings + org/staff management via scope-walled capabilities.
+- Legacy URLs /cities and /platform redirect to /platform/cities (SYSTEM_ADMIN passes, others blocked at destination).
+- Reusable artifact: scripts/verify-single-admin.sh <base_url> — 13-assertion regression suite for the single-admin policy.
