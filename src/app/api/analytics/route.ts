@@ -5,11 +5,14 @@ import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { computeSnapshot } from "@/lib/domain/service";
 import { withGuard, cityContext, readScope } from "@/lib/security/authz";
+import { requireModuleForRequest, requireModule } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
+    // SaaS module gate — disabled module = API unavailable (not just hidden).
+    await requireModuleForRequest(req, "ANALYTICS");
     const scope = await readScope(req);
     const snapshots = await db.aggregationSnapshot.findMany({
       where: scope ? { orgUnitId: { in: scope.unitIds } } : {},
@@ -29,6 +32,7 @@ export async function POST(req: Request) {
           city: input.cityCode ?? req.headers.get("x-city-code"),
           unitId: String(input.orgUnitId ?? ""), unitLabel: "aggregation unit",
         });
+        await requireModule(ctx.cityCode, "ANALYTICS"); // SaaS module gate (target tenant resolved by the scope wall)
         return computeSnapshot(String(input.orgUnitId), String(input.period));
       });
   } catch (err) { return fail(err); }

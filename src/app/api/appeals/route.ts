@@ -5,11 +5,14 @@ import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { fileAppeal, progressAppeal } from "@/lib/domain/service";
 import { withGuard, cityContext, readScope, assertComplaintInScope, CityScopeError } from "@/lib/security/authz";
+import { requireModuleForRequest, requireModule } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
+    // SaaS module gate — disabled module = API unavailable (not just hidden).
+    await requireModuleForRequest(req, "COMPLAINTS");
     const scope = await readScope(req);
     const appeals = await db.appeal.findMany({
       include: { complaint: { include: { ground: true } } }, orderBy: { filedAt: "desc" }, take: 200,
@@ -28,6 +31,7 @@ export async function POST(req: Request) {
       { action: "APPEAL_FILE", entity: "Appeal", ref: (d: { appealNumber: string }) => d.appealNumber },
       async (actor) => {
         const ctx = await cityContext(actor, { city: input.cityCode ?? req.headers.get("x-city-code") });
+        await requireModule(ctx.cityCode, "COMPLAINTS"); // SaaS module gate (target tenant resolved by the scope wall)
         await assertComplaintInScope(ctx, String(input.complaintId ?? ""));
         return fileAppeal({
           complaintId: String(input.complaintId), appellantName: String(input.appellantName),
@@ -44,6 +48,7 @@ export async function PATCH(req: Request) {
       { action: `APPEAL_${String(input.action).toUpperCase()}`, entity: "Appeal", ref: (d: { appealNumber: string }) => d.appealNumber },
       async (actor) => {
         const ctx = await cityContext(actor, { city: input.cityCode ?? req.headers.get("x-city-code") });
+        await requireModule(ctx.cityCode, "COMPLAINTS"); // SaaS module gate (target tenant resolved by the scope wall)
         const appeal = await db.appeal.findUnique({
           where: { id: String(input.id ?? "") }, select: { complaintId: true },
         });

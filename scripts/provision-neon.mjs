@@ -68,6 +68,78 @@ const scalarCount = async (sql) => {
   return Number(rows[0]?.n ?? 0);
 };
 
+// --- Phase 9 SaaS backfill (idempotent): every existing city becomes a full
+// tenant — slug, lifecycle status, white-label colors, module flags and a
+// starter service catalog. Fills ONLY empty fields; safe on every deploy.
+const ALL_MODULES = JSON.stringify({
+  CITIZEN_SERVICES: true, SERVICE_REQUESTS: true, COMPLAINTS: true, APPOINTMENTS: true,
+  PERMITS: true, LICENSING: true, PAYMENTS: true, NOTIFICATIONS: true,
+  DOCUMENTS: true, REPORTS: true, ANALYTICS: true, ANNOUNCEMENTS: true,
+});
+const TENANT_COLORS = {
+  AA: { primary: "#1D4ED8", secondary: "#0F766E", accent: "#2563EB" },
+  AD: { primary: "#059669", secondary: "#065F46", accent: "#10B981" },
+  DR: { primary: "#475569", secondary: "#334155", accent: "#64748B" },
+};
+const STARTER_SERVICES = [
+  { code: "REG-CERT", nameEn: "Rental contract registration & certification", category: "REGISTRATION", fee: 100, days: 5, docs: ["Lease agreement", "ID of landlord and tenant", "Ownership evidence"] },
+  { code: "COMPLAINT-FILE", nameEn: "File a rent complaint", category: "COMPLAINTS", fee: 0, days: 30, docs: ["ID card", "Lease or payment evidence"] },
+  { code: "PAY-RECEIPT", nameEn: "Rent payment recording", category: "PAYMENTS", fee: 0, days: 1, docs: ["Receipt reference"] },
+  { code: "PERMIT-RENTAL", nameEn: "Rental business permit application", category: "PERMITS", fee: 250, days: 10, docs: ["Business license", "Ownership evidence", "ID card"] },
+];
+const slugify = (s) =>
+  String(s).toLowerCase().trim().replace(/[^a-z0-9\s-]/g, "").replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-").replace(/^-|-$/g, "").slice(0, 48);
+async function backfillTenants() {
+  let cols = 0;
+  try {
+    cols = await scalarCount(`SELECT COUNT(*)::int AS n FROM information_schema.columns WHERE table_schema='public' AND table_name='CityConfig' AND column_name='slug'`);
+  } catch { return; }
+  if (!cols) { log("backfill: SaaS columns not present yet — skipped."); return; }
+  const cities = await db.cityConfig.findMany({ orderBy: { cityCode: "asc" } });
+  let changed = 0;
+  for (const c of cities) {
+    const data = {};
+    if (!c.slug) {
+      let slug = slugify(c.nameEn) || c.cityCode.toLowerCase();
+      const taken = await db.cityConfig.findUnique({ where: { slug } });
+      if (taken && taken.cityCode !== c.cityCode) slug = slugify(`${c.nameEn}-${c.cityCode}`) || `${slug}-${c.cityCode.toLowerCase()}`;
+      data.slug = slug;
+    }
+    if (!c.status) data.status = c.isActive ? "ACTIVE" : "DEACTIVATED";
+    if (!c.isActive && c.status === "ACTIVE") data.status = "DEACTIVATED";
+    if (c.isActive && c.status === "DEACTIVATED") data.status = "ACTIVE";
+    if (!c.country) data.country = "Ethiopia";
+    if (!c.timezone) data.timezone = "Africa/Addis_Ababa";
+    if ((c.primaryColor ?? "").toUpperCase() === "#1D4ED8" && (c.secondaryColor ?? "").toUpperCase() === "#0F766E" && (c.accentColor ?? "").toUpperCase() === "#D4875A" && (TENANT_COLORS[c.cityCode] || !c.primaryColor)) {
+      const p = TENANT_COLORS[c.cityCode] ?? TENANT_COLORS.AA;
+      data.primaryColor = p.primary; data.secondaryColor = p.secondary; data.accentColor = p.accent;
+    }
+    if (!c.modulesJson) data.modulesJson = ALL_MODULES;
+    if (Object.keys(data).length > 0) {
+      await db.cityConfig.update({ where: { cityCode: c.cityCode }, data });
+      changed++;
+      log(`backfill ${c.cityCode}: ${Object.keys(data).join(", ")}`);
+    }
+    const svc = await db.serviceDefinition.count({ where: { cityCode: c.cityCode } });
+    if (svc === 0) {
+      const bureauId = c.bureauId ?? null;
+      for (const s of STARTER_SERVICES) {
+        await db.serviceDefinition.create({
+          data: {
+            cityCode: c.cityCode, code: s.code, nameEn: s.nameEn, category: s.category,
+            requiredDocumentsJson: JSON.stringify(s.docs), processingTimeDays: s.days,
+            slaDays: s.days, feeAmount: s.fee, feeCurrency: "ETB",
+            departmentOrgUnitId: bureauId, isActive: true, isPublic: true,
+          },
+        });
+      }
+      log(`backfill ${c.cityCode}: ${STARTER_SERVICES.length} starter services seeded`);
+    }
+  }
+  log(`backfill done — ${changed} of ${cities.length} tenant(s) updated`);
+}
+
 // --- 2. Probe the current state of the database -----------------------------
 log(`probing ${new URL(directUrl).hostname} ...`);
 let cityConfigTable = 0, isActiveColumn = 0, cityCount = 0;
@@ -93,6 +165,7 @@ if (!stale) {
   if (push.status !== 0)
     die("schema sync failed (destructive change?). Re-provision by emptying the database, or run scripts/refresh-neon.sh locally.");
   log("schema in sync.");
+  await backfillTenants();
   await db.$disconnect();
   process.exit(0);
 }
@@ -180,5 +253,6 @@ if (mismatches.length > 0) {
 }
 if ((loaded.CityConfig ?? 0) < 2) die("CityConfig did not load — refusing to ship a broken login.");
 
+await backfillTenants();
 await db.$disconnect();
 log("DONE — Neon now matches the verified demo state. The deployment will serve the full login directory.");

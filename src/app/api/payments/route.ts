@@ -6,11 +6,14 @@ import { ok, fail, body } from "@/lib/api";
 import { recordPayment } from "@/lib/domain/service";
 import { withGuard, cityContext, assertFileInScope } from "@/lib/security/authz";
 import { withReadGuard } from "@/lib/security/session";
+import { requireModuleForRequest, requireModule } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
+    // SaaS module gate — disabled module = API unavailable (not just hidden).
+    await requireModuleForRequest(req, "PAYMENTS");
     // Phase 8 hardening (DEF-06-01): financial ledger read.
     await withReadGuard(req, { capability: "read:payments", sensitive: true, entity: "Payment ledger" });
     const scope = await readScope(req);
@@ -35,6 +38,7 @@ export async function POST(req: Request) {
           city: input.cityCode ?? req.headers.get("x-city-code"),
           unitId: String(input.recordedByOrgUnitId ?? ""), unitLabel: "recording office",
         });
+        await requireModule(ctx.cityCode, "PAYMENTS"); // SaaS module gate (target tenant resolved by the scope wall)
         await assertFileInScope(ctx, String(input.fileId ?? ""));
         return recordPayment({
           fileId: String(input.fileId), amount: Number(input.amount),

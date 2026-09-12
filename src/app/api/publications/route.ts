@@ -5,11 +5,14 @@
 import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { withGuard, cityContext, readScope } from "@/lib/security/authz";
+import { requireModuleForRequest, requireModule } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
+    // SaaS module gate — disabled module = API unavailable (not just hidden).
+    await requireModuleForRequest(req, "ANNOUNCEMENTS");
     const scope = await readScope(req);
     const publications = await db.publicationItem.findMany({
       where: scope ? { publishedByOrgUnitId: { in: scope.unitIds } } : {},
@@ -32,6 +35,7 @@ export async function POST(req: Request) {
           unitId: input.publishedByOrgUnitId ? String(input.publishedByOrgUnitId) : null,
           unitLabel: "publishing bureau",
         });
+        await requireModule(ctx.cityCode, "ANNOUNCEMENTS"); // SaaS module gate (target tenant resolved by the scope wall)
         const bureauId = input.publishedByOrgUnitId
           ? String(input.publishedByOrgUnitId)
           : ctx.bureauId ?? ctx.units.find((u) => u.tier === "BUREAU")?.id;

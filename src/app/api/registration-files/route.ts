@@ -7,6 +7,7 @@ import { ok, fail, body } from "@/lib/api";
 import { createRegistrationFile } from "@/lib/domain/service";
 import { withGuard, cityContext, readScope, assertPropertyInScope, CityScopeError } from "@/lib/security/authz";
 import { withReadGuard } from "@/lib/security/session";
+import { requireModuleForRequest, requireModule } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,8 @@ type WitnessInput = { fullName: string; idTypeId: string; idNumber: string };
 
 export async function GET(req: Request) {
   try {
+    // SaaS module gate — disabled module = API unavailable (not just hidden).
+    await requireModuleForRequest(req, "SERVICE_REQUESTS");
     // Phase 8 hardening (DEF-06-01): files carry identity + financial data.
     await withReadGuard(req, { capability: "read:registration", sensitive: true, entity: "Registration files" });
     const scope = await readScope(req);
@@ -39,6 +42,7 @@ export async function POST(req: Request) {
           city: input.cityCode ?? req.headers.get("x-city-code"),
           unitId: String(input.woredaId ?? ""), unitLabel: "woreda",
         });
+        await requireModule(ctx.cityCode, "SERVICE_REQUESTS"); // SaaS module gate (target tenant resolved by the scope wall)
         await assertPropertyInScope(ctx, String(input.propertyId ?? ""));
         // The executed model contract must be the acting city's own.
         const contract = await db.modelContract.findUnique({

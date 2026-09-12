@@ -5,11 +5,14 @@ import { db } from "@/lib/db";
 import { ok, fail, body } from "@/lib/api";
 import { createComplaint, progressComplaint } from "@/lib/domain/service";
 import { withGuard, cityContext, readScope, assertPropertyInScope, CityScopeError } from "@/lib/security/authz";
+import { requireModuleForRequest, requireModule } from "@/lib/tenant";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   try {
+    // SaaS module gate — disabled module = API unavailable (not just hidden).
+    await requireModuleForRequest(req, "COMPLAINTS");
     const scope = await readScope(req);
     const complaints = await db.complaint.findMany({
       where: scope ? { receivedAtOrgUnitId: { in: scope.unitIds } } : {},
@@ -29,6 +32,7 @@ export async function POST(req: Request) {
           city: input.cityCode ?? req.headers.get("x-city-code"),
           unitId: String(input.receivedAtOrgUnitId ?? ""), unitLabel: "receiving office",
         });
+        await requireModule(ctx.cityCode, "COMPLAINTS"); // SaaS module gate (target tenant resolved by the scope wall)
         if (input.propertyId) await assertPropertyInScope(ctx, String(input.propertyId));
         return createComplaint({
           channel: String(input.channel), groundCode: String(input.groundCode),
@@ -51,6 +55,7 @@ export async function PATCH(req: Request) {
       { action: `COMPLAINT_${String(input.action).toUpperCase()}`, entity: "Complaint", ref: (d: { refNumber: string }) => d.refNumber },
       async (actor) => {
         const ctx = await cityContext(actor, { city: input.cityCode ?? req.headers.get("x-city-code") });
+        await requireModule(ctx.cityCode, "COMPLAINTS"); // SaaS module gate (target tenant resolved by the scope wall)
         const complaint = await db.complaint.findUnique({
           where: { id: String(input.id ?? "") }, select: { receivedAtOrgUnitId: true },
         });

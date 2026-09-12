@@ -16,10 +16,12 @@ export function fail(err: unknown) {
   if (err instanceof LegalError) {
     return NextResponse.json({ ok: false, error: err.message, rule: err.rule }, { status: 422 });
   }
-  if (err instanceof Error && err.name === "SecurityError") {
+  if (err instanceof Error && (err.name === "SecurityError" || "missing" in err)) {
     const sec = err as Error & { missing?: string };
     // Phase 8 hardening (DEF-06-01): session-layer failures authenticate as
     // 401 so clients know to sign in; authorization failures stay 403.
+    // Covers every SecurityError subclass (CityScopeError, ModuleDisabledError,
+    // PlatformAdminRequiredError, ...) via the `missing` code property.
     const UNAUTHENTICATED = new Set([
       "AUTH_SESSION_REQUIRED", "AUTH_SESSION_EXPIRED", "AUTH_SESSION_REVOKED",
       "AUTH_SUBJECT", "IDP_TIMEOUT",

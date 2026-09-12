@@ -75,6 +75,8 @@ export const CAPABILITIES: Record<string, string[]> = {
   "city:manage": ["BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // city identity + statutory params
   "city:admin": ["MINISTRY_ANALYST", "SYSTEM_ADMIN"], // fleet-level READ: fleet table + regional overview
   "city:write": ["SYSTEM_ADMIN"], // fleet-level WRITE: onboard / edit / activate / deactivate cities
+  // SaaS tenant service catalog — city admin manages own city, system admin fleet-wide
+  "service:manage": ["CITY_ADMIN", "SYSTEM_ADMIN"],
   "ladder:manage": ["BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // penalty ladder values
   "org:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // sub-city / woreda register
   // Read capabilities enforced when auth_mode = production (DEF-06-01)

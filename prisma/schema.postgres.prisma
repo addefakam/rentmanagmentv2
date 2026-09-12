@@ -39,6 +39,7 @@ model OrgUnit {
   trainingSessions   TrainingSession[]
   pilotSubCities     PilotConfig[]
   cityConfig         CityConfig?
+  services           ServiceDefinition[] // departments/offices owning tenant services (SaaS)
   isActive           Boolean   @default(true)
   confirmationStatus String    @default("CONFIRMED") // CONFIRMED | PENDING_OFFICIAL_REGISTER
   sourceNote         String?
@@ -306,6 +307,70 @@ model CityConfig {
   complaintDecisionDays Int @default(30) // Proc. Art. 22 (working days)
   appealDays    Int     @default(15) // Proc. Art. 24
   isActive      Boolean @default(true)
+  // -----------------------------------------------------------------------
+  // SaaS multi-tenant platform — this row IS the tenant. Every operational
+  // record hangs under the bureau subtree above; the fields below carry the
+  // tenant identity, lifecycle, white-label branding, per-tenant module
+  // flags and connectivity. All additive with defaults: existing cities
+  // backfill automatically (existing city = Tenant #1).
+  // -----------------------------------------------------------------------
+  slug          String? @unique // URL identity: city-a.platform.com
+  status        String  @default("ACTIVE") // ACTIVE | SUSPENDED | DEACTIVATED (kept in sync with isActive)
+  country       String  @default("Ethiopia")
+  region        String? // state / regional administration
+  timezone      String  @default("Africa/Addis_Ababa")
+  contactEmail  String?
+  contactPhone  String?
+  contactAddress String?
+  // White-label branding (per-tenant theme, loaded dynamically)
+  logoUrl       String?
+  faviconUrl    String?
+  primaryColor  String  @default("#1D4ED8")
+  secondaryColor String @default("#0F766E")
+  accentColor   String  @default("#D4875A")
+  portalTitle   String? // overrides the platform title on login/console when set
+  welcomeMessage String?
+  // Per-tenant configuration blocks (JSON strings)
+  modulesJson   String? // {"COMPLAINTS":true,"PAYMENTS":false,...} — missing key = enabled
+  configurationJson String?
+  customDomainsJson String? // ["services.addisababa.gov.et"] — custom domain support
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+  services      ServiceDefinition[]
+}
+
+// ---------------------------------------------------------------------------
+// SaaS — Tenant-scoped service catalog. Each city defines its own public
+// services (name, category, required documents, processing time, owning
+// office, workflow, SLA, fee, notification rules, visibility). Nothing is
+// hardcoded in the application: the catalog is data, editable per tenant.
+// ---------------------------------------------------------------------------
+model ServiceDefinition {
+  id                String   @id @default(cuid())
+  cityCode          String
+  city              CityConfig @relation(fields: [cityCode], references: [cityCode])
+  code              String   // stable per-tenant service code, e.g. REG-CERT
+  nameEn            String
+  nameAm            String?
+  nameOm            String?
+  category          String   // REGISTRATION | COMPLAINTS | PAYMENTS | PERMITS | LICENSING | OTHER
+  description       String?
+  requiredDocumentsJson String? // ["Lease agreement", ...]
+  processingTimeDays Int     @default(5)
+  departmentOrgUnitId String?
+  department        OrgUnit? @relation(fields: [departmentOrgUnitId], references: [id])
+  workflowCode      String?  // ties the service to the per-city workflow engine (ModelContract / process key)
+  slaDays           Int?
+  feeAmount         Float?
+  feeCurrency       String   @default("ETB")
+  notificationRulesJson String?
+  isActive          Boolean  @default(true)
+  isPublic          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([cityCode, code])
+  @@index([cityCode])
 }
 
 // ---------------------------------------------------------------------------

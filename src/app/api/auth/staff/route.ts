@@ -26,7 +26,10 @@ export async function GET(req: Request) {
       staffCode: string; fullName: string; roleCode: string; roleName: string;
       orgUnitCode: string; cityCode: string;
     }> = [];
-    if (cityCode) {
+    // Tenant isolation: only ACTIVE tenants expose a directory. A requested
+    // city that is deactivated (or unknown) yields an EMPTY officer list —
+    // the scope fallback must never leak another city's officers.
+    if (cityCode && configs.some((c) => c.cityCode === cityCode)) {
       const scope = cityScope(units as never, configs as never, cityCode);
       const rows = await db.systemUser.findMany({
         where: { isActive: true, orgUnitId: { in: scope.unitIds } },

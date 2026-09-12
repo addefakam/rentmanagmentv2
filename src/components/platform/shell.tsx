@@ -29,10 +29,23 @@ import { t } from "./i18n";
 import type { BootPayload, Lang } from "./types";
 import { setCallContext } from "./panels-s1";
 import { NAV_GROUPS, NAV_ITEMS, canAccess } from "@/lib/rbac-pages";
+import { parseModules } from "@/lib/tenant-modules";
 
 export type ClientOfficer = {
   staffCode: string; fullName: string; roleCode: string; roleTier: string;
   orgUnitCode: string; cityCode: string | null; national: boolean;
+};
+
+// SaaS module visibility map — a console page belongs to a tenant module; the
+// page disappears from the navigation when the tenant's module flag is off
+// (and the module's APIs reject calls server-side — defense in depth).
+const PAGE_MODULE: Record<string, string> = {
+  "/parties": "SERVICE_REQUESTS",
+  "/properties": "SERVICE_REQUESTS",
+  "/registration": "SERVICE_REQUESTS",
+  "/rent": "PAYMENTS",
+  "/complaints": "COMPLAINTS",
+  "/reports": "REPORTS",
 };
 
 type BootCtx = {
@@ -43,6 +56,7 @@ type BootCtx = {
   setLang: (l: Lang) => void;
   officer: ClientOfficer;
   setCity: (code: string) => void;
+  tenantModules: Record<string, boolean> | null;
 };
 
 const Ctx = createContext<BootCtx | null>(null);
@@ -69,6 +83,22 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
   const [loading, setLoading] = useState(true);
   const [city, setCityState] = useState<string>(officer.cityCode ?? "AA");
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [tenantModules, setTenantModules] = useState<Record<string, boolean> | null>(null);
+  const [tenantTitle, setTenantTitle] = useState<string | null>(null);
+
+  // White-label theme + module flags for the tenant in view. Re-applies when
+  // a national officer switches city (each city can carry its own branding).
+  useEffect(() => {
+    fetch(`/api/tenant/branding?city=${encodeURIComponent(city)}`, { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (j.ok && j.data?.theme) {
+          setTenantModules(j.data.theme.modules ?? {});
+          setTenantTitle(j.data.theme.portalTitle ?? null);
+        }
+      })
+      .catch(() => { /* keep defaults */ });
+  }, [city]);
 
   const setLang = useCallback((l: Lang) => setLangState(l), []);
 
@@ -110,19 +140,23 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
   }, [refresh, router]);
 
   const ctx = useMemo<BootCtx>(
-    () => ({ boot, loading, refresh: () => refresh(), lang, setLang, officer, setCity }),
-    [boot, loading, refresh, lang, setLang, officer, setCity],
+    () => ({ boot, loading, refresh: () => refresh(), lang, setLang, officer, setCity, tenantModules }),
+    [boot, loading, refresh, lang, setLang, officer, setCity, tenantModules],
   );
 
-  const visible = NAV_ITEMS.filter((n) => canAccess(n.href, officer.roleCode));
+  const visible = NAV_ITEMS.filter((n) => canAccess(n.href, officer.roleCode)).filter((n) => {
+    const mod = PAGE_MODULE[n.href];
+    if (!mod || !tenantModules) return true; // unknown mapping or flags not loaded yet — keep visible
+    return parseModules(JSON.stringify(tenantModules))[mod] !== false;
+  });
   const currentCity = boot?.cities.find((c) => c.cityCode === (boot?.cityCode ?? city));
 
   const nav = (
     <nav className="flex h-full flex-col gap-4 overflow-y-auto px-3 py-4" aria-label="Console">
       <Link href="/" className="mb-1 flex items-center gap-2 px-2" onClick={() => setMobileOpen(false)}>
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#D4875A] text-sm font-black text-white">R</span>
+        <span className="flex h-8 w-8 items-center justify-center rounded-lg text-sm font-black text-white" style={{ backgroundColor: "var(--tenant-accent, #D4875A)" }}>R</span>
         <span className="min-w-0">
-          <span className="block truncate text-sm font-bold text-white">Rent Control</span>
+          <span className="block truncate text-sm font-bold text-white">{tenantTitle ?? "Rent Control"}</span>
           <span className="block truncate text-[10px] text-slate-400">{currentCity ? currentCity.nameEn : "…"} · Proc. 1320/2016</span>
         </span>
       </Link>
@@ -139,7 +173,8 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
                 return (
                   <Link
                     key={n.href} href={n.href} onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${active ? "bg-[#D4875A]/15 font-semibold text-[#E8A87E]" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
+                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${active ? "font-semibold text-[var(--tenant-accent-bright, #E8A87E)]" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
+                    style={active ? { backgroundColor: "var(--tenant-accent-soft, rgba(212,135,90,0.15))" } : undefined}
                     aria-current={active ? "page" : undefined}
                   >
                     <Icon className="h-4 w-4 shrink-0" aria-hidden />
@@ -184,7 +219,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
             {/* City switcher — national officers only */}
             {boot && (officer.national ? (
               <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-[#D4875A]" aria-hidden />
+                <MapPin className="h-3.5 w-3.5" style={{ color: "var(--tenant-accent, #D4875A)" }} aria-hidden />
                 <Select value={boot.cityCode} onValueChange={setCity}>
                   <SelectTrigger className="h-8 w-[150px] border-white/20 bg-white/10 text-white text-sm" aria-label={t("shell.city", lang)}>
                     <SelectValue />
@@ -206,7 +241,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
 
             {/* Language */}
             <div className="flex items-center gap-1.5">
-              <Languages className="hidden h-3.5 w-3.5 text-[#D4875A] sm:block" aria-hidden />
+              <Languages className="hidden h-3.5 w-3.5 sm:block" style={{ color: "var(--tenant-accent, #D4875A)" }} aria-hidden />
               <Select value={lang} onValueChange={(v) => setLang(v as Lang)}>
                 <SelectTrigger className="h-8 w-[130px] border-white/20 bg-white/10 text-white text-sm" aria-label="Language">
                   <SelectValue />
@@ -268,14 +303,29 @@ export function ModuleFrame({ route, render }: {
   route: string;
   render: (ctx: { boot: BootPayload; lang: Lang; refresh: () => Promise<void> }) => React.ReactNode;
 }) {
-  const { boot, loading, refresh, lang, officer } = useBoot();
+  const { boot, loading, refresh, lang, officer, tenantModules } = useBoot();
   if (!canAccess(route, officer.roleCode)) {
     return (
       <div className="mx-auto mt-16 max-w-md rounded-xl border bg-white p-8 text-center">
-        <ShieldAlert className="mx-auto mb-3 h-10 w-10 text-[#D4875A]" aria-hidden />
+        <ShieldAlert className="mx-auto mb-3 h-10 w-10" style={{ color: "var(--tenant-accent, #D4875A)" }} aria-hidden />
         <h2 className="text-base font-bold">Not available for your role</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {officer.roleCode.replace(/_/g, " ")} ({officer.staffCode}) cannot open {route}. Ask a bureau head or system admin if you need access.
+        </p>
+      </div>
+    );
+  }
+  // SaaS module gate (client mirror): direct navigation to a page whose
+  // module the tenant disabled is refused here too — the module's APIs
+  // enforce the same rule server-side.
+  const requiredModule = PAGE_MODULE[route];
+  if (requiredModule && tenantModules && tenantModules[requiredModule] === false) {
+    return (
+      <div className="mx-auto mt-16 max-w-md rounded-xl border bg-white p-8 text-center">
+        <ShieldAlert className="mx-auto mb-3 h-10 w-10" style={{ color: "var(--tenant-accent, #D4875A)" }} aria-hidden />
+        <h2 className="text-base font-bold">Module not enabled</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          The module "{requiredModule.replace(/_/g, " ").toLowerCase()}" is not enabled for this city by the platform administrator.
         </p>
       </div>
     );

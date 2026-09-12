@@ -27,14 +27,19 @@ export async function POST(req: Request) {
     ]);
     const cityCode = cityCodeForOrgUnit(units as never, configs as never, user.orgUnitId);
     const national = isNationalRole(user.roleCode);
-    // City fleet administration: a deactivated city refuses sign-in for its
-    // own officers (soft suspension — data is untouched, reactivation restores
-    // access). National officers are never city-bound, so they pass through.
+    // City fleet administration: a deactivated or suspended tenant refuses
+    // sign-in for its own officers (soft suspension — data is untouched,
+    // reactivation restores access). National officers are never city-bound,
+    // so they pass through. `status` is the SaaS lifecycle (ACTIVE |
+    // SUSPENDED | DEACTIVATED) and is kept in sync with the legacy isActive.
     if (!national && cityCode) {
       const cfg = configs.find((c) => c.cityCode === cityCode);
-      if (cfg && !cfg.isActive) {
+      if (cfg && (!cfg.isActive || (cfg as { status?: string }).status === "SUSPENDED")) {
+        const suspended = (cfg as { status?: string }).status === "SUSPENDED";
         return Response.json(
-          { ok: false, error: `${cfg.nameEn} is currently deactivated by the system administrator. Contact the Ministry help desk.` },
+          { ok: false, error: suspended
+            ? `${cfg.nameEn} is currently suspended by the platform administrator. Contact the Ministry help desk.`
+            : `${cfg.nameEn} is currently deactivated by the system administrator. Contact the Ministry help desk.` },
           { status: 403 },
         );
       }
@@ -48,6 +53,7 @@ export async function POST(req: Request) {
       orgUnitCode: user.orgUnit.code,
       cityCode: cityCode ?? "AA",
       national,
+      tenantSlug: (configs.find((c) => c.cityCode === (cityCode ?? "AA")) as { slug?: string | null } | undefined)?.slug ?? null,
     };
     const res = Response.json({ ok: true, officer });
     const opt = cookieOptions();

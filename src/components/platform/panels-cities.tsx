@@ -30,6 +30,13 @@ type CityRow = {
   subCities: number; woredas: number; staff: number; properties: number; files: number;
   complaintsOpen: number; complaintsTotal: number;
   paymentsCount: number; paymentsAmount: number;
+  // SaaS tenant fields
+  slug?: string | null; status?: string; country?: string; region?: string | null; timezone?: string;
+  contactEmail?: string | null; contactPhone?: string | null; contactAddress?: string | null;
+  logoUrl?: string | null; faviconUrl?: string | null;
+  primaryColor?: string; secondaryColor?: string; accentColor?: string;
+  portalTitle?: string | null; welcomeMessage?: string | null;
+  modules?: Record<string, boolean>; customDomains?: string[]; serviceCount?: number;
 };
 
 type OnboardResult = {
@@ -59,6 +66,69 @@ export function CitiesAdmin() {
     nameEn: "", nameAm: "", nameOm: "", canonicalLang: "am",
     complaintDecisionDays: "30", appealDays: "15",
   });
+  // SaaS tenant configuration editor (white-label + modules + connectivity)
+  const [tenantEdit, setTenantEdit] = useState<CityRow | null>(null);
+  const [tenantForm, setTenantForm] = useState({
+    slug: "", portalTitle: "", welcomeMessage: "", logoUrl: "", faviconUrl: "",
+    primaryColor: "#1D4ED8", secondaryColor: "#0F766E", accentColor: "#2563EB",
+    contactEmail: "", contactPhone: "", contactAddress: "",
+    region: "", timezone: "Africa/Addis_Ababa", customDomains: "",
+    modules: {} as Record<string, boolean>,
+  });
+
+  const MODULE_LIST = [
+    "CITIZEN_SERVICES", "SERVICE_REQUESTS", "COMPLAINTS", "APPOINTMENTS", "PERMITS",
+    "LICENSING", "PAYMENTS", "NOTIFICATIONS", "DOCUMENTS", "REPORTS", "ANALYTICS", "ANNOUNCEMENTS",
+  ];
+
+  const openTenant = (row: CityRow) => {
+    setTenantEdit(row);
+    setTenantForm({
+      slug: row.slug ?? "", portalTitle: row.portalTitle ?? "", welcomeMessage: row.welcomeMessage ?? "",
+      logoUrl: row.logoUrl ?? "", faviconUrl: row.faviconUrl ?? "",
+      primaryColor: row.primaryColor ?? "#1D4ED8", secondaryColor: row.secondaryColor ?? "#0F766E",
+      accentColor: row.accentColor ?? "#2563EB",
+      contactEmail: row.contactEmail ?? "", contactPhone: row.contactPhone ?? "", contactAddress: row.contactAddress ?? "",
+      region: row.region ?? "", timezone: row.timezone ?? "Africa/Addis_Ababa",
+      customDomains: (row.customDomains ?? []).join(", "),
+      modules: { ...(row.modules ?? {}) },
+    });
+  };
+
+  const saveTenant = async () => {
+    if (!tenantEdit) return;
+    setBusy(true);
+    const out = await call("/api/cities", "PATCH", {
+      cityCode: tenantEdit.cityCode,
+      slug: tenantForm.slug || " ",
+      portalTitle: tenantForm.portalTitle, welcomeMessage: tenantForm.welcomeMessage,
+      logoUrl: tenantForm.logoUrl, faviconUrl: tenantForm.faviconUrl,
+      primaryColor: tenantForm.primaryColor, secondaryColor: tenantForm.secondaryColor, accentColor: tenantForm.accentColor,
+      contactEmail: tenantForm.contactEmail, contactPhone: tenantForm.contactPhone, contactAddress: tenantForm.contactAddress,
+      region: tenantForm.region, timezone: tenantForm.timezone,
+      customDomains: tenantForm.customDomains,
+      modules: tenantForm.modules,
+    }) as { message?: string } | null;
+    setBusy(false);
+    if (out) {
+      toast.success(out.message ?? "Tenant updated.");
+      setTenantEdit(null);
+      await load();
+      await refresh();
+    }
+  };
+
+  const suspend = async (row: CityRow, status: string) => {
+    setBusy(true);
+    const out = await call("/api/cities", "PATCH", { cityCode: row.cityCode, status }) as { message?: string } | null;
+    setBusy(false);
+    setConfirmCode(null);
+    if (out) {
+      toast.success(out.message ?? "Status updated.");
+      await load();
+      await refresh();
+    }
+  };
 
   const set = (k: keyof typeof EMPTY_FORM, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
 
@@ -182,7 +252,7 @@ export function CitiesAdmin() {
           <DataTable
             headers={["Status", "City", "Bureau", "Structure", "Staff", "Registry", "Operations", "Statutory (days)", canWrite ? "Action" : "Access"]}
             rows={rows.map((r) => [
-              <StatusBadge key={`s-${r.cityCode}`} value={r.isActive ? "ACTIVE" : "CLOSED"} />,
+              <StatusBadge key={`s-${r.cityCode}`} value={r.isActive ? (r.status === "SUSPENDED" ? "PENDING" : "ACTIVE") : "CLOSED"} />,
               <span key={`c-${r.cityCode}`}>
                 <span className="block text-xs font-semibold">{r.nameEn}</span>
                 <span className="font-mono text-[10px] text-muted-foreground">{r.cityCode} · {r.canonicalLang.toUpperCase()} · {r.currency}</span>
@@ -206,6 +276,7 @@ export function CitiesAdmin() {
                 ) : (
                   <span key={`a-${r.cityCode}`} className="flex flex-wrap gap-1">
                     <ActionButton variant="outline" disabled={busy} onClick={() => openEdit(r)}>Edit</ActionButton>
+                    <ActionButton variant="outline" disabled={busy} onClick={() => openTenant(r)}>Tenant</ActionButton>
                     <ActionButton
                       variant={r.isActive ? "outline" : "default"}
                       onClick={() => setConfirmCode(r.cityCode)}
@@ -259,6 +330,88 @@ export function CitiesAdmin() {
             <ActionButton onClick={saveEdit} disabled={busy || !editForm.nameEn.trim()}>
               {busy ? "Saving…" : "Save changes"}
             </ActionButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Tenant configuration dialog (SaaS) --------------------------------- */}
+      <Dialog open={!!tenantEdit} onOpenChange={(o) => { if (!o) setTenantEdit(null); }}>
+        <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Tenant configuration — {tenantEdit?.nameEn} ({tenantEdit?.cityCode})</DialogTitle>
+            <DialogDescription>
+              White-label branding, module switches, contact details and connectivity for THIS tenant only. The theme applies to its login and console the moment you save.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-4">
+            {/* Identity */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Identity & URL</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Field label="Slug (subdomain)"><TextField value={tenantForm.slug} onChange={(e) => setTenantForm((f) => ({ ...f, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }))} placeholder="addis-ababa" /> </Field>
+                <Field label="Tenant URL (preview)"><TextField value={tenantForm.slug ? `${tenantForm.slug}.platform.com` : ""} disabled /></Field>
+                <Field label="Custom domains (comma-separated)"><TextField value={tenantForm.customDomains} onChange={(e) => setTenantForm((f) => ({ ...f, customDomains: e.target.value }))} placeholder="services.city.gov.et" /></Field>
+              </div>
+            </div>
+            {/* Branding */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">White-label branding</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Field label="Portal title (overrides platform title)"><TextField value={tenantForm.portalTitle} onChange={(e) => setTenantForm((f) => ({ ...f, portalTitle: e.target.value }))} placeholder="e.g. Addis Ababa Rent Control" /></Field>
+                <Field label="Logo URL"><TextField value={tenantForm.logoUrl} onChange={(e) => setTenantForm((f) => ({ ...f, logoUrl: e.target.value }))} placeholder="https://…" /></Field>
+                <Field label="Favicon URL"><TextField value={tenantForm.faviconUrl} onChange={(e) => setTenantForm((f) => ({ ...f, faviconUrl: e.target.value }))} placeholder="https://…/favicon.png" /></Field>
+              </div>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-4">
+                <Field label="Primary color"><input type="color" className="h-9 w-full cursor-pointer rounded-md border" value={tenantForm.primaryColor} onChange={(e) => setTenantForm((f) => ({ ...f, primaryColor: e.target.value.toUpperCase() }))} aria-label="Primary color" /></Field>
+                <Field label="Secondary color"><input type="color" className="h-9 w-full cursor-pointer rounded-md border" value={tenantForm.secondaryColor} onChange={(e) => setTenantForm((f) => ({ ...f, secondaryColor: e.target.value.toUpperCase() }))} aria-label="Secondary color" /></Field>
+                <Field label="Accent color"><input type="color" className="h-9 w-full cursor-pointer rounded-md border" value={tenantForm.accentColor} onChange={(e) => setTenantForm((f) => ({ ...f, accentColor: e.target.value.toUpperCase() }))} aria-label="Accent color" /></Field>
+                <div className="flex items-end">
+                  <span className="flex h-9 w-full items-center justify-center gap-2 rounded-md border text-xs" style={{ backgroundColor: tenantForm.accentColor, color: "#fff" }}>
+                    Live preview
+                  </span>
+                </div>
+              </div>
+              <Field label="Welcome message (shown on this tenant's sign-in page)">
+                <TextField value={tenantForm.welcomeMessage} onChange={(e) => setTenantForm((f) => ({ ...f, welcomeMessage: e.target.value }))} placeholder="Welcome to the Addis Ababa rent control portal" />
+              </Field>
+            </div>
+            {/* Contact + locale */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Contact & locale</p>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Field label="Contact email"><TextField value={tenantForm.contactEmail} onChange={(e) => setTenantForm((f) => ({ ...f, contactEmail: e.target.value }))} placeholder="help@city.gov.et" /></Field>
+                <Field label="Contact phone"><TextField value={tenantForm.contactPhone} onChange={(e) => setTenantForm((f) => ({ ...f, contactPhone: e.target.value }))} /></Field>
+                <Field label="Region"><TextField value={tenantForm.region} onChange={(e) => setTenantForm((f) => ({ ...f, region: e.target.value }))} /></Field>
+              </div>
+              <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+                <Field label="Contact address"><TextField value={tenantForm.contactAddress} onChange={(e) => setTenantForm((f) => ({ ...f, contactAddress: e.target.value }))} /></Field>
+                <Field label="Timezone"><TextField value={tenantForm.timezone} onChange={(e) => setTenantForm((f) => ({ ...f, timezone: e.target.value }))} placeholder="Africa/Addis_Ababa" /></Field>
+                <Field label="Status"><TextField value={`${tenantEdit?.status ?? "ACTIVE"} · ${tenantEdit?.isActive ? "sign-in allowed" : "sign-in refused"}`} disabled /></Field>
+              </div>
+            </div>
+            {/* Modules */}
+            <div>
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Modules — disabled modules disappear from the UI AND are rejected by the backend APIs</p>
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+                {MODULE_LIST.map((m) => {
+                  const on = tenantForm.modules[m] !== false; // missing = enabled
+                  return (
+                    <label key={m} className="flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] font-medium">
+                      <input
+                        type="checkbox" className="h-3.5 w-3.5"
+                        checked={on}
+                        onChange={(e) => setTenantForm((f) => ({ ...f, modules: { ...f.modules, [m]: e.target.checked } }))}
+                      />
+                      {m.replace(/_/g, " ")}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <ActionButton variant="ghost" onClick={() => setTenantEdit(null)}>Cancel</ActionButton>
+            <ActionButton onClick={saveTenant} disabled={busy}>{busy ? "Saving…" : "Save tenant configuration"}</ActionButton>
           </DialogFooter>
         </DialogContent>
       </Dialog>

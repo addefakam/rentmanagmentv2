@@ -25,6 +25,7 @@ export type Officer = {
   orgUnitCode: string;
   cityCode: string | null; // null for national (MINISTRY/SYSTEM) staff
   national: boolean; // may switch cities and see everything
+  tenantSlug?: string | null; // SaaS: URL identity of the officer's tenant (city), resolved server-side at sign-in
   iat: number;
 };
 
