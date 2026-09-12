@@ -763,3 +763,24 @@ Stage Summary:
 - Adama is now removed from the system ENTIRELY — code, seed, snapshot, local DB, AND production Neon (the Task 30 blocker is resolved). Re-onboarding via /platform/cities remains available and a re-onboarded AD would be protected from auto-purge by the REMOVED_CITIES marker.
 - Production policy verified live: no AD in directory/fleet/switcher/branding; ex-Adama officers STF-1001..1005 unknown (401); national accounts (STF-0007/0008) sign in exclusively from Addis Ababa; surviving tenants (AA active, BISH active, DR deactivated) fully isolated; module gates and RBAC unchanged.
 - Total production verification this task: 17 + 13 + 36 = 66 assertions green, 2 documented skips (local-only checks).
+
+---
+Task ID: 32
+Agent: Main agent (Super Z)
+Task: Owner directive — "create separate url only for super user Addis Abeba": a dedicated sign-in URL exclusively for the System Super User (STF-0008), bound to the Addis Ababa administration.
+
+Work Log:
+- Inspected existing auth flow first: /api/auth/login (national-role AA rule), /login page (slug/city wrapper), login-form.tsx (roster + code entry), officer.ts (signed rc_officer cookie), middleware.ts (tenant slug resolution), rbac-pages.ts (page registry).
+- NEW /admin page (src/app/admin/page.tsx): discreet code-only portal — no city picker, no officer roster, no demo hints; a valid SYSTEM_ADMIN session bounces straight to /platform/cities; metadata title "System Administration — Restricted".
+- NEW client form (src/components/super-admin-form.tsx): single staff-code field, ShieldCheck identity, Addis Ababa white-label theme via public branding API (?city=AA), success redirects to /platform/cities, generic error surface.
+- NEW endpoint /api/auth/super (src/app/api/auth/super/route.ts): POST-only; hardwires AA context; SYSTEM_ADMIN-only (STF-0007 ministry analyst and every city officer get the same generic 403 "reserved for the System Super User"); unknown/inactive codes 401; issues the SAME signed rc_officer cookie as an AA sign-in through /api/auth/login (cookie byte-equivalent posture, tenantSlug of AA).
+- robots.txt: Disallow /admin for all agents (discretion; enforcement is server-side regardless).
+- NEW scripts/verify-super-admin-portal.sh (21 assertions: page render + leak checks, endpoint matrix, real-session checks, public-login regression).
+- Lint clean; local production build PASS with both routes registered (ƒ /admin, ƒ /api/auth/super); local run on :3210: super-admin 21/21 + adama-removed 17/17 + single-admin 13/13 + tenant-isolation 41/41; test tenant TSVH cleaned after.
+- Agent Browser verification: /admin renders (title + heading + code field + disabled button); STF-0008 → lands on /platform/cities; STF-0007 → refusal message shown; screenshots saved (super-admin-portal-signed-in.png, super-admin-portal-refusal.png, super-admin-portal-production.png in download/).
+- Commit 69ad247 pushed (960694a..69ad247); Vercel deployed rentmanagmentv2-ndhb; production verification: super-admin 21/21 + adama-removed 17/17 + single-admin 13/17→13/13; browser confirmed live at https://rentmanagmentv2-ndhb.vercel.app/admin.
+
+Stage Summary:
+- The super user now has a SEPARATE URL: https://rentmanagmentv2-ndhb.vercel.app/admin — Addis-Ababa-bound, SYSTEM_ADMIN-exclusive, roster-free and discreet (not linked from /login, robots-disallowed).
+- Public /login remains unchanged for every other officer; national sign-in rules and the Adama removal policy all still verified green (51 production assertions this task).
+- Enforcement is server-side (role check in /api/auth/super), so the page being discreet is defense-in-depth, not the security boundary.
