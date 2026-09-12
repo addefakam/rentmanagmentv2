@@ -40,13 +40,22 @@ export async function GET(req: Request) {
         staffCode: s.staffCode, fullName: s.fullName, roleCode: s.roleCode,
         roleName: s.role.nameEn, orgUnitCode: s.orgUnit.code, cityCode,
       }));
-      // National officers (Ministry / System admin) can sign in to any city view.
+      // National officers: the ministry analyst keeps fleet-wide oversight
+      // sign-in from every city view. Owner directive (single-admin policy):
+      // the ONE System Admin is attached to the FEDERAL CAPITAL only — its
+      // account appears exclusively in the Addis Ababa (AA) roster and in NO
+      // other city's sign-in directory.
+      const PLATFORM_HOME_CITY = "AA"; // federal capital — matches the login default (cityCode ?? "AA")
+      const nationalRoles = cityCode === PLATFORM_HOME_CITY
+        ? ["MINISTRY_ANALYST", "SYSTEM_ADMIN"]
+        : ["MINISTRY_ANALYST"];
       const national = await db.systemUser.findMany({
-        where: { isActive: true, roleCode: { in: ["MINISTRY_ANALYST", "SYSTEM_ADMIN"] } },
+        where: { isActive: true, roleCode: { in: nationalRoles } },
         include: { role: true, orgUnit: true },
         orderBy: { staffCode: "asc" },
       });
-      staff.push(...national.map((s) => ({
+      const seen = new Set(staff.map((s) => s.staffCode)); // defensive dedupe
+      staff.push(...national.filter((s) => !seen.has(s.staffCode)).map((s) => ({
         staffCode: s.staffCode, fullName: s.fullName, roleCode: s.roleCode,
         roleName: s.role.nameEn, orgUnitCode: s.orgUnit.code, cityCode: "*",
       })));

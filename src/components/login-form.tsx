@@ -64,7 +64,9 @@ export function LoginForm({ initialSlug, initialCity }: { initialSlug?: string; 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ staffCode: code.trim() }),
+        // `city` carries the portal whose roster the officer used — the server
+        // refuses the System Admin from any city other than Addis Ababa.
+        body: JSON.stringify({ staffCode: code.trim(), city }),
       });
       const json = await res.json();
       if (res.ok && json.ok) { window.location.href = "/"; return; }
