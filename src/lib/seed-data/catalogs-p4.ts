@@ -41,6 +41,15 @@ export const CITY_CONFIGS = [
     holidaysNote: "National public holidays configurable; working-day clocks exclude Sat/Sun.",
     minLeaseYears: 2, maxPrepayMonths: 2, isActive: true,
   },
+  // Demo DEACTIVATED city — SaaS lifecycle showcase. Its officers are refused
+  // sign-in while closed; the system admin reactivates it from City Management
+  // (no data changes) and the city administrator below can then sign in.
+  {
+    cityCode: "DR", nameEn: "Dire Dawa", nameAm: "ድሬዳዋ", nameOm: "Dirree Dhawaa",
+    currency: "ETB", workWeek: "MON-FRI",
+    holidaysNote: "National public holidays configurable; working-day clocks exclude Sat/Sun.",
+    minLeaseYears: 2, maxPrepayMonths: 2, isActive: false,
+  },
 ];
 
 // Demonstration staff accounts bound to the seeded hierarchy (M13).
@@ -61,6 +70,9 @@ export const DEMO_STAFF = [
   { staffCode: "STF-1003", fullName: "Ayunni Gemmechu", roleCode: "SUBCITY_MONITOR", orgUnitCode: "AD-CENTRAL", language: "om" },
   { staffCode: "STF-1004", fullName: "Bonsa Degaga", roleCode: "BUREAU_ANALYST", orgUnitCode: "AD-BUREAU", language: "om" },
   { staffCode: "STF-1005", fullName: "Meseret Worku", roleCode: "BUREAU_HEAD", orgUnitCode: "AD-BUREAU", language: "om" },
+  // Dire Dawa (demo deactivated city) — the city super-admin created with the
+  // city. Sign-in is refused while DR is deactivated; works after reactivation.
+  { staffCode: "STF-2001", fullName: "Fikru Mengistu", roleCode: "CITY_ADMIN", orgUnitCode: "DR-BUREAU", language: "am" },
 ];
 
 // Public awareness publications — Proc. Arts. 14, 16, 18 (M11)

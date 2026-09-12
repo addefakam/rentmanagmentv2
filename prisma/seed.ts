@@ -9,6 +9,7 @@ import { PrismaClient } from "@prisma/client";
 
 import {
   MINISTRY, BUREAU, SUB_CITIES, ADAMA_BUREAU, ADAMA_SUB_CITIES,
+  DIRE_DAWA_BUREAU, DIRE_DAWA_SUB_CITIES,
 } from "../src/lib/seed-data/orgTree";
 import {
   LANGUAGES, ROLES, IDENTIFICATION_TYPES, PROPERTY_STATUS_TYPES,
@@ -108,6 +109,39 @@ async function seedOrgTree() {
       });
     }
   }
+
+  // Multi-city SaaS demo: Dire Dawa — onboarded, then DEACTIVATED by the
+  // system admin. The full subtree, config and model contract exist, so
+  // reactivation from City Management is a one-click, zero-migration action.
+  const direDawaBureau = await prisma.orgUnit.create({
+    data: {
+      code: DIRE_DAWA_BUREAU.code, tier: "BUREAU",
+      nameEn: DIRE_DAWA_BUREAU.nameEn, nameAm: DIRE_DAWA_BUREAU.nameAm, nameOm: DIRE_DAWA_BUREAU.nameOm,
+      parentId: ministry.id, confirmationStatus: "CONFIRMED",
+      sourceNote: "Dire Dawa Administration (chartered city); demo deactivated city for the SaaS lifecycle.",
+    },
+  });
+  for (const sc of DIRE_DAWA_SUB_CITIES) {
+    const subCity = await prisma.orgUnit.create({
+      data: {
+        code: sc.code, tier: "SUB_CITY",
+        nameEn: sc.nameEn, nameAm: sc.nameAm, nameOm: sc.nameOm,
+        parentId: direDawaBureau.id, confirmationStatus: "CONFIRMED",
+        sourceNote: sc.woredas.note,
+      },
+    });
+    for (let w = 1; w <= sc.woredas.count; w++) {
+      const wnum = String(w).padStart(2, "0");
+      await prisma.orgUnit.create({
+        data: {
+          code: `${sc.code}-W${wnum}`, tier: "WOREDA",
+          nameEn: `Woreda ${wnum}`, nameAm: `ወረዳ ${wnum}`, nameOm: `Woredaa ${wnum}`,
+          parentId: subCity.id, confirmationStatus: "PENDING_OFFICIAL_REGISTER",
+          sourceNote: sc.woredas.note,
+        },
+      });
+    }
+  }
 }
 
 async function seedCatalogs() {
@@ -143,9 +177,12 @@ async function seedCatalogs() {
     await prisma.complaintGroundType.create({ data: cg });
   }
   for (const cc of CITY_CONFIGS) {
-    const bureauCode = cc.cityCode === "AD" ? "AD-BUREAU" : "AA-BUREAU";
-    const bureau = await prisma.orgUnit.findUnique({ where: { code: bureauCode } });
-    await prisma.cityConfig.create({ data: { ...cc, bureauId: bureau?.id } });
+    // City convention: every city's bureau org unit is `<cityCode>-BUREAU`,
+    // which anchors the city's data-isolation boundary (one BUREAU subtree
+    // per CityConfig row).
+    const bureau = await prisma.orgUnit.findUnique({ where: { code: `${cc.cityCode}-BUREAU` } });
+    if (!bureau) throw new Error(`City ${cc.cityCode} has no ${cc.cityCode}-BUREAU org unit in the seed tree.`);
+    await prisma.cityConfig.create({ data: { ...cc, bureauId: bureau.id } });
   }
   for (const pub of PUBLICATIONS) {
     const bureau = await prisma.orgUnit.findUnique({ where: { code: "AA-BUREAU" } });
@@ -208,6 +245,29 @@ async function seedModelContract() {
       issuedBy: "Adama City Administration Rent Control Bureau",
       legalBasis: MODEL_CONTRACT_V1.legalBasis,
       canonicalLang: "om",
+      effectiveFrom: new Date(MODEL_CONTRACT_V1.effectiveFrom),
+      sections: {
+        create: CONTRACT_SECTIONS.map((s) => ({
+          orderNo: s.orderNo, code: s.code,
+          titleEn: s.titleEn, titleAm: s.titleAm, titleOm: s.titleOm,
+          contentEn: s.contentEn, contentAm: s.contentAm, contentOm: s.contentOm,
+          certificationStatus: "PENDING_LEGAL_REVIEW",
+          legalBasis: s.legalBasis,
+        })),
+      },
+    },
+  });
+
+  // Dire Dawa model contract (demo deactivated city) — pre-provisioned so
+  // reactivation is one click and the city is fully operational immediately.
+  await prisma.modelContract.create({
+    data: {
+      cityCode: "DR",
+      version: "DR-1.0",
+      status: "ACTIVE",
+      issuedBy: "Dire Dawa Administration Rent Control Bureau",
+      legalBasis: MODEL_CONTRACT_V1.legalBasis,
+      canonicalLang: "am",
       effectiveFrom: new Date(MODEL_CONTRACT_V1.effectiveFrom),
       sections: {
         create: CONTRACT_SECTIONS.map((s) => ({

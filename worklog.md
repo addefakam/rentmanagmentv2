@@ -477,3 +477,23 @@ Stage Summary:
 - Demo state: AA, Adama, Bahir Dar (BDU), Hawassa (HAW) all ACTIVE; Bahir Dar demonstrates the onboarding flow end to end.
 - Owner: (1) supply PAT to push 654e0d8; (2) run prisma db push against Neon once so CityConfig.isActive exists in production before using deactivate; (3) Vercel redeploy.
 - Screenshots: download/cities-desktop-1280.png, download/cities-mobile-390.png.
+
+---
+Task ID: 24
+Agent: main (Super Z)
+Task: Complete the SaaS city-governance module — seed a demo deactivated city (Dire Dawa), then run the full lifecycle + isolation verification battery end to end and publish.
+
+Work Log:
+- Audited Tasks 22-23 output: /api/cities (GET/POST/PATCH incl. edit + activate/deactivate), City Management page, CITY_ADMIN role, login/platform isolation walls all present and committed; CityConfig.isActive already in BOTH schemas. Remaining gap: no demo deactivated city in the seed and no consolidated verification pass.
+- orgTree.ts: added DIRE_DAWA_BUREAU (DR-BUREAU) + DIRE_DAWA_SUB_CITIES (DR-CENTRAL, 2 woredas) — minimal demo subtree.
+- catalogs-p4.ts: DR CityConfig with isActive:false (demo deactivated city) + STF-2001 Fikru Mengistu (CITY_ADMIN, DR-BUREAU) so reactivation has an admin to sign in.
+- prisma/seed.ts: seeded the DR subtree under FED-MINISTRY; replaced the AA/AD special-case bureau lookup with the generic `<cityCode>-BUREAU` convention (throws if a city has no bureau); added DR-1.0 model contract clone so a reactivated DR is fully operational with zero migration.
+- db push (sqlite) + reseed OK: 3 cityConfigs, 14 staff, 3 model contracts, 152 org units, 134 woredas.
+- 12-step verification battery (curl + browser), ALL PASS: (1) login directory hides DR; (2) STF-2001 sign-in 403 while deactivated; (3) SYSTEM_ADMIN fleet view lists AA/AD/DR with per-city stats; (4) PATCH reactivate DR -> (5) STF-2001 signs in (CITY_ADMIN, city=DR, national=false); (6) DR admin ?city=AA pinned server-side to DR — 0 AA parties leak, switcher=[DR]; (7) CITY_ADMIN fleet PATCH 403 (city:write = SYSTEM_ADMIN only); (8) registrar fleet GET 403; (9) PATCH deactivate DR -> STF-2001 403 again, data preserved; (10) POST onboard HAW Hawassa in one call (HAW-BUREAU->HAW-CENTRAL->W01, contract HAW-1.0, city admin STF-2002 Tigist Alemu + 2 starter desks, credentials returned); (11) HAW admin isolation identical (0 AA parties, pinned HAW); (12) PATCH edit mode (DR days 30/15->25/10) persists. Last-active-city guard re-verified (deactivate AA as last active -> refused). Reseeded to pristine demo state afterwards.
+- UI (agent-browser): login city dropdown shows only AA+AD (DR hidden); /cities renders regional overview (2/3 active, 12 staff, 30 properties) + fleet table with DR CLOSED + Reactivate button; UI reactivate -> toast + row ACTIVE; UI deactivate flow (two-click confirm) verified; incidental finding: find-text click hit the first matching row (AA) — restored via targeted PATCH, no data impact. Screenshot: download/cities-saas-verify.png.
+- tsc: only pre-existing errors (examples/, scripts/, seed.ts adama prop) — same on HEAD, none introduced. Dev server clean.
+
+Stage Summary:
+- Demo state now: AA + AD active, DR deactivated (full SaaS lifecycle showcase: reactivate is one click, STF-2001 works after, deactivate again restores).
+- SaaS conditions from the owner all verified live: create on demand / edit / deactivate-activate / super-power data views at regional + city level / one locked-to-city admin per city / strict no-mix isolation.
+- 3 commits were pending push (PAT loss after sandbox reset); this commit added on top — push attempted at end of task.

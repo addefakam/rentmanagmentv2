@@ -123,3 +123,25 @@ export const ADAMA_SUB_CITIES: SubCitySeedSpec[] = [
     woredas: { count: 5, basis: "PROVISIONAL", note: "Peri-urban woredas 10-14 of Adama city; provisional pending O-7 register." },
   },
 ];
+
+// ---------------------------------------------------------------------------
+// Multi-city demo: Dire Dawa Administration — seeded DEACTIVATED. This city
+// demonstrates the SaaS city lifecycle end to end: it appears in City
+// Management as CLOSED, its officers cannot sign in while deactivated, and
+// the system admin can reactivate it (after which its city administrator
+// signs in with the staff code below). Reactivation needs no data changes —
+// the subtree, config and model contract are all in place.
+// ---------------------------------------------------------------------------
+export const DIRE_DAWA_BUREAU = {
+  code: "DR-BUREAU",
+  nameEn: "Dire Dawa Administration Rent Control Bureau",
+  nameAm: "የድሬዳዋ አስተዳደር የቤት ኪራይ ቁጥጥር ቢሮ",
+  nameOm: "Bu'aa Too'annaa Kiraalaa Manaa Bulchiinsa Dirree Dhawaa",
+};
+
+export const DIRE_DAWA_SUB_CITIES: SubCitySeedSpec[] = [
+  {
+    code: "DR-CENTRAL", nameEn: "Dire Dawa Central Sub-city", nameAm: "ድሬዳዋ ማዕከላዊ ክፍለ ከተማ", nameOm: "Dirree Dhawaa Giddugaleessa",
+    woredas: { count: 2, basis: "PROVISIONAL", note: "Demo deactivated city: minimal structure pending the city's own onboarding request." },
+  },
+];
