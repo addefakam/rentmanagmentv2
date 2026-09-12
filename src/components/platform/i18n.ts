@@ -26,6 +26,11 @@ const D: Dict = {
   "nav.cities": ["City Management", "የከተማ አስተዳደር", "Bulchiinsa Magaalota"],
   "nav.management": ["National Management", "ብሔራዊ አስተዳደር", "Bulchiinsa Biyyoolessummaa"],
   "nav.audit": ["Audit Trail", "የኦዲት መከታተያ", "Hordoffii Inspektii"],
+  // National Management tabs (Task 37 link-first IA)
+  "nat.tab.overview": ["Overview", "አጠቃላይ እይታ", "Ilaalcha Waliigalaa"],
+  "nat.tab.cities": ["Cities", "ከተሞች", "Magaalota"],
+  "nat.tab.regulations": ["Regulations", "ደንቦች", "Seeraalee"],
+  "nat.tab.contracts": ["Model contracts", "ሞዴል ውሎች", "Waliinoota Moodelaa"],
   "nav.evidence_p": ["Evidence & Gates", "ማስረጃዎች እና ጌቶች", "Ragaafi fi Dalaloota"],
   "nav.group.overview": ["Overview", "አጠቃላይ", "Ilaalcha"],
   "nav.group.registry": ["Registry", "ምዝገባ", "Galmee"],

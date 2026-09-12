@@ -2,14 +2,15 @@
 
 // ============================================================================
 // panels-national.tsx — NATIONAL MANAGEMENT center for the System Super User
-// (owner directive). Four zones:
-//   1. Fleet statistics — the important national numbers at a glance.
-//   2. Management duties — what the super user must keep healthy, live status.
-//   3. National regulation register — add a new regulation / modification /
-//      model change; the entry is REFLECTED TO EVERY CITY automatically
-//      (every city console reads the same national register).
-//   4. Model contract propagation — push a new contract version with section
-//      amendments to ALL active cities in one action (Proc. Art. 5; Dir. 4).
+// (owner directives). LINK-FIRST IA: the four zones are TABS — each opens on
+// demand instead of stacking everything on one page ("i prefer links instead
+// of so many content on single page ... use the space properly"):
+//   1. Overview — fleet statistics + the live management-duty statuses.
+//   2. Cities — the per-city management table.
+//   3. Regulations — the national regulation register; entries are REFLECTED
+//      TO EVERY CITY automatically (every city console reads the register).
+//   4. Model contracts — push a new contract version with section amendments
+//      to ALL active cities in one action (Proc. Art. 5; Dir. 4).
 // Registry, Operations and Project tools are intentionally NOT part of this
 // surface — they stay with the city tiers.
 // ============================================================================
@@ -18,6 +19,7 @@ import { useCallback, useEffect, useState } from "react";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
 import { Panel, Stat, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge } from "./kit";
+import { t } from "./i18n";
 
 type Stats = {
   cities: { total: number; active: number; suspended: number; deactivated: number };
@@ -39,8 +41,17 @@ type Payload = {
 };
 type PropResult = { cityCode: string; created: boolean; version?: string; detail?: string };
 
+const TABS = [
+  { key: "overview", labelKey: "nat.tab.overview" },
+  { key: "cities", labelKey: "nat.tab.cities" },
+  { key: "regulations", labelKey: "nat.tab.regulations" },
+  { key: "contracts", labelKey: "nat.tab.contracts" },
+] as const;
+type TabKey = (typeof TABS)[number]["key"];
+
 export function NationalManagementPage() {
-  const { officer } = useBoot();
+  const { officer, lang } = useBoot();
+  const [tab, setTab] = useState<TabKey>("overview");
   const [data, setData] = useState<Payload | null>(null);
   const [propResults, setPropResults] = useState<PropResult[] | null>(null);
 
@@ -71,73 +82,97 @@ export function NationalManagementPage() {
 
   return (
     <div className="grid grid-cols-1 gap-4">
-      <Panel title="Fleet statistics" subtitle={`The national picture across all ${s.cities.total} tenant cities — registry, operations, payments and audit posture.`}>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <Stat label="Active cities" value={s.cities.active} hint={`${s.cities.suspended} suspended · ${s.cities.deactivated} deactivated`} />
-          <Stat label="Officers" value={s.officers} hint="active accounts, all cities" />
-          <Stat label="Parties" value={s.parties} hint="landlords · tenants · agents" />
-          <Stat label="Properties" value={s.properties} hint="registered dwellings" />
-          <Stat label="Registration files" value={s.files.total} hint={`${s.files.inProgress} in progress · ${s.files.registered} registered`} />
-          <Stat label="Payments" value={`${money} ETB`} hint={`${s.payments.count} receipts · electronic only`} />
-          <Stat label="Open complaints" value={s.complaints.open} hint={`${s.complaints.decided} decided of ${s.complaints.total}`} />
-          <Stat label="Rent adjustments" value={s.adjustments.published} hint={`${s.adjustments.draft} in draft`} />
-          <Stat label="Publications" value={s.publications} hint="public notices issued" />
-          <Stat label="Audit events (30d)" value={s.auditEvents30d} hint="tamper-evident chain" />
-          <Stat label="Deadline clocks" value={s.deadlines.open} hint={s.deadlines.overdue > 0 ? `${s.deadlines.overdue} OVERDUE` : "none overdue"} />
-          <Stat label="Federal model contract" value={data.federalVersion ?? "—"} hint="version in force" />
-        </div>
-      </Panel>
+      {/* Tab rail — the access layer: each zone renders only when opened. */}
+      <div className="flex flex-wrap gap-1.5 rounded-xl border bg-white p-1.5" role="tablist" aria-label="National management sections">
+        {TABS.map((x) => (
+          <button
+            key={x.key} type="button" role="tab" aria-selected={tab === x.key}
+            onClick={() => setTab(x.key)}
+            className={`rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors ${tab === x.key ? "text-white shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
+            style={tab === x.key ? { backgroundColor: "var(--tenant-accent, #D4875A)" } : undefined}
+          >
+            {t(x.labelKey, lang)}
+          </button>
+        ))}
+      </div>
 
-      <Panel title="Management duties" subtitle="What the super user must keep healthy — live status from the platform itself.">
-        <div className="grid gap-2">
-          {data.tasks.map((t) => (
-            <div key={t.key} className="flex flex-col gap-1 rounded-lg border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-sm font-medium leading-tight">{t.label}</p>
-                <p className="text-xs text-muted-foreground">{t.detail}</p>
-              </div>
-              <StatusBadge value={t.status === "OK" ? "REGISTERED" : "OVERDUE"} />
+      {tab === "overview" ? (
+        <div className="grid grid-cols-1 gap-4">
+          <Panel title="Fleet statistics" subtitle={`The national picture across all ${s.cities.total} tenant cities — registry, operations, payments and audit posture.`}>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              <Stat label="Active cities" value={s.cities.active} hint={`${s.cities.suspended} suspended · ${s.cities.deactivated} deactivated`} />
+              <Stat label="Officers" value={s.officers} hint="active accounts, all cities" />
+              <Stat label="Parties" value={s.parties} hint="landlords · tenants · agents" />
+              <Stat label="Properties" value={s.properties} hint="registered dwellings" />
+              <Stat label="Registration files" value={s.files.total} hint={`${s.files.inProgress} in progress · ${s.files.registered} registered`} />
+              <Stat label="Payments" value={`${money} ETB`} hint={`${s.payments.count} receipts · electronic only`} />
+              <Stat label="Open complaints" value={s.complaints.open} hint={`${s.complaints.decided} decided of ${s.complaints.total}`} />
+              <Stat label="Rent adjustments" value={s.adjustments.published} hint={`${s.adjustments.draft} in draft`} />
+              <Stat label="Publications" value={s.publications} hint="public notices issued" />
+              <Stat label="Audit events (30d)" value={s.auditEvents30d} hint="tamper-evident chain" />
+              <Stat label="Deadline clocks" value={s.deadlines.open} hint={s.deadlines.overdue > 0 ? `${s.deadlines.overdue} OVERDUE` : "none overdue"} />
+              <Stat label="Federal model contract" value={data.federalVersion ?? "—"} hint="version in force" />
             </div>
-          ))}
+          </Panel>
+
+          <Panel title="Management duties" subtitle="What the super user must keep healthy — live status from the platform itself.">
+            <div className="grid gap-2">
+              {data.tasks.map((t2) => (
+                <div key={t2.key} className="flex flex-col gap-1 rounded-lg border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium leading-tight">{t2.label}</p>
+                    <p className="text-xs text-muted-foreground">{t2.detail}</p>
+                  </div>
+                  <StatusBadge value={t2.status === "OK" ? "REGISTERED" : "OVERDUE"} />
+                </div>
+              ))}
+            </div>
+          </Panel>
         </div>
-      </Panel>
+      ) : null}
 
-      <Panel title="Per-city management table" subtitle="Every tenant city: staffing, registry volume, open disputes and the model contract version in force.">
-        <DataTable
-          headers={["City", "Status", "Officers", "Files", "Open complaints", "Contract version"]}
-          empty="No cities onboarded yet."
-          rows={data.rows.map((r) => [
-            `${r.nameEn} (${r.cityCode})`,
-            <StatusBadge key={r.cityCode} value={r.status} />,
-            String(r.officers),
-            String(r.files),
-            String(r.complaintsOpen),
-            r.contractVersion ?? "—",
-          ])}
-        />
-      </Panel>
+      {tab === "cities" ? (
+        <Panel title="Per-city management table" subtitle="Every tenant city: staffing, registry volume, open disputes and the model contract version in force.">
+          <DataTable
+            headers={["City", "Status", "Officers", "Files", "Open complaints", "Contract version"]}
+            empty="No cities onboarded yet."
+            rows={data.rows.map((r) => [
+              `${r.nameEn} (${r.cityCode})`,
+              <StatusBadge key={r.cityCode} value={r.status} />,
+              String(r.officers),
+              String(r.files),
+              String(r.complaintsOpen),
+              r.contractVersion ?? "—",
+            ])}
+          />
+        </Panel>
+      ) : null}
 
-      <Panel title="National regulation register" subtitle="Add a new regulation, modification or model change here — the entry is immediately REFLECTED TO ALL CITIES: every city console reads this same national register (visible in each city's Settings page).">
-        <RegulationManager regulations={data.regulations} onChanged={load} staffCode={officer.staffCode} />
-      </Panel>
+      {tab === "regulations" ? (
+        <Panel title="National regulation register" subtitle="Add a new regulation, modification or model change here — the entry is immediately REFLECTED TO ALL CITIES: every city console reads this same national register (visible in each city's Settings page).">
+          <RegulationManager regulations={data.regulations} onChanged={load} staffCode={officer.staffCode} />
+        </Panel>
+      ) : null}
 
-      <Panel title="Model contract propagation (fleet-wide)" subtitle={`Amend the federal model contract (${data.federalVersion ?? "n/a"}) into a new version and push it to EVERY active city in one action. Cities keep per-city version numbers (<CITY>-suffix); the parity duty above turns green when all match.`}>
-        <ContractPropagation sections={data.sections} onDone={(results) => { setPropResults(results); void load(); }} staffCode={officer.staffCode} />
-        {propResults ? (
-          <div className="mt-4">
-            <p className="mb-2 text-xs font-medium text-muted-foreground">Propagation result — {propResults.filter((r) => r.created).length} of {propResults.length} cities updated:</p>
-            <DataTable
-              headers={["City", "Outcome", "Version / detail"]}
-              empty="No result."
-              rows={propResults.map((r) => [
-                r.cityCode,
-                r.created ? <StatusBadge key={`${r.cityCode}-ok`} value="REGISTERED" /> : <StatusBadge key={`${r.cityCode}-ko`} value="REJECTED" />,
-                r.created ? (r.version ?? "") : (r.detail ?? ""),
-              ])}
-            />
-          </div>
-        ) : null}
-      </Panel>
+      {tab === "contracts" ? (
+        <Panel title="Model contract propagation (fleet-wide)" subtitle={`Amend the federal model contract (${data.federalVersion ?? "n/a"}) into a new version and push it to EVERY active city in one action. Cities keep per-city version numbers (<CITY>-suffix); the parity duty in Overview turns green when all match.`}>
+          <ContractPropagation sections={data.sections} onDone={(results) => { setPropResults(results); void load(); }} staffCode={officer.staffCode} />
+          {propResults ? (
+            <div className="mt-4">
+              <p className="mb-2 text-xs font-medium text-muted-foreground">Propagation result — {propResults.filter((r) => r.created).length} of {propResults.length} cities updated:</p>
+              <DataTable
+                headers={["City", "Outcome", "Version / detail"]}
+                empty="No result."
+                rows={propResults.map((r) => [
+                  r.cityCode,
+                  r.created ? <StatusBadge key={`${r.cityCode}-ok`} value="REGISTERED" /> : <StatusBadge key={`${r.cityCode}-ko`} value="REJECTED" />,
+                  r.created ? (r.version ?? "") : (r.detail ?? ""),
+                ])}
+              />
+            </div>
+          ) : null}
+        </Panel>
+      ) : null}
     </div>
   );
 }

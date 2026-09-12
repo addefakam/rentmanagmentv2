@@ -22,11 +22,11 @@ export function Panel({ title, subtitle, children, className }: { title: string;
     // min-w-0: lets the card shrink inside grid layouts; overflow-hidden:
     // guarantees wide table content never paints over neighbouring panels.
     <Card className={cn("min-w-0 overflow-hidden", className)}>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold">{title}</CardTitle>
-        {subtitle ? <CardDescription className="text-xs">{subtitle}</CardDescription> : null}
+      <CardHeader className="border-b border-border/60 pb-3">
+        <CardTitle className="font-display text-[15px] font-semibold tracking-tight">{title}</CardTitle>
+        {subtitle ? <CardDescription className="mt-1 text-xs leading-relaxed">{subtitle}</CardDescription> : null}
       </CardHeader>
-      <CardContent className="p-4 pt-0">{children}</CardContent>
+      <CardContent className="p-4">{children}</CardContent>
     </Card>
   );
 }
@@ -35,8 +35,8 @@ export function Stat({ label, value, hint }: { label: string; value: string | nu
   return (
     <Card className="min-w-0">
       <CardContent className="min-w-0 p-4">
-        <div className="text-xs break-words text-muted-foreground">{label}</div>
-        <div className="text-2xl font-bold break-words tabular-nums">{value}</div>
+        <div className="text-[11px] font-medium uppercase tracking-wider break-words text-muted-foreground">{label}</div>
+        <div className="mt-0.5 font-display text-[22px] font-bold tracking-tight break-words tabular-nums">{value}</div>
         {hint ? <div className="mt-1 text-[11px] break-words text-muted-foreground">{hint}</div> : null}
       </CardContent>
     </Card>
@@ -46,7 +46,7 @@ export function Stat({ label, value, hint }: { label: string; value: string | nu
 export function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-1 gap-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
+      <Label className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">{label}</Label>
       {children}
     </div>
   );
@@ -110,7 +110,7 @@ export function DataTable({ headers, rows, empty }: { headers: string[]; rows: R
     // neighbouring cards; tall tables scroll vertically past max-h-96.
     <div className="max-h-96 w-full min-w-0 overflow-auto">
       <Table>
-        <TableHeader><TableRow>{headers.map((h) => <TableHead key={h} className="text-xs whitespace-nowrap">{h}</TableHead>)}</TableRow></TableHeader>
+        <TableHeader><TableRow>{headers.map((h) => <TableHead key={h} className="text-[11px] font-semibold uppercase tracking-wider whitespace-nowrap text-muted-foreground">{h}</TableHead>)}</TableRow></TableHeader>
         <TableBody>
           {rows.map((r, i) => (
             <TableRow key={i}>{r.map((cell, j) => <TableCell key={j} className="text-xs">{cell}</TableCell>)}</TableRow>

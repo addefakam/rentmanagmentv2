@@ -1,10 +1,12 @@
 // ============================================================================
-// panels-dashboard.tsx — "/" landing page, ROLE-AWARE (owner directive:
-// "customize the dashboard, use it to present general information").
-//  · SYSTEM_ADMIN (the super user) gets a GENERAL INFORMATION hub: what the
-//    platform is, the fleet at a glance, the federal regulation register
-//    highlights, the management-duty snapshot and his working surfaces —
-//    none of the city-operational sprint links he no longer holds.
+// panels-dashboard.tsx — "/" landing page, ROLE-AWARE (owner directives:
+// "customize the dashboard, use it to present general information" +
+// "i prefer links instead of so many content on single page ... use the
+// space properly").
+//  · SYSTEM_ADMIN (the super user) gets a LINK-FIRST GENERAL INFORMATION
+//    page: a compact identity band, four numbers that decide the day, and
+//    the working surfaces as the primary content — deep data (fleet stats,
+//    register, duties) stays one click away in National Management.
 //  · Every other role keeps the city KPI cards + the seven sprint
 //    increments as deep links into their own routes, plus the project tools.
 // ============================================================================
@@ -13,8 +15,9 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Stat, Panel, StatusBadge, RuleNote } from "./kit";
+import { Stat, RuleNote } from "./kit";
 import { useBoot } from "./shell";
 import { call } from "./panels-s1";
 import { t } from "./i18n";
@@ -47,10 +50,11 @@ type NationalPayload = {
 };
 
 // ---------------------------------------------------------------------------
-// GENERAL INFORMATION hub — the super user's customized dashboard (owner
-// directive). Presents what the platform IS and how the fleet stands: the
-// national numbers, the federal register highlights and the live duty
-// statuses, with quick entry into each working surface.
+// GENERAL INFORMATION — the super user's customized dashboard (owner
+// directives). LINK-FIRST: the page launches the work instead of hosting it —
+// identity band, four essential numbers, the surfaces as large link cards,
+// and a one-line federal summary. The dense material (12 fleet stats, the
+// register, the duty statuses) lives in the National Management tabs.
 // ---------------------------------------------------------------------------
 function SuperUserGeneralInfo({ staffCode, fullName }: { staffCode: string; fullName: string }) {
   const [data, setData] = useState<NationalPayload | null>(null);
@@ -64,9 +68,6 @@ function SuperUserGeneralInfo({ staffCode, fullName }: { staffCode: string; full
     return () => { alive = false; };
   }, [staffCode]);
 
-  // Owner directive: City Settings and the Service Catalog are city-tier
-  // surfaces — removed from the super user's console along with registry,
-  // operations, project tools and Insights.
   const surfaces = [
     { href: "/platform/management", name: "National Management", desc: "Fleet statistics, management duties, the national regulation register and model-contract propagation." },
     { href: "/platform/audit", name: "Audit Trail", desc: "Fleet-wide, tamper-evident oversight of every state-changing action in every city." },
@@ -79,105 +80,53 @@ function SuperUserGeneralInfo({ staffCode, fullName }: { staffCode: string; full
   }
 
   const s = data.stats;
-  const money = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(s.payments.amount);
   const activeRegs = data.regulations.filter((r) => r.status === "ACTIVE");
   const attention = data.tasks.filter((x) => x.status !== "OK");
 
   return (
     <div className="grid grid-cols-1 gap-4">
-      <Panel
-        title="General information"
-        subtitle="What this platform is and where it stands — the national picture at sign-in."
-      >
-        <div className="grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Platform</p>
-            <p className="mt-1 font-semibold">Residential Rent Control &amp; Administration Platform</p>
-            <p className="mt-1 text-xs text-muted-foreground">Proclamation 1320/2016 · Directive 7/2016 · Model Agreement — a multi-tenant system in which each city administration runs its own registry, operations and public services.</p>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Your role</p>
-            <p className="mt-1 font-semibold">{fullName} — System Super User</p>
-            <p className="mt-1 text-xs text-muted-foreground">The one platform administrator: you run the fleet, issue federal regulations and model-contract changes to ALL cities, and hold the audit trail. Registry, operations and project tools belong to the city tiers.</p>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Tenant fleet</p>
-            <p className="mt-1 font-semibold">{s.cities.total} cities — {s.cities.active} active</p>
-            <p className="mt-1 text-xs text-muted-foreground">{s.cities.suspended} suspended · {s.cities.deactivated} deactivated. Onboarding, suspension and deactivation live in City Management.</p>
-          </div>
-          <div className="rounded-lg border bg-muted/30 p-3">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">Federal state</p>
-            <p className="mt-1 font-semibold">Model contract {data.federalVersion ?? "—"} in force</p>
-            <p className="mt-1 text-xs text-muted-foreground">{activeRegs.length} active national regulation{activeRegs.length === 1 ? "" : "s"} on the federal register, reflected in every city console. {attention.length === 0 ? "All management duties are healthy." : `${attention.length} management dut${attention.length === 1 ? "y needs" : "ies need"} attention — see the snapshot below.`}</p>
-          </div>
-        </div>
-      </Panel>
-
-      <Panel title="Platform at a glance" subtitle="The general numbers across the whole fleet — registry, operations, payments and oversight.">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-          <Stat label="Active cities" value={s.cities.active} hint={`of ${s.cities.total} onboarded`} />
-          <Stat label="Officers" value={s.officers} hint="active accounts, all cities" />
-          <Stat label="Parties" value={s.parties} hint="landlords · tenants · agents" />
-          <Stat label="Properties" value={s.properties} hint="registered dwellings" />
-          <Stat label="Registration files" value={s.files.total} hint={`${s.files.registered} registered`} />
-          <Stat label="Payments" value={`${money} ETB`} hint={`${s.payments.count} receipts`} />
-          <Stat label="Open complaints" value={s.complaints.open} hint={`${s.complaints.decided} decided of ${s.complaints.total}`} />
-          <Stat label="Rent adjustments" value={s.adjustments.published} hint={`${s.adjustments.draft} in draft`} />
-          <Stat label="Publications" value={s.publications} hint="public notices issued" />
-          <Stat label="Audit events (30d)" value={s.auditEvents30d} hint="tamper-evident chain" />
-          <Stat label="Deadline clocks" value={s.deadlines.open} hint={s.deadlines.overdue > 0 ? `${s.deadlines.overdue} OVERDUE` : "none overdue"} />
-          <Stat label="Federal contract" value={data.federalVersion ?? "—"} hint="version in force" />
-        </div>
-      </Panel>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Panel title="Federal regulation register — latest" subtitle="The most recent entries you added; every city console already shows them.">
-          {activeRegs.length === 0 ? (
-            <p className="py-2 text-sm text-muted-foreground">No active national regulations yet — add the first one in National Management.</p>
-          ) : (
-            <div className="grid gap-2">
-              {activeRegs.slice(0, 5).map((r) => (
-                <div key={r.id} className="flex items-start justify-between gap-2 rounded-lg border px-3 py-2">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium leading-tight"><span className="font-mono text-xs">{r.code}</span> — {r.titleEn}</p>
-                    <p className="text-xs text-muted-foreground">{r.type} · {r.year} · added {new Date(r.addedAt).toISOString().slice(0, 10)} by {r.addedBy}</p>
-                  </div>
-                  <StatusBadge value="ACTIVE" />
-                </div>
-              ))}
-              {activeRegs.length > 5 ? <p className="text-xs text-muted-foreground">+{activeRegs.length - 5} more — manage the register in National Management.</p> : null}
-            </div>
-          )}
-        </Panel>
-
-        <Panel title="Management duties snapshot" subtitle="Live platform health — what the super user keeps running.">
-          <div className="grid gap-2">
-            {data.tasks.map((x) => (
-              <div key={x.key} className="flex flex-col gap-1 rounded-lg border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium leading-tight">{x.label}</p>
-                  <p className="text-xs text-muted-foreground">{x.detail}</p>
-                </div>
-                <StatusBadge value={x.status === "OK" ? "REGISTERED" : "OVERDUE"} />
-              </div>
-            ))}
-          </div>
-        </Panel>
+      {/* Identity band — what this place is and who holds it. Nothing else. */}
+      <div className="rounded-xl border bg-white p-5">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">General information</p>
+        <h2 className="mt-1 font-display text-2xl font-bold tracking-tight">Welcome, {fullName}</h2>
+        <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+          You operate the platform itself — the federal register, the model contract every city signs under, and the audit trail of every city.
+          Registry and operations stay with the city tiers. Choose where to work below; the numbers follow when you need them.
+        </p>
       </div>
 
-      <Panel title="Your working surfaces" subtitle="Everything the System Super User operates — city settings, service catalogs, registry, operations and project tools stay with the city tiers by design.">
-        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+      {/* Four numbers that decide the day — everything else lives one link away. */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Stat label="Active cities" value={s.cities.active} hint={`of ${s.cities.total} onboarded`} />
+        <Stat label="Officers" value={s.officers} hint="active accounts, all cities" />
+        <Stat label="Registration files" value={s.files.total} hint={`${s.files.registered} registered`} />
+        <Stat label="Duties need attention" value={attention.length} hint={attention.length === 0 ? "all duties healthy" : "see National Management"} />
+      </div>
+
+      {/* Working surfaces — the primary content of this page. */}
+      <div>
+        <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Working surfaces — open on demand</p>
+        <div className="grid gap-3 md:grid-cols-3">
           {surfaces.map((surf) => (
-            <Link key={surf.href} href={surf.href} className="rounded-xl border bg-white p-4 transition-colors hover:border-[#D4875A]/50 hover:shadow-sm">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-semibold">{surf.name}</span>
-                <Badge variant="outline" className="font-mono text-[10px]">{surf.href}</Badge>
+            <Link key={surf.href} href={surf.href} className="group rounded-xl border bg-white p-5 transition-all hover:-translate-y-0.5 hover:border-[#D4875A]/60 hover:shadow-md">
+              <div className="flex items-start justify-between gap-2">
+                <span className="font-display text-base font-semibold tracking-tight">{surf.name}</span>
+                <ArrowRight className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1 group-hover:text-[#D4875A]" aria-hidden />
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">{surf.desc}</p>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{surf.desc}</p>
+              <Badge variant="outline" className="mt-3 font-mono text-[10px]">{surf.href}</Badge>
             </Link>
           ))}
         </div>
-      </Panel>
+      </div>
+
+      {/* One-line federal facts — deep data stays exactly one link away. */}
+      <p className="px-1 text-xs leading-relaxed text-muted-foreground">
+        Federal contract <span className="font-mono font-medium text-foreground">{data.federalVersion ?? "—"}</span> in force ·{" "}
+        {activeRegs.length} active national regulation{activeRegs.length === 1 ? "" : "s"} reflected in every city ·{" "}
+        {s.auditEvents30d} audit events in the last 30 days · full fleet statistics in{" "}
+        <Link href="/platform/management" className="font-medium text-foreground underline decoration-[#D4875A]/50 underline-offset-2 hover:text-[#D4875A]">National Management</Link>.
+      </p>
     </div>
   );
 }
@@ -214,7 +163,7 @@ export function DashboardPage() {
             className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold">{s.key} · {s.name}</span>
+              <span className="font-display text-sm font-semibold tracking-tight">{s.key} · {s.name}</span>
               <Badge variant="outline" className="font-mono text-[10px]">{s.modules}</Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">{s.highlight}</p>

@@ -165,7 +165,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
         if (items.length === 0) return null;
         return (
           <div key={g.key}>
-            <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-slate-500">{t(`nav.group.${g.key}`, lang)}</p>
+            <p className="mb-1 px-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">{t(`nav.group.${g.key}`, lang)}</p>
             <div className="grid gap-0.5">
               {items.map((n) => {
                 const Icon = GROUP_ICONS[n.href] ?? FolderGit2;
@@ -173,10 +173,11 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
                 return (
                   <Link
                     key={n.href} href={n.href} onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${active ? "font-semibold text-[var(--tenant-accent-bright, #E8A87E)]" : "text-slate-300 hover:bg-white/5 hover:text-white"}`}
+                    className={`relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-[13px] transition-colors ${active ? "font-semibold text-[var(--tenant-accent-bright, #E8A87E)]" : "font-medium text-slate-300 hover:bg-white/5 hover:text-white"}`}
                     style={active ? { backgroundColor: "var(--tenant-accent-soft, rgba(212,135,90,0.15))" } : undefined}
                     aria-current={active ? "page" : undefined}
                   >
+                    {active ? <span aria-hidden className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-[var(--tenant-accent-bright, #E8A87E)]" /> : null}
                     <Icon className="h-4 w-4 shrink-0" aria-hidden />
                     <span className="truncate">{t(n.labelKey, lang) === n.labelKey ? n.labelEn : t(n.labelKey, lang)}</span>
                   </Link>
@@ -188,7 +189,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
       })}
       <div className="mt-auto rounded-lg bg-white/5 p-3 text-[11px] leading-relaxed text-slate-400">
         <p className="font-semibold text-slate-200">{officer.fullName}</p>
-        <p>{officer.roleCode.replace(/_/g, " ")} · {officer.orgUnitCode}</p>
+        <p>{officer.roleCode.replace(/_/g, " ")} · <span className="font-mono">{officer.orgUnitCode}</span></p>
       </div>
     </nav>
   );
@@ -212,7 +213,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
             </Sheet>
 
             <div className="min-w-0 flex-1">
-              <h1 className="truncate text-sm font-bold sm:text-base">{t("app.title", lang)}</h1>
+              <h1 className="truncate font-display text-sm font-semibold tracking-tight sm:text-[15px]">{t("app.title", lang)}</h1>
               <p className="hidden truncate text-[11px] text-slate-400 sm:block">{t("app.subtitle", lang)}</p>
             </div>
 
@@ -345,9 +346,12 @@ export function ModuleFrame({ route, render }: {
 /** Page title block used at the top of every module page. */
 export function PageHead({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <div className="mb-4">
-      <h2 className="text-lg font-bold tracking-tight">{title}</h2>
-      {subtitle ? <p className="mt-0.5 text-xs text-muted-foreground">{subtitle}</p> : null}
+    <div className="mb-5 flex items-start gap-3">
+      <span aria-hidden className="mt-1.5 h-6 w-1 shrink-0 rounded-full" style={{ backgroundColor: "var(--tenant-accent, #D4875A)" }} />
+      <div className="min-w-0">
+        <h2 className="font-display text-xl font-bold tracking-tight">{title}</h2>
+        {subtitle ? <p className="mt-1 text-[13px] leading-relaxed text-muted-foreground">{subtitle}</p> : null}
+      </div>
     </div>
   );
 }

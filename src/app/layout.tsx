@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Sora, JetBrains_Mono, Noto_Sans_Ethiopic } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Owner-directed typography refresh (Task 37): Inter carries the UI body,
+// Sora gives headings a distinctive, professional voice, JetBrains Mono
+// serves the staff/contract codes, and Noto Sans Ethiopic renders the
+// Amharic surface properly (the previous latin-only Geist stack left
+// Ethiopic script to inconsistent system fallbacks).
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
+const sora = Sora({ subsets: ["latin"], variable: "--font-sora", display: "swap" });
+const jetbrains = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains", display: "swap" });
+const ethiopic = Noto_Sans_Ethiopic({ subsets: ["ethiopic"], variable: "--font-ethiopic", display: "swap" });
 
 export const metadata: Metadata = {
   title: "Rent Control and Administration System - Phase 4 Platform",
@@ -35,7 +35,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${inter.variable} ${sora.variable} ${jetbrains.variable} ${ethiopic.variable} antialiased bg-background text-foreground`}
       >
         {children}
         <Toaster />
