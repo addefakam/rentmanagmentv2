@@ -889,3 +889,26 @@ Stage Summary:
 - City tiers receive the typography uplift automatically through the shared kit/shell; their page structures are unchanged.
 - Reusable lessons recorded: kill dev servers by port-owning PID; body-level font stack is required for next/font + Tailwind v4 preflight.
 - SECURITY NOTE: the GitHub PAT remains exposed in chat history — owner should revoke/rotate it after this session.
+
+---
+Task ID: 37b
+Agent: Main agent (Super Z)
+Task: Owner directive — "dont restrict this change to main page make it effective to Intier system page": extend the Task 37 link-first information architecture from the super-user surfaces to EVERY page of the system.
+
+Work Log:
+- Housekeeping: the workspace had one accidental UUID-message commit again (8ccc79d, only Task 37 production screenshots) — dropped via git reset --mixed and recommitted as 9565397 under a proper message (same pattern as Task 31/35).
+- kit.tsx: new shared primitives TabRail + useHashTab. Every console page now organizes its zones behind a rail of REAL anchor links (e.g. /rent#payments, /complaints#deadlines) synced to the URL hash via hashchange — each zone is addressable/bookmarkable and renders ONLY when opened. Unknown hashes fall back to the default zone; optional per-tab count badges.
+- City tiers converted from stacked zones to link-first tab hubs: /parties (onboard | register), /properties (registry | contract studio), /registration (present | registrar), /rent (adjustment | payments), /complaints (intake & decisions | appeals | deadline engine), /enforcement (control & visits | penalty cases), /reports (replication & backups | analytics & publications; bureau stats band stays on top), /services (catalog | add), /settings (identity | federal register | staff (CITY_ADMIN/SYSTEM_ADMIN only) | penalty ladder | org), and /platform/cities (fleet | onboard a city — read-only ministry viewers keep the full fleet view without the rail).
+- Project tools converted: /project (G4 | promotion | open items), /project/testing (compliance | test plan & security | open items), /project/uat (battery | legal | defects | gate), /project/pilot (migration & training | pilot | awareness), /project/golive (readiness | waves | operations | closure & PIR). Summary Stat bands stay above the rail on evidence pages.
+- panels-national.tsx (Task 37 phase 1) refactored onto the shared TabRail (same four keys, i18n labels) — /platform/management tabs are now also deep-linkable (#overview/#cities/#regulations/#contracts).
+- LINT CATCH: useHashTab after early returns broke react-hooks/rules-of-hooks in p5-p8 — hooks moved above the returns; kit ref-during-render replaced with a memoized JSON key. Rejected a mid-edit approach that regressed the ministry analyst's read-only fleet view; final structure keeps canWrite-conditional rail only.
+- Lint clean (pre-existing login warning only); build PASS.
+- Local :3210: super-user-console 39/39 + portal 23/23 + adama 17/17 + single-admin 13/13 + tenant-isolation 41/41 = 133 assertions green; test tenant TSVG cleaned.
+- Agent Browser (local), 15-page matrix: every page exposes the expected TabRail (parties 2, properties 2, registration 2, rent 2, complaints 3, enforcement 2, reports 2, settings 4 for bureau head WITHOUT the staff tab, project 3, testing 3, uat 4, pilot 3, golive 4, platform/cities 2, platform/management 4) and every deep link activates its zone (aria-selected). /rent click-through updates the URL to #payments. Typography persists (body Inter, h2 Sora). STF-0001 correctly gets refusal cards (no tabs) on /reports and /project*. No page errors. 8 screenshots in download/ (ia-city-*.png, ia-project-*.png, ia-platform-*.png).
+- Commit 99725ce pushed (2ccacfb..99725ce) — DEPLOYMENT BLOCKED: the Vercel account hit "Deployment rate limited — retry in 24 hours" on ALL 6 projects (an empty retrigger commit 3f0bd1d was refused the same way). Production (rentmanagmentv2-ndhb) still runs the Task 37 phase-1 build and stays fully green: 28+23+17+13 = 81 assertions re-verified after the block.
+- NEXT SESSION: after the rate limit resets, push any commit (or re-run `git commit --allow-empty && git push`) to deploy 3f0bd1d/99725ce, then re-run the four remote suites + the browser tab census on production.
+
+Stage Summary:
+- The ENTIRE system now follows the owner's link-first IA: short pages, one zone per screen, every zone reachable by a plain link — super user console, city-tier operations, settings, services, and all five project-tool evidence pages. Typography (Inter/Sora/JetBrains Mono/Noto Sans Ethiopic) and all APIs/enforcement are untouched; suites re-verified 133 local / 81 production (pre-deploy build).
+- Reusable lessons: Vercel Hobby-plan rate limits are account-wide across all six projects and block for 24 h; agent-browser census of [role=tab] + aria-selected is the fastest regression for the tab IA; keep hooks above early returns.
+- SECURITY NOTE: the GitHub PAT remains exposed in chat history — owner should revoke/rotate it after this session.
