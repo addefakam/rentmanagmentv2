@@ -679,3 +679,25 @@ Stage Summary:
 - City-bound officers unchanged: bureau heads/city admins keep own-city settings + org/staff management via scope-walled capabilities.
 - Legacy URLs /cities and /platform redirect to /platform/cities (SYSTEM_ADMIN passes, others blocked at destination).
 - Reusable artifact: scripts/verify-single-admin.sh <base_url> — 13-assertion regression suite for the single-admin policy.
+
+---
+Task ID: 28
+Agent: Main agent (Super Z)
+Task: Owner directive — "give STF-0008 (System Admin) only for city administration Addis Ababa, remove from Adama": attach the supreme admin's sign-in to the Addis Ababa roster only.
+
+Work Log:
+- Inspected first: /api/auth/staff (roster appended ALL national officers to EVERY city with cityCode:"*"), /api/auth/login (POST took only staffCode), login-form.tsx (free-text code field, POST without city), /login wrapper (initialCity only from ?city= — a ?slug=adama portal defaulted the roster to the FIRST city), seed (STF-0007/STF-0008 both at FED-MINISTRY, outside city subtrees — append is their only roster entry, no duplication risk).
+- /api/auth/staff: national append is now city-aware — MINISTRY_ANALYST stays in every ACTIVE city roster; SYSTEM_ADMIN appended ONLY when requested city === PLATFORM_HOME_CITY ("AA", federal capital, matches existing ?? "AA" defaults). Defensive dedupe via Set.
+- /api/auth/login: contextual enforcement — SYSTEM_ADMIN + explicit city !== AA -> 403 "The System Admin signs in only from the Addis Ababa administration portal." Callers without city (scripts/legacy) unaffected.
+- login-form.tsx: POST now includes the selected city (the roster the officer used).
+- /login wrapper: ?slug=<tenant> resolves the tenant's city server-side (db.cityConfig.findUnique on slug, ACTIVE only) and defaults initialCity — branded portals now open with their own officer list.
+- Console city switcher untouched: STF-0008 still manages the whole fleet after signing in from AA (national power preserved).
+- Incident: first local verification run hit a STALE server — pkill -f "next start" missed the process because Next renames it to "next-server"; the new start failed EADDRINUSE (proof in /tmp/next-start2.log) and curls served the old build. Fixed by pkill -f next-server. Lesson: kill by the next-server process name, verify port is free before starting.
+- Wrote scripts/verify-admin-city.sh (12 assertions). Local: 12/12 + single-admin regression 13/13. Commit 9984b79 pushed (46b1fff..9984b79).
+- Production: polled /api/auth/staff?city=AD until STF-0008 disappeared (poll 4), then 12/12 PASS + single-admin regression 13/13 PASS (AA roster has STF-0008; AD roster excludes it, keeps STF-0007 + city officers; STF-0008 via ADAMA 403, via AA 200; analyst and registrar sign-ins unchanged; both branded portals render).
+
+Stage Summary:
+- Production policy NOW: the one supreme administrator (STF-0008) signs in exclusively from the Addis Ababa administration portal — its entry no longer appears in the Adama (or any other city's) roster, and a manual code entry from an Adama context is refused 403.
+- STF-0007 (ministry analyst) still visible in every city roster (fleet oversight sign-in) — unchanged by design.
+- Branded tenant portals (?slug=...) now default to their own city's officer list.
+- Reusable artifact: scripts/verify-admin-city.sh <base_url> — 12-assertion regression suite for the admin-city attachment rule.
