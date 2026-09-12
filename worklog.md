@@ -596,3 +596,17 @@ Work Log:
 Stage Summary:
 - All 10 phases implemented, tested locally end-to-end (production-equivalent build + 40/40 security battery).
 - Vercel deploy of 278f93b had NOT gone live ~36 min after push: public alias still serves the previous build (staff:200, old login HTML, new route 404). Old app remains healthy — production is NOT broken. Needs owner to check the Vercel deploy log for 278f93b (build may have failed/queued); if the log shows a [provision] or compile error, paste it in chat.
+
+---
+Task ID: 26-b
+Agent: main (Super Z)
+Task: Owner pasted a build log again — determine if it is new or stale; verify current production + deployment state.
+
+Work Log:
+- Pasted log identified as STALE (3rd time, same pre-fix build): fingerprints = duplicate "prisma" at package.json lines 70 AND 96 (current package.json has prisma only at line 70; line 96 is tailwindcss) and error text "--no-install prisma generate --output /vercel/path0/node_modules/.prisma-pg" (that npx-style invocation no longer exists anywhere in build.mjs / provision-neon.mjs after cda9b51).
+- Verified repo/deploy state at 13:12 UTC: local HEAD e191c87 == origin/main (ls-remote). Today's timeline: cda9b51 08:56 (build fix) -> 6a0a693 10:23 -> 278f93b 12:21 (full SaaS, all 10 phases) -> e191c87 12:52.
+- Live production probes: /login -> 200 (42ms); /api/auth/staff?cityCode=AA -> ok:true with cities AA+AD; /api/tenant/branding -> 404 (new SaaS route NOT present) => production still serves the PRE-SaaS build; production NOT broken.
+- Both Prisma schemas validate OK (postgres validated with dummy DATABASE_URL since local .env is SQLite) — schema syntax ruled out as a build blocker.
+
+Stage Summary:
+- Open item unchanged from Task 26: newest deployments (278f93b / e191c87) not live yet (~50 min for the first). Owner must read the LATEST deployment's build log (topmost entry in Vercel Deployments, commit e191c87/278f93b), not the old red ones. Everything verifiable from my side is healthy.
