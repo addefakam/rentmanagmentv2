@@ -558,3 +558,19 @@ Work Log:
 
 Stage Summary:
 - Pushed cda9b51 (bd9ef7d..cda9b51). Vercel rebuild will regenerate the pg client, auto-provision Neon (drop + push + 1193-row snapshot + verify), and build. If anything still fails, the log now shows prisma's own error directly above the [provision] ERROR line.
+
+---
+Task ID: 25-d
+Agent: main (Super Z)
+Task: Confirm the fix landed on production after owner pasted the (stale) build log again.
+
+Work Log:
+- Owner's pasted log matched the PREVIOUS build (timestamps 11:48, references the removed "--no-install prisma generate --output .prisma-pg" command) — cda9b51's build succeeded afterwards.
+- Live production verification against https://rentmanagmentv2-ndhb.vercel.app:
+  (1) /api/auth/staff -> ok:true, cities [AA, AD] (DR correctly hidden, deactivated);
+  (2) ?city=AA -> officers STF-0001 Alem Tadesse, STF-0002 Sara Bekele, STF-0003 Mulugeta Worku ...;
+  (3) ?city=AD -> officers STF-1001 Chaltu Bekele ...;
+  (4) POST /api/auth/login {staffCode:"STF-0008"} -> ok:true, System Admin (SYSTEM_ADMIN, national) + rc_officer cookie set. Sign-in works end to end.
+
+Stage Summary:
+- PRODUCTION FIXED: Vercel build auto-provisioned Neon (schema + 1193-row verified demo state) and deployed healthy code. Login page fully functional. Root causes were: (a) DATABASE_URL missing on the Vercel project (owner fixed via env var), (b) npx-based CLI invocation failing under bun-run build (fixed via direct node invocation, cda9b51).
