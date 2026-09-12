@@ -868,3 +868,24 @@ Stage Summary:
 - City tiers keep both surfaces untouched (bureau head verified 200 on production), and the pages' APIs stay tier-scoped as before — no capability changes were made, only console scope.
 - Reusable artifact: scripts/verify-super-user-console.sh section C3 guards the removal in local and remote modes.
 - SECURITY NOTE: the GitHub PAT remains exposed in chat history — owner should revoke/rotate it after this session.
+
+---
+Task ID: 37
+Agent: Main agent (Super Z)
+Task: Owner directive — "the font style for entire system is not attractive, format it accordingly and make it attractive; i prefer links instead of so many content on single page, i need to access based on the need; customize it, use the space properly."
+
+Work Log:
+- Typography (whole system): root layout switched from latin-only Geist to Inter (body) + Sora (display headings) + JetBrains Mono (codes) + Noto Sans Ethiopic (Amharic), wired through @theme inline (--font-sans/--font-display/--font-mono); globals.css gained an explicit BODY-level font stack (root cause of the old "unattractive" text: Tailwind v4 preflight sets the font on <html>, ABOVE the element carrying the next/font variables, so the base font silently fell back to system-ui/Times — true in the old build too), heading base rule (Sora, -0.015em tracking, balance) and accent ::selection.
+- Kit restyle (reaches every role): Panel titles in display font with divider header, Stat values in display font with uppercase micro-labels, Field labels and DataTable headers as uppercase micro-labels. Shell restyle: PageHead with tenant-accent bar, sidebar active indicator bar, display-font topbar title, mono org-unit code.
+- Link-first IA (super user): dashboard "/" is now a launching pad — identity band + four essential numbers + working surfaces as large link cards (ArrowRight affordance) + one-line federal facts; the 12-stat grid, register list and duties list moved out of the page. National Management is now a four-tab hub (Overview / Cities / Regulations / Model contracts; trilingual i18n keys nat.tab.*) — each zone renders on demand, URL unchanged (suite-safe). City-tier dashboards keep their structure with the new typography.
+- BUILD TRAP FOUND AND FIXED: a zombie next-server (process name "next-server (v16.1.3)", invisible to pkill -f "next start") kept holding :3210 and served the PRE-build HTML — first suite run and first font check ran against stale markup. Servers are now killed by the port-owning PID; battery re-run honestly against the real build.
+- Lint clean; build PASS. Local :3210: super-user-console 39/39 + portal 23/23 + adama-removed 17/17 + single-admin 13/13 + tenant-isolation 41/41 = 133 assertions green; test tenant cleaned.
+- Agent Browser (local): computed body = Inter stack, h2 = Sora stack, Noto Sans Ethiopic font face "loaded" after switching to Amharic (crisp rendering); all four tabs click through to their zones (Cities table, Regulations manager, Contracts propagation verified); dashboard census: /platform/management 3 links, audit/cities 2 each, /settings + /services 0. Screenshots in download/ (typography-national-overview/-regulations/-dashboard-linkfirst/-amharic.png).
+- Commit f330636 pushed; all 6 Vercel projects deployed (statuses polled to success).
+- Production: console suite 28/28 + portal 23/23 + adama-removed 17/17 + single-admin 13/13 = 81 assertions green; browser live checks: body Inter, h2 Sora, 4 tabs (download/typography-production.png, typography-dashboard-production.png).
+
+Stage Summary:
+- The whole system now speaks one typographic voice — Inter body, Sora headings, JetBrains Mono codes, Noto Sans Ethiopic for Amharic — and the super user's pages follow the link-first pattern: short pages, on-demand access, space used properly.
+- City tiers receive the typography uplift automatically through the shared kit/shell; their page structures are unchanged.
+- Reusable lessons recorded: kill dev servers by port-owning PID; body-level font stack is required for next/font + Tailwind v4 preflight.
+- SECURITY NOTE: the GitHub PAT remains exposed in chat history — owner should revoke/rotate it after this session.
