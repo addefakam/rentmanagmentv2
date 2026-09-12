@@ -40,25 +40,25 @@ export async function GET(req: Request) {
         staffCode: s.staffCode, fullName: s.fullName, roleCode: s.roleCode,
         roleName: s.role.nameEn, orgUnitCode: s.orgUnit.code, cityCode,
       }));
-      // National officers: the ministry analyst keeps fleet-wide oversight
-      // sign-in from every city view. Owner directive (single-admin policy):
-      // the ONE System Admin is attached to the FEDERAL CAPITAL only — its
-      // account appears exclusively in the Addis Ababa (AA) roster and in NO
-      // other city's sign-in directory.
+      // Owner directive (single-admin policy, extended): NATIONAL officers —
+      // the ministry analyst AND the system admin — sign in ONLY from the
+      // federal capital's portal. Their accounts appear exclusively in the
+      // Addis Ababa (AA) roster; every other city's sign-in directory lists
+      // that city's own officers only. Post-sign-in, national officers still
+      // view the whole fleet through the console city switcher.
       const PLATFORM_HOME_CITY = "AA"; // federal capital — matches the login default (cityCode ?? "AA")
-      const nationalRoles = cityCode === PLATFORM_HOME_CITY
-        ? ["MINISTRY_ANALYST", "SYSTEM_ADMIN"]
-        : ["MINISTRY_ANALYST"];
-      const national = await db.systemUser.findMany({
-        where: { isActive: true, roleCode: { in: nationalRoles } },
-        include: { role: true, orgUnit: true },
-        orderBy: { staffCode: "asc" },
-      });
-      const seen = new Set(staff.map((s) => s.staffCode)); // defensive dedupe
-      staff.push(...national.filter((s) => !seen.has(s.staffCode)).map((s) => ({
-        staffCode: s.staffCode, fullName: s.fullName, roleCode: s.roleCode,
-        roleName: s.role.nameEn, orgUnitCode: s.orgUnit.code, cityCode: "*",
-      })));
+      if (cityCode === PLATFORM_HOME_CITY) {
+        const national = await db.systemUser.findMany({
+          where: { isActive: true, roleCode: { in: ["MINISTRY_ANALYST", "SYSTEM_ADMIN"] } },
+          include: { role: true, orgUnit: true },
+          orderBy: { staffCode: "asc" },
+        });
+        const seen = new Set(staff.map((s) => s.staffCode)); // defensive dedupe
+        staff.push(...national.filter((s) => !seen.has(s.staffCode)).map((s) => ({
+          staffCode: s.staffCode, fullName: s.fullName, roleCode: s.roleCode,
+          roleName: s.role.nameEn, orgUnitCode: s.orgUnit.code, cityCode: "*",
+        })));
+      }
     }
     return ok({ cities, staff });
   } catch (err) {

@@ -21,14 +21,15 @@ export async function POST(req: Request) {
     if (!user || !user.isActive) {
       return Response.json({ ok: false, error: "Unknown or inactive staff code." }, { status: 401 });
     }
-    // Owner directive (single-admin policy): the System Admin signs in ONLY
-    // from the federal capital's portal — Addis Ababa (AA). The login page
-    // passes the city whose roster the officer used; any other city context
-    // is refused. Contextual only: API callers that omit `city` are untouched.
+    // Owner directive (single-admin policy, extended): NATIONAL officers —
+    // System Admin AND ministry analyst — sign in ONLY from the federal
+    // capital's portal, Addis Ababa (AA). The login page passes the city
+    // whose roster the officer used; any other city context is refused.
+    // Contextual only: API callers that omit `city` are untouched.
     const requestedCity = String(input.city ?? "").trim().toUpperCase();
-    if (user.roleCode === "SYSTEM_ADMIN" && requestedCity && requestedCity !== "AA") {
+    if (isNationalRole(user.roleCode) && requestedCity && requestedCity !== "AA") {
       return Response.json(
-        { ok: false, error: "The System Admin signs in only from the Addis Ababa administration portal." },
+        { ok: false, error: "National officers (System Admin / Ministry) sign in only from the Addis Ababa administration portal." },
         { status: 403 },
       );
     }
