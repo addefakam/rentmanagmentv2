@@ -993,3 +993,24 @@ Stage Summary:
 - The city-level Rent Control Bureau head now runs the FULL staffing chain of his city from Settings: create sub-cities (org editor), then create the rent-control officers of every level — city bureau, sub-city, woreda — each with the role that fits the desk (registrar / stamper / monitor / analyst / committee / bureau head / city admin), and hand out their auto-issued sign-in codes. Everything scope-walled to his own city.
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint (file NEK-CENTRAL-W01/2026/0001 opened; lifecycle actions pending; v4 hybrid-auth script rewrite still pending).
 - SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
+
+---
+Task ID: 43
+Agent: Main agent (Super Z)
+Task: Owner directive — SUB-CITY DELEGATION. "City-level Rent Control Bureau head: enable ONLY creating sub-cities, each with ONE user responsible for staff and woredas management in his area; when this user logs in, allow him to access ONLY his sub-city; revoke the bureau head's right to create woredas and staff — that is now the sub-city level rent control bureau's responsibility."
+
+Work Log:
+- authz.ts: staff:manage = CITY_ADMIN + SUBCITY_MONITOR + SYSTEM_ADMIN (BUREAU_HEAD revoked); org:manage += SUBCITY_MONITOR; cityContext() now confines a SUBCITY_MONITOR attached to a SUB_CITY unit to HIS sub-city subtree (subtreeRootForRole in city.ts; bureau-attached roles keep the full city).
+- /api/org-units POST: role/tier rules (BUREAU_HEAD -> SUB_CITY only; SUBCITY_MONITOR -> WOREDA only; admins both); SUB_CITY creation REQUIRES managerFullName and auto-issues the responsible officer (SUBCITY_MONITOR user + STF sign-in code) atomically with the unit; response carries manager{staffCode}.
+- /api/staff: SUBCITY_MONITOR restricted to woreda-desk roles (WOREDA_REGISTRAR / WOREDA_STAMPER / COMMITTEE_MEMBER) on POST and PATCH; uniqueness guard — ONE active SUBCITY_MONITOR per sub-city (POST + role/move PATCH); scope wall narrows his ctx to his subtree (cross-subcity refs -> 403 "outside your sub-city").
+- /api/platform boot: officer subtreeRootForRole narrowing — orgUnits/staff/parties/properties/files/complaints/counts all confined to the officer's sub-city subtree.
+- rbac-pages /settings += SUBCITY_MONITOR; ClientOfficer/layout now carry orgUnitId.
+- panels-settings.tsx: role-aware tabs (officer sees ONLY org+staff; city-level tabs for BUREAU_HEAD/CITY_ADMIN/SYSTEM_ADMIN); OrgEditor: bureau head gets "Found a new sub-city (with its responsible officer)" form (level fixed Sub-city + officer name/language fields), officer gets "Register a woreda of your sub-city", admins keep both tiers; officer's table lists his own sub-city row + his woredas. StaffRegister: officer's role list = 3 desk roles, office options = his area.
+- Local verify (12 API checks + 2 browser views): ALL as designed — A1 BH woreda deny, A2 BH staff 403, A3 sub-city w/o officer error, A4 founded AA-T42 + officer STF-2003 issued, B1 officer boot = ['AA-T42'] only, B2/B3 officer created woreda + appointed registrar, B4 monitor-role deny, B5/B6 cross-subcity 403, C1 2nd-monitor uniqueness deny, C2 admin officer-required, C3 admin still creates staff. Screenshots task43-*.png.
+- Committed a2cdfb4, pushed 7a6c344..a2cdfb4, Vercel live.
+- PRODUCTION verify (read-only + deny probes): AA BH STF-0005 tabs without Staff register + founding form live; officer STF-0003 (AA-BOLE) boot = 15 units ALL AA-BOLE* + staff only @AA-BOLE/W01, tabs [org, staff]; deny probes live (BH woreda/staff, officer cross-subcity); NEK CITY_ADMIN regression clean (whole-city scope: NEK-BUREAU + NEK-CENTRAL + W01). Screenshots prod-task43-*.png.
+
+Stage Summary:
+- Delegation model in force: city bureau head only FOUNDSub-cities with their one responsible officer; that officer — scoped strictly to his sub-city — runs the woredas and the staffing of his area. City/system admins keep the city-wide desk. Existing sub-cities WITHOUT an officer still need one appointed by the CITY_ADMIN (staff register).
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
