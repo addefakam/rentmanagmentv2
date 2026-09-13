@@ -7,12 +7,13 @@
 
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { t } from "./i18n";
 import type { BootPayload, Lang } from "./types";
 import { Panel, Field, TextField, SelectField, BoolField, ActionButton, DataTable, StatusBadge, RuleBadge, Stat, TabRail, useHashTab } from "./kit";
 import { call } from "./panels-s1";
+import { useBoot } from "./shell";
 
 type PanelProps = { boot: BootPayload; lang: Lang; refresh: () => Promise<void> };
 const fmtDate = (v?: string | null) => (v ? new Date(v).toISOString().slice(0, 10) : "—");
@@ -156,7 +157,175 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// OWNER DIRECTIVE (Task 44) — Bureau reports: the city Rent Control Bureau
+// head "generates different types of report at city level up to woreda
+// level". One fetch of GET /api/reports/bureau (capability reports:bureau)
+// returns the whole management suite of his city — every figure aggregates
+// the FULL city and breaks down per sub-city and per woreda. The report of
+// the moment renders below a city totals band; Download CSV hands the same
+// table to stakeholders and the Ministry feed.
+// ---------------------------------------------------------------------------
+type BureauReport = {
+  cityCode: string;
+  generatedAt: string;
+  generatedBy: { staffCode: string; fullName: string; roleCode: string };
+  fileStatuses: string[];
+  totals: Record<string, number>;
+  staffing: Array<{
+    subCityCode: string; subCityName: string;
+    officer: { staffCode: string; fullName: string } | null;
+    woredaCount: number; deskCount: number; registrars: number; stampers: number; committee: number;
+  }>;
+  woredaRows: Array<{
+    subCityCode: string; subCityName: string; woredaCode: string; woredaName: string;
+    properties: number;
+    files: { total: number } & Record<string, number>;
+    payments: { receipts: number; totalEtb: number; cashFlags: number };
+    penalties: { cases: number; imposedEtb: number; capped: number; open: number };
+  }>;
+  complaintRows: Array<{
+    unitCode: string; unitName: string; tier: string;
+    received: number; open: number; decided: number; appeals: number; appealsOpen: number;
+  }>;
+};
+
+const REPORT_TYPES = [
+  { key: "staffing", label: "Sub-city staffing & structure" },
+  { key: "registration", label: "Registration pipeline by woreda" },
+  { key: "properties", label: "Property registry by woreda" },
+  { key: "payments", label: "Payment ledger by woreda" },
+  { key: "complaints", label: "Complaints & appeals" },
+  { key: "penalties", label: "Penalty cases by woreda" },
+] as const;
+
+function BureauReports() {
+  const { officer } = useBoot();
+  const [rep, setRep] = useState<BureauReport | null>(null);
+  const [kind, setKind] = useState<(typeof REPORT_TYPES)[number]["key"]>("staffing");
+
+  useEffect(() => {
+    let alive = true;
+    call("/api/reports/bureau", "GET", null, officer.staffCode).then((d) => {
+      if (alive && d) setRep(d as BureauReport);
+    });
+    return () => { alive = false; };
+  }, [officer.staffCode]);
+
+  const statusLabel = (s: string) => s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, " ");
+
+  const table = useMemo(() => {
+    if (!rep) return null;
+    switch (kind) {
+      case "staffing":
+        return {
+          headers: ["Sub-city", "Name", "Responsible officer", "Woredas", "Active desks", "Registrars", "Stampers", "Committee"],
+          rows: rep.staffing.map((s) => [
+            s.subCityCode, s.subCityName,
+            s.officer ? `${s.officer.fullName} (${s.officer.staffCode})` : "NO RESPONSIBLE OFFICER",
+            s.woredaCount, s.deskCount, s.registrars, s.stampers, s.committee,
+          ]),
+        };
+      case "registration":
+        return {
+          headers: ["Sub-city", "Woreda", "Total files", ...rep.fileStatuses.map(statusLabel)],
+          rows: rep.woredaRows.map((w) => [
+            w.subCityCode, `${w.woredaCode} — ${w.woredaName}`, w.files.total,
+            ...rep.fileStatuses.map((s) => w.files[s] ?? 0),
+          ]),
+        };
+      case "properties":
+        return {
+          headers: ["Sub-city", "Woreda", "Properties"],
+          rows: rep.woredaRows.map((w) => [w.subCityCode, `${w.woredaCode} — ${w.woredaName}`, w.properties]),
+        };
+      case "payments":
+        return {
+          headers: ["Sub-city", "Woreda", "Receipts", "Total (ETB)", "Cash flags (Proc. Art. 13)"],
+          rows: rep.woredaRows.map((w) => [w.subCityCode, `${w.woredaCode} — ${w.woredaName}`, w.payments.receipts, w.payments.totalEtb, w.payments.cashFlags]),
+        };
+      case "complaints":
+        return {
+          headers: ["Unit", "Name", "Tier", "Received", "Open", "Decided", "Appeals", "Open appeals"],
+          rows: rep.complaintRows.map((c) => [c.unitCode, c.unitName, statusLabel(c.tier), c.received, c.open, c.decided, c.appeals, c.appealsOpen]),
+        };
+      case "penalties":
+        return {
+          headers: ["Sub-city", "Woreda", "Cases", "Imposed (ETB)", "Cap applied", "Open"],
+          rows: rep.woredaRows.map((w) => [w.subCityCode, `${w.woredaCode} — ${w.woredaName}`, w.penalties.cases, w.penalties.imposedEtb, w.penalties.capped, w.penalties.open]),
+        };
+    }
+  }, [rep, kind]);
+
+  const exportCsv = () => {
+    if (!table || !rep) return;
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const csv = [table.headers.map(esc).join(","), ...table.rows.map((r) => r.map(esc).join(","))].join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = `${rep.cityCode}-bureau-report-${kind}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+
+  const tot = rep?.totals ?? {};
+  return (
+    <div className="grid gap-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+        <Stat label="Sub-cities" value={tot.subCities ?? 0} />
+        <Stat label="Woredas" value={tot.woredas ?? 0} />
+        <Stat label="Sub-cities without officer" value={tot.subCitiesWithoutOfficer ?? 0} />
+        <Stat label="Properties registered" value={tot.properties ?? 0} />
+        <Stat label="Files fully registered" value={tot.registeredFiles ?? 0} />
+        <Stat label="Payments (ETB)" value={(tot.paymentsEtb ?? 0).toLocaleString()} />
+        <Stat label="Open complaints" value={tot.openComplaints ?? 0} />
+        <Stat label="Penalty cases" value={tot.penaltyCases ?? 0} />
+        <Stat label="Fines imposed (ETB)" value={(tot.penaltiesEtb ?? 0).toLocaleString()} />
+      </div>
+
+      <Panel
+        title="City bureau reports — city level down to every woreda"
+        subtitle={rep
+          ? `${rep.cityCode} · generated ${new Date(rep.generatedAt).toISOString().replace("T", " ").slice(0, 16)} by ${rep.generatedBy.fullName} (${rep.generatedBy.staffCode}). Every figure aggregates ALL sub-cities and their woredas; city-bureau modifications are reflected in these numbers the moment they happen.`
+          : "Loading the report suite…"}
+      >
+        <div className="grid gap-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="min-w-[280px]">
+              <Field label="Report type">
+                <SelectField value={kind} onChange={(v) => setKind(v as typeof kind)}
+                  options={REPORT_TYPES.map((r) => ({ value: r.key, label: r.label }))} />
+              </Field>
+            </div>
+            <ActionButton variant="outline" onClick={exportCsv} disabled={!table}>Download CSV</ActionButton>
+          </div>
+          {table ? (
+            <DataTable
+              headers={table.headers}
+              rows={table.rows.map((r, i) =>
+                r.map((cell, j) => (
+                  <span key={`${i}-${j}`} className={j === 0 ? "font-mono text-[10px]" : "text-[11px]"}>
+                    {String(cell)}
+                  </span>
+                )),
+              )}
+              empty="No data for this report type yet."
+            />
+          ) : (
+            <p className="py-2 text-sm text-muted-foreground">Preparing the city report suite…</p>
+          )}
+        </div>
+      </Panel>
+    </div>
+  );
+}
+
 export function DataPanel({ boot, lang, refresh }: PanelProps) {
+  // OWNER DIRECTIVE (Task 44): the bureau reports tab belongs to the city
+  // bureau head (and the city super-admin); other desks keep the two
+  // data-management zones.
+  const { officer } = useBoot();
+  const canBureauReports = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN";
   const orgs = useMemo(() => boot.orgUnits.filter((o) => ["WOREDA", "SUB_CITY", "BUREAU", "MINISTRY"].includes(o.tier)), [boot.orgUnits]);
   const [rep, setRep] = useState({ fromOrgUnitId: "", recordType: "REGISTRY_ENTRY", recordRef: "" });
   const [snap, setSnap] = useState({ orgUnitId: "", period: new Date().toISOString().slice(0, 7) });
@@ -181,7 +350,7 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
 
   const bureauTotal = boot.snapshots.find((s) => s.sourceTier === "BUREAU" || s.sourceTier === "MINISTRY");
 
-  const [tab] = useHashTab(["replication", "analytics"], "replication");
+  const [tab] = useHashTab(canBureauReports ? ["replication", "analytics", "bureau"] : ["replication", "analytics"], "replication");
 
   return (
     <div className="grid gap-4">
@@ -201,8 +370,11 @@ export function DataPanel({ boot, lang, refresh }: PanelProps) {
         tabs={[
           { key: "replication", label: "Replication & backups", count: boot.replications.length, hint: "M10 — upward change propagation (Dir. Art. 13)" },
           { key: "analytics", label: "Analytics & publications", count: boot.publications.length, hint: "M11 — aggregation snapshots and the public feed (Proc. Art. 18)" },
+          ...(canBureauReports ? [{ key: "bureau", label: "Bureau reports", hint: "City-level management reports, every sub-city down to woreda level (city bureau head)" }] : []),
         ]}
       />
+
+      {tab === "bureau" && canBureauReports ? <BureauReports /> : null}
 
       {tab === "replication" ? (
       <div className="grid gap-4 lg:grid-cols-2">

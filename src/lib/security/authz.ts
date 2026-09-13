@@ -92,6 +92,11 @@ export const CAPABILITIES: Record<string, string[]> = {
   // responsible officer); the sub-city officer registers the WOREDAS of his
   // area; the route enforces the role/tier split.
   "org:manage": ["BUREAU_HEAD", "SUBCITY_MONITOR", "SYSTEM_ADMIN"], // sub-city / woreda register
+  // OWNER DIRECTIVE (Task 44) — city bureau management reports: the city
+  // bureau head generates the management report suite of HIS city, with
+  // figures aggregating every sub-city down to woreda level. The city
+  // super-admin and the system admin keep the same city-wide view.
+  "reports:bureau": ["BUREAU_HEAD", "CITY_ADMIN", "SYSTEM_ADMIN"],
   // Read capabilities enforced when auth_mode = production (DEF-06-01)
   "read:parties": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
   "read:registration": ["WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"],

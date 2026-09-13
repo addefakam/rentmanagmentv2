@@ -178,6 +178,35 @@ function OrgEditor() {
   const defaultTier = isBureauHead ? "SUB_CITY" : "WOREDA";
   const [unit, setUnit] = useState({ tier: defaultTier, code: "", nameEn: "", nameAm: "", nameOm: "" });
   const [manager, setManager] = useState({ fullName: "", language: "en" });
+  // OWNER DIRECTIVE (Task 44) — manage sub-cities: the bureau head sees WHO
+  // runs each sub-city and (re)appoints its ONE responsible officer; every
+  // sub-city console and bureau report reflects the change immediately.
+  const officerByUnit = useMemo(() => {
+    const m = new Map<string, { staffCode: string; fullName: string }>();
+    for (const s of boot?.staff ?? []) {
+      if (s.roleCode === "SUBCITY_MONITOR" && s.isActive) {
+        m.set(s.orgUnitId, { staffCode: s.staffCode, fullName: s.fullName });
+      }
+    }
+    return m;
+  }, [boot?.staff]);
+  const [appoint, setAppoint] = useState<{ unit: OrgUnit; sitting: { staffCode: string; fullName: string } | null; fullName: string; language: string } | null>(null);
+  const [appointBusy, setAppointBusy] = useState(false);
+  const openAppoint = (u: OrgUnit) => {
+    setAppoint({ unit: u, sitting: officerByUnit.get(u.id) ?? null, fullName: "", language: "en" });
+  };
+  const saveAppoint = async () => {
+    if (!appoint || !appoint.fullName.trim()) return;
+    setAppointBusy(true);
+    const out = await call("/api/org-units/manager", "POST", {
+      orgUnitId: appoint.unit.id,
+      fullName: appoint.fullName,
+      language: appoint.language,
+      replaceStaffCode: appoint.sitting?.staffCode ?? "",
+    }, officer.staffCode) as { staffCode: string; message: string } | null;
+    setAppointBusy(false);
+    if (out) { toast.success(out.message); setAppoint(null); await refresh(); }
+  };
   const create = async () => {
     const parentId = unit.tier === "SUB_CITY" ? effectiveBureau : (isSubCityOfficer ? officer.orgUnitId : effectiveSc);
     const payload = unit.tier === "SUB_CITY"
@@ -223,22 +252,39 @@ function OrgEditor() {
       ) : null}
 
       <DataTable
-        headers={["Code", "Tier", "Under", "Names (EN · AM · OM)", "Status", "Actions"]}
-        rows={[...(mySubCity ? [mySubCity] : []), ...subCities, ...allWoredas].map((u) => [
-          <span key={u.id} className="font-mono text-[10px]">{u.code}</span>,
-          <span key={`t-${u.id}`} className="text-[10px]">{u.tier.replace("_", " ")}</span>,
-          <span key={`p-${u.id}`} className="font-mono text-[10px] text-muted-foreground">
-            {u.tier === "SUB_CITY" ? "city bureau" : unitById.get(u.parentId ?? "")?.code ?? "—"}
-          </span>,
-          <span key={`n-${u.id}`} className="block max-w-[260px]">
-            <span className="block text-[11px] font-semibold">{u.nameEn}</span>
-            <span className="block text-[10px] text-muted-foreground">{u.nameAm} · {u.nameOm}</span>
-          </span>,
-          <span key={`c-${u.id}`} className="text-[10px] text-muted-foreground">
-            {u.tier === "SUB_CITY" ? `${units.filter((w) => w.parentId === u.id).length} woredas` : u.confirmationStatus === "CONFIRMED" ? "confirmed" : "pending O-7"}
-          </span>,
-          <ActionButton key={`a-${u.id}`} variant="outline" onClick={() => openEdit(u)}>Edit</ActionButton>,
-        ])}
+        headers={["Code", "Tier", "Under", "Names (EN · AM · OM)", "Responsible officer", "Status", "Actions"]}
+        rows={[...(mySubCity ? [mySubCity] : []), ...subCities, ...allWoredas].map((u) => {
+          const sitting = u.tier === "SUB_CITY" ? officerByUnit.get(u.id) ?? null : null;
+          return [
+            <span key={u.id} className="font-mono text-[10px]">{u.code}</span>,
+            <span key={`t-${u.id}`} className="text-[10px]">{u.tier.replace("_", " ")}</span>,
+            <span key={`p-${u.id}`} className="font-mono text-[10px] text-muted-foreground">
+              {u.tier === "SUB_CITY" ? "city bureau" : unitById.get(u.parentId ?? "")?.code ?? "—"}
+            </span>,
+            <span key={`n-${u.id}`} className="block max-w-[260px]">
+              <span className="block text-[11px] font-semibold">{u.nameEn}</span>
+              <span className="block text-[10px] text-muted-foreground">{u.nameAm} · {u.nameOm}</span>
+            </span>,
+            <span key={`o-${u.id}`} className="text-[10px]">
+              {u.tier === "SUB_CITY" ? (
+                sitting ? (
+                  <span className="font-semibold">{sitting.fullName} <span className="font-mono text-[9px] text-muted-foreground">{sitting.staffCode}</span></span>
+                ) : (
+                  <span className="font-semibold text-amber-600">No responsible officer</span>
+                )
+              ) : "—"}
+            </span>,
+            <span key={`c-${u.id}`} className="text-[10px] text-muted-foreground">
+              {u.tier === "SUB_CITY" ? `${units.filter((w) => w.parentId === u.id).length} woredas` : u.confirmationStatus === "CONFIRMED" ? "confirmed" : "pending O-7"}
+            </span>,
+            <span key={`a-${u.id}`} className="flex flex-wrap gap-1">
+              <ActionButton variant="outline" onClick={() => openEdit(u)}>Edit</ActionButton>
+              {!isSubCityOfficer && u.tier === "SUB_CITY" ? (
+                <ActionButton variant="ghost" onClick={() => openAppoint(u)}>{sitting ? "Replace officer" : "Appoint officer"}</ActionButton>
+              ) : null}
+            </span>,
+          ];
+        })}
         empty="No units registered yet."
       />
 
@@ -267,12 +313,45 @@ function OrgEditor() {
         </DialogContent>
       </Dialog>
 
+      {/* Appoint dialog — the ONE responsible officer of a sub-city ------
+         OWNER DIRECTIVE (Task 44): the bureau head manages his sub-cities —
+          a vacant sub-city gets its officer; a departing officer is replaced
+          (incumbent deactivated, successor's sign-in code auto-issued). The
+          change is reflected immediately in every sub-city console. */}
+      <Dialog open={!!appoint} onOpenChange={(o) => { if (!o) setAppoint(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>
+              {appoint?.sitting ? "Replace the responsible officer of " : "Appoint the responsible officer of "}{appoint?.unit.code}
+            </DialogTitle>
+            <DialogDescription>
+              Each sub-city has exactly ONE responsible officer — he manages its woredas and its staff. {appoint?.sitting ? `${appoint.sitting.fullName} (${appoint.sitting.staffCode}) will be deactivated and the successor receives a new sign-in code.` : "The officer's sign-in code is issued automatically."} The change is reflected immediately in every sub-city console of {boot?.cityConfig?.nameEn ?? "the city"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Field label="Officer full name">
+              <TextField value={appoint?.fullName ?? ""} onChange={(e) => setAppoint((a) => (a ? { ...a, fullName: e.target.value } : a))} placeholder="e.g. Kebebe Tsegaye" />
+            </Field>
+            <Field label="Officer language">
+              <SelectField value={appoint?.language ?? "en"} onChange={(v) => setAppoint((a) => (a ? { ...a, language: v } : a))}
+                options={[{ value: "am", label: "አማርኛ" }, { value: "en", label: "English" }, { value: "om", label: "Afaan Oromoo" }]} />
+            </Field>
+          </div>
+          <DialogFooter>
+            <ActionButton variant="ghost" onClick={() => setAppoint(null)}>Cancel</ActionButton>
+            <ActionButton onClick={saveAppoint} disabled={appointBusy || !appoint?.fullName.trim()}>
+              {appointBusy ? "Appointing…" : appoint?.sitting ? "Replace officer" : "Appoint officer"}
+            </ActionButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="rounded-lg border bg-muted/20 p-3">
         {isBureauHead ? (
           <>
             <p className="mb-1 text-xs font-semibold">Found a new sub-city (with its responsible officer)</p>
             <p className="mb-2 text-[11px] text-muted-foreground">
-              One officer is issued with the sub-city — from then on HE manages its woredas and its staff. Woreda and staff registration are not city-bureau duties anymore.
+              One officer is issued with the sub-city — from then on HE manages its woredas and its staff. Woreda and staff registration are not city-bureau duties anymore. A sub-city left without an officer (or whose officer departed) gets a new one from its row&apos;s Appoint officer action above.
             </p>
           </>
         ) : isSubCityOfficer ? (
@@ -458,7 +537,7 @@ export function SettingsPage() {
     <div className="grid grid-cols-1 gap-4">
       <TabRail active={tab} ariaLabel="City settings sections" tabs={tabs} />
       {tab === "identity" ? (
-        <Panel title="City identity & statutory parameters" subtitle="Per-city rule set (Dir. Art. 14). Changes take effect immediately; the statutory clock params drive complaints and appeal windows.">
+        <Panel title="City identity & statutory parameters" subtitle="Per-city rule set (Dir. Art. 14). Every change made here by the city bureau is REFLECTED IMMEDIATELY IN ALL SUB-CITIES and their woredas — every console reads the same city rule set. The statutory clock params drive complaints and appeal windows.">
           <CityConfigForm />
         </Panel>
       ) : null}
@@ -471,14 +550,14 @@ export function SettingsPage() {
         </Panel>
       ) : null}
       {tab === "ladder" ? (
-        <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive’s offense catalogue; values are configurable parameters (open item O1). Rows referenced by penalty cases are deactivated, never deleted.">
+        <Panel title="Penalty ladder (M9 · Dir. Art. 22)" subtitle="The Directive’s offense catalogue; values are configurable parameters (open item O1). Ladder values set by the city bureau apply to EVERY sub-city and woreda of the city at once. Rows referenced by penalty cases are deactivated, never deleted.">
           <LadderEditor />
         </Panel>
       ) : null}
       {tab === "org" ? (
         <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle={isSubCityOfficer
           ? "Your sub-city and its woredas. New woredas enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7)."
-          : "Sub-cities of the city bureau — each founded together with its ONE responsible officer, who then manages its woredas and staff. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7)."}>
+          : "The city bureau head manages every sub-city here: found each one with its ONE responsible officer, appoint or replace that officer for existing sub-cities, correct names — every modification is reflected immediately in ALL sub-city consoles. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7)."}>
           <OrgEditor />
         </Panel>
       ) : null}
