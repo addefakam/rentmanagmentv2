@@ -463,11 +463,12 @@ export function DashboardPage() {
   // hold reports:bureau (city bureau head + city admin) — the same gate as
   // the Bureau reports tab; other roles keep the dashboard untouched.
   const canCityCharts = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN";
-  // Task 46 (owner directive — city bureau head MINIMAL console): his
-  // dashboard keeps the KPI band + city report charts + exactly the two
-  // working surfaces of his delegation role. The sprint construction grid
-  // and project evidence links belong to the desks, not to him.
-  const isBureauHead = officer.roleCode === "BUREAU_HEAD";
+  // Task 46 + 47 (owner directives — city-level MINIMAL console): the city
+  // bureau head AND the city administrator get the KPI band + city report
+  // charts + exactly their management surfaces. Registry, operations and
+  // project sprint cards live at the SUB-CITY level now — never on a
+  // city-level dashboard.
+  const isCityLevelDesk = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN";
   // Every other role: sprint deep links are filtered by the page RBAC so a
   // card can never lead to a page the role cannot open (this also fixes the
   // committee member's pre-existing dead sprint links).
@@ -486,7 +487,7 @@ export function DashboardPage() {
         <CityReportCharts staffCode={officer.staffCode} cityCode={boot.cityCode ?? officer.cityCode ?? ""} />
       ) : null}
 
-      {isBureauHead ? (
+      {isCityLevelDesk ? (
         <div className="grid gap-3 md:grid-cols-2">
           <Link
             href="/settings#org"
@@ -512,6 +513,19 @@ export function DashboardPage() {
               City-level reports across all sub-cities down to every woreda — staffing, registration pipeline, properties, payments, complaints, penalties — exportable to CSV.
             </p>
           </Link>
+          {officer.roleCode === "CITY_ADMIN" ? (
+            <Link
+              href="/services"
+              className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-display text-sm font-semibold tracking-tight">{t("nav.services", lang)}</span>
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                The city&apos;s published catalog of rent-control services and their steps — what citizens can request at every sub-city and woreda desk.
+              </p>
+            </Link>
+          ) : null}
         </div>
       ) : (
         <>

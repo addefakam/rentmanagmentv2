@@ -39,6 +39,15 @@
 // tools are REMOVED from his sidebar and shell — those belong to the woreda
 // and sub-city desks. His console is exactly: Dashboard (KPIs + city report
 // charts) · Data & Reports · City Settings.
+//
+// Owner directive — REGISTRY/OPERATIONS/PROJECT LIVE AT SUB-CITY LEVEL: the
+// SAME split now applies to the WHOLE city level. Registry desks (parties,
+// properties, registration, rent), operations (complaints, enforcement) and
+// the project tools are removed from the city administrator's console too —
+// they are run by the sub-city officer and his woreda desks (SUBCITY_MONITOR,
+// WOREDA_REGISTRAR, WOREDA_STAMPER), never by the city tier. The city level
+// keeps management only: Dashboard, Data & Reports, City Settings (+ the
+// Service Catalog for the city administrator).
 // ============================================================================
 
 const ALL_ROLES = [
@@ -47,16 +56,17 @@ const ALL_ROLES = [
 ];
 
 // The super user's console EXCLUDES registry, operations and project tools
-// (owner directive) — every city tier keeps them. The CITY BUREAU HEAD is
-// excluded too (minimal-console directive): desk pages belong to the woreda
-// and sub-city desks his delegation created, not to the city bureau head.
-const REGISTRY_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN" && r !== "BUREAU_HEAD");
-const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN" && r !== "BUREAU_HEAD");
+// (owner directive) — every city tier keeps them. The CITY BUREAU HEAD and
+// the CITY ADMINISTRATOR are excluded too (minimal-console + sub-city-level
+// directives): desk pages belong to the sub-city officer and his woreda
+// desks, never to the city tier.
+const REGISTRY_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN" && r !== "BUREAU_HEAD" && r !== "CITY_ADMIN");
+const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN" && r !== "BUREAU_HEAD" && r !== "CITY_ADMIN");
 const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // city analytics — super user excluded (owner directive)
 const SETTINGS_ROLES = ["BUREAU_HEAD", "SUBCITY_MONITOR", "CITY_ADMIN"]; // city self-administration + the sub-city officer's own area (staff + woredas) — ministry analyst oversight-only, super user excluded (owner directive)
 const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "CITY_ADMIN", "MINISTRY_ANALYST"]; // service catalog — city-tier desks, bureau head + super user excluded (owner directives)
 const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the ONE high-power platform administrator — sole manager of cities
-const PROJECT_ROLES = ["BUREAU_ANALYST", "CITY_ADMIN", "MINISTRY_ANALYST"]; // project tools — super user + city bureau head excluded
+const PROJECT_ROLES = ["BUREAU_ANALYST", "MINISTRY_ANALYST"]; // project tools — super user + city bureau head + city administrator excluded (registry/operations/project live at sub-city level)
 
 export const PAGE_ACCESS: Record<string, string[]> = {
   "/": ALL_ROLES,

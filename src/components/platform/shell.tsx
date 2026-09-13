@@ -82,6 +82,7 @@ const GROUP_ICONS: Record<string, typeof LayoutDashboard> = {
 // under the Dashboard, with the report surface last.
 const GROUP_ORDER_BY_ROLE: Record<string, string[]> = {
   BUREAU_HEAD: ["overview", "admin", "insights"],
+  CITY_ADMIN: ["overview", "admin", "insights"],
 };
 
 export function ConsoleShell({ officer, children }: { officer: ClientOfficer; children: React.ReactNode }) {
