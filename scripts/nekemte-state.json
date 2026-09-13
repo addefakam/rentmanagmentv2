@@ -1,0 +1,21 @@
+{
+  "onboard": {
+    "cityCode": "NEK",
+    "bureauCode": "NEK-BUREAU",
+    "contractVersion": "NEK-1.0",
+    "team": [
+      "STF-2003 · CITY ADMIN — full authority over NEK"
+    ],
+    "slug": "nekemte",
+    "cityAdmin": {
+      "staffCode": "STF-2003",
+      "fullName": "Nekemte City Administrator"
+    },
+    "orgUnits": [
+      "NEK-BUREAU",
+      "NEK-CENTRAL",
+      "NEK-CENTRAL-W01"
+    ],
+    "message": "City Nekemte (NEK) is live — city administrator Nekemte City Administrator (STF-2003) can sign in and manage it immediately. Tenant URL: /login?slug=nekemte"
+  }
+}
