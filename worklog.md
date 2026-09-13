@@ -950,3 +950,20 @@ Work Log:
 Stage Summary:
 - Sub-cities and woredas are now fully editable (trilingual names) from City Settings -> Organization hierarchy, live in production. Codes intentionally immutable.
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint (file opened, lifecycle actions pending; v4 hybrid-auth script rewrite still pending).
+
+---
+Task ID: 41
+Agent: Main agent (Super Z)
+Task: "I need to edit woredas too" — make woreda editing universal and obvious.
+
+Work Log:
+- OrgEditor (panels-settings.tsx): table now lists EVERY woreda of the city (sorted by code) instead of only the selected sub-city's; new "Under" column shows the parent sub-city code (sub-cities show "city bureau"); creation selector relabeled "Sub-city (parent for new woredas)".
+- panels-s1.tsx AdminPanel org panel (legacy dead code, not mounted by any route): added a link to /settings#org for when it is ever remounted.
+- tsc: no new errors (pre-existing staff-typing errors only).
+- Local verify (CITY_ADMIN STF-2003): AA-BOLE-W01 (non-default sub-city) editable directly; OM name saved and reflected. /parties has no mounted S1 panel (link check n/a on live routes).
+- Committed bf240d5, pushed, production verified as NEK CITY_ADMIN: census 2 rows / 2 Edit buttons / Under column live; dialog prefilled; real save changed NEK-CENTRAL-W01 nameAm to a test value and the table updated.
+- Restored production names via PATCH (nameAm "ነቀምቴ ማዕከላዊ ወረዳ 01", nameOm/nameEn confirmed unchanged).
+
+Stage Summary:
+- Every woreda of a city is now visible and editable (trilingual names) in City Settings -> Organization hierarchy, live in production; production data left in original state.
+- Task 38 (Nekemte full business scenario) still open at the same checkpoint.
