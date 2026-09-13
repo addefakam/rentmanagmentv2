@@ -1,19 +1,24 @@
 // ============================================================================
 // /api/staff — city staff register (Dir. Arts. 6, 8, 9; Dir. Art. 14 admin).
-// The CITY Rent Control Bureau head (BUREAU_HEAD) and the city super-admin
-// (CITY_ADMIN, created automatically at city onboarding) run the staff
-// register of ONE city — bureau, sub-city and woreda desks alike:
-//   POST  : add an officer to the acting city — staff code auto-issued from
-//           the register sequence (STF-####), role must be a city-level role
-//           (national roles cannot be created from a city desk), org unit
-//           must sit inside the acting city's bureau subtree;
+// OWNER DIRECTIVE — SUB-CITY DELEGATION:
+//   CITY_ADMIN (city super-admin) and SYSTEM_ADMIN run the staff register
+//   of the whole city — bureau, sub-city and woreda desks alike.
+//   SUBCITY_MONITOR — the ONE responsible officer of a sub-city — appoints
+//   the woreda desks of HIS sub-city only: registrars, stamping officers
+//   and hearing committee members (role rule below; scope wall narrows the
+//   city ctx to his sub-city subtree).
+//   BUREAU_HEAD does NOT create staff — founding a sub-city hands staffing
+//   to that sub-city's own officer (POST /api/org-units).
+//   POST  : add an officer — staff code auto-issued from the register
+//           sequence (STF-####); role must be a city-level role (national
+//           roles cannot be created from a city desk); org unit must sit
+//           inside the acting officer's scope; each sub-city keeps ONE
+//           active SUBCITY_MONITOR;
 //   PATCH : activate / deactivate an officer, move them to another unit of
-//           the same city, or correct their role — every referenced id is
-//           re-validated against the city scope, and an officer cannot
+//           the same scope, or correct their role — every referenced id is
+//           re-validated against the scope, and an officer cannot
 //           deactivate their own account.
-// The SYSTEM_ADMIN (national) uses the same route for any city it views.
-// Capability: staff:manage (CITY_ADMIN, SYSTEM_ADMIN). City isolation is
-// enforced by cityContext() — cross-city references are denied 403.
+// Capability: staff:manage. Cross-scope references are denied 403.
 // ============================================================================
 
 import { fail, body, ok } from "@/lib/api";
@@ -28,6 +33,19 @@ const CITY_ROLE_CODES = [
   "WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST",
   "BUREAU_HEAD", "COMMITTEE_MEMBER", "CITY_ADMIN",
 ];
+// The sub-city officer appoints woreda desks only — never another
+// sub-city officer, never city-level roles (owner directive).
+const SUBCITY_ASSIGNABLE = ["WOREDA_REGISTRAR", "WOREDA_STAMPER", "COMMITTEE_MEMBER"];
+
+// Each sub-city keeps ONE active responsible officer.
+async function assertSingleSubCityMonitor(orgUnitId: string, unitCode: string): Promise<void> {
+  const sitting = await db.systemUser.findFirst({
+    where: { roleCode: "SUBCITY_MONITOR", orgUnitId, isActive: true },
+  });
+  if (sitting) {
+    throw new Error(`${sitting.fullName} (${sitting.staffCode}) is already the responsible sub-city officer of ${unitCode}. Each sub-city has one.`);
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -45,6 +63,11 @@ export async function POST(req: Request) {
           throw new Error(`Role ${roleCode || "(none)"} cannot be assigned from a city desk. Allowed: ${CITY_ROLE_CODES.join(", ")}.`);
         }
         if (!orgUnitId) throw new Error("Home org unit is required.");
+        if (actor.roleCode === "SUBCITY_MONITOR" && !SUBCITY_ASSIGNABLE.includes(roleCode)) {
+          throw new Error(
+            `A sub-city rent-control officer appoints woreda desks only. Allowed: ${SUBCITY_ASSIGNABLE.join(", ")}.`,
+          );
+        }
 
         const ctx = await cityContext(actor, {
           city: (input.cityCode as string | undefined) ?? req.headers.get("x-city-code"),
@@ -54,6 +77,9 @@ export async function POST(req: Request) {
         if (!role || !role.isActive) throw new Error(`Unknown or inactive role: ${roleCode}`);
         const unit = ctx.units.find((u) => u.id === orgUnitId);
         if (!unit) throw new CityScopeError("The selected org unit does not belong to the acting city.");
+        if (roleCode === "SUBCITY_MONITOR") {
+          await assertSingleSubCityMonitor(orgUnitId, unit.code);
+        }
 
         // Staff codes auto-issue after the highest registered number so they
         // never collide with seeded or onboarded registers.
@@ -115,6 +141,18 @@ export async function PATCH(req: Request) {
         const roleCode = input.roleCode != null ? String(input.roleCode) : user.roleCode;
         if (roleCode !== user.roleCode && !CITY_ROLE_CODES.includes(roleCode)) {
           throw new Error(`Role ${roleCode} cannot be assigned from a city desk.`);
+        }
+        if (actor.roleCode === "SUBCITY_MONITOR" && roleCode !== user.roleCode && !SUBCITY_ASSIGNABLE.includes(roleCode)) {
+          throw new Error(
+            `A sub-city rent-control officer appoints woreda desks only. Allowed: ${SUBCITY_ASSIGNABLE.join(", ")}.`,
+          );
+        }
+        const monitorMovedIn =
+          roleCode === "SUBCITY_MONITOR" &&
+          (user.roleCode !== "SUBCITY_MONITOR" || orgUnitId !== user.orgUnitId);
+        if (monitorMovedIn && input.isActive !== false) {
+          const target = ctx.units.find((u) => u.id === orgUnitId);
+          await assertSingleSubCityMonitor(orgUnitId, target?.code ?? user.orgUnit.code);
         }
         const updated = await db.systemUser.update({
           where: { id },

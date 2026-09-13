@@ -11,7 +11,7 @@
 
 import { db } from "@/lib/db";
 import { ok, fail } from "@/lib/api";
-import { cityScope } from "@/lib/city";
+import { cityScope, descendantIds, subtreeRootForRole } from "@/lib/city";
 import { currentOfficer } from "@/lib/auth/officer";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,17 @@ export async function GET(req: Request) {
     const activeCity =
       configs.find((c) => c.cityCode === requestedCity)?.cityCode ?? configs[0]?.cityCode ?? "AA";
     const scope = cityScope(allUnits as never, configs as never, activeCity);
-    const { woredaIds, subCityIds, unitIds } = scope;
+    // OWNER DIRECTIVE — SUB-CITY DELEGATION: a sub-city officer's boot
+    // payload covers ONLY his sub-city subtree — his woredas, his staff,
+    // his numbers. Bureau-attached roles keep the whole city subtree.
+    let { woredaIds, subCityIds, unitIds } = scope;
+    const subRoot = subtreeRootForRole(allUnits as never, officer.orgUnitId, officer.roleCode);
+    if (subRoot) {
+      unitIds = descendantIds(allUnits as never, subRoot);
+      const tierOf = new Map(allUnits.map((u) => [u.id, u.tier] as const));
+      subCityIds = unitIds.filter((id) => tierOf.get(id) === "SUB_CITY");
+      woredaIds = unitIds.filter((id) => tierOf.get(id) === "WOREDA");
+    }
 
     // Deadline clocks are keyed by subject refs; keep the city's refs only.
     const refFilter = (rows: Array<{ refNumber?: string; fileNumber?: string; appealNumber?: string }>) =>

@@ -10,7 +10,7 @@
 import { db } from "@/lib/db";
 import { ok } from "@/lib/api";
 import { recordAudit } from "./audit";
-import { bureauOf, cityCodeForOrgUnit, descendantIds } from "@/lib/city";
+import { bureauOf, cityCodeForOrgUnit, descendantIds, subtreeRootForRole } from "@/lib/city";
 import { isNationalRole } from "@/lib/auth/officer";
 
 export class SecurityError extends Error {
@@ -70,12 +70,12 @@ export const CAPABILITIES: Record<string, string[]> = {
   "operations:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // hypercare, cycle, referrals, handover, PIR (plan A-42..A-48)
   "feed:publish": ["MINISTRY_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"], // national feed to the Ministry (A-45)
   "setting:manage": ["SYSTEM_ADMIN"], // platform settings incl. auth_mode switch
-  // City staff register — the city Rent Control Bureau head and the city
-  // super-admin add/move/deactivate the officers of ONE city (Dir. Art. 8:
-  // the bureau organizes its sub-city and woreda offices); the system admin
-  // does it fleet-wide. Scope wall: every reference stays inside the acting
-  // city's bureau subtree.
-  "staff:manage": ["BUREAU_HEAD", "CITY_ADMIN", "SYSTEM_ADMIN"],
+  // City staff register — the sub-city rent-control officer appoints the
+  // woreda desks of HIS sub-city (role/tier rules in the route); the city
+  // super-admin and the system admin run the wider register. The city bureau
+  // head does NOT create staff: founding a sub-city hands staffing to that
+  // sub-city's own officer (owner directive).
+  "staff:manage": ["CITY_ADMIN", "SUBCITY_MONITOR", "SYSTEM_ADMIN"],
   // Multi-city administration (per-city rule sets, Dir. Art. 14).
   // Owner directive (single-admin policy): exactly ONE administrator — the
   // SYSTEM_ADMIN — manages cities. The ministry analyst is oversight-only:
@@ -88,7 +88,10 @@ export const CAPABILITIES: Record<string, string[]> = {
   // SaaS tenant service catalog — city admin manages own city, system admin fleet-wide
   "service:manage": ["CITY_ADMIN", "SYSTEM_ADMIN"],
   "ladder:manage": ["BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"], // penalty ladder values
-  "org:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // sub-city / woreda register
+  // Org register — the city bureau head FOUNDS sub-cities (each with its
+  // responsible officer); the sub-city officer registers the WOREDAS of his
+  // area; the route enforces the role/tier split.
+  "org:manage": ["BUREAU_HEAD", "SUBCITY_MONITOR", "SYSTEM_ADMIN"], // sub-city / woreda register
   // Read capabilities enforced when auth_mode = production (DEF-06-01)
   "read:parties": ["WOREDA_REGISTRAR", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "MINISTRY_ANALYST", "SYSTEM_ADMIN"],
   "read:registration": ["WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"],
@@ -216,7 +219,9 @@ export async function cityContext(
     };
   }
 
-  // City-bound actor: pinned to the home bureau subtree, no exceptions.
+  // City-bound actor: pinned to the home bureau subtree, no exceptions —
+  // except the sub-city officer (owner directive), whose world is his own
+  // sub-city subtree: his woredas, his staff, his numbers only.
   const bureau = bureauOf(units as never, actor.orgUnitId);
   const mine = configs.find((c) => c.bureauId === bureau?.id);
   if (!bureau || !mine) {
@@ -229,10 +234,15 @@ export async function cityContext(
       `Cross-city access denied: ${actor.staffCode} is scoped to ${mine.nameEn} (${mine.cityCode}) and cannot act on ${opts.city}.`,
     );
   }
-  const unitIds = descendantIds(units as never, bureau.id);
+  const subRoot = subtreeRootForRole(units as never, actor.orgUnitId, actor.roleCode);
+  const unitIds = subRoot
+    ? descendantIds(units as never, subRoot)
+    : descendantIds(units as never, bureau.id);
   if (opts.unitId && !unitIds.includes(opts.unitId)) {
     throw new CityScopeError(
-      `Cross-city access denied: the referenced ${opts.unitLabel ?? "org unit"} is outside ${mine.nameEn} (${mine.cityCode}).`,
+      subRoot
+        ? `Access denied: the referenced ${opts.unitLabel ?? "org unit"} is outside your sub-city (${units.find((u) => u.id === subRoot)?.code ?? ""}).`
+        : `Cross-city access denied: the referenced ${opts.unitLabel ?? "org unit"} is outside ${mine.nameEn} (${mine.cityCode}).`,
     );
   }
   return {

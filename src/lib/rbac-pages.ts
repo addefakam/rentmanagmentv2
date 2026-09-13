@@ -41,7 +41,7 @@ const ALL_ROLES = [
 const REGISTRY_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN");
 const OPERATIONS_ROLES = ALL_ROLES.filter((r) => r !== "COMMITTEE_MEMBER" && r !== "SYSTEM_ADMIN");
 const INSIGHT_ROLES = ["SUBCITY_MONITOR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // city analytics — super user excluded (owner directive)
-const SETTINGS_ROLES = ["BUREAU_HEAD", "CITY_ADMIN"]; // city self-administration — ministry analyst oversight-only, super user excluded (owner directive)
+const SETTINGS_ROLES = ["BUREAU_HEAD", "SUBCITY_MONITOR", "CITY_ADMIN"]; // city self-administration + the sub-city officer's own area (staff + woredas) — ministry analyst oversight-only, super user excluded (owner directive)
 const SERVICES_ROLES = ["WOREDA_REGISTRAR", "BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // service catalog — city-tier desks, super user excluded (owner directive)
 const PLATFORM_ADMIN_ROLES = ["SYSTEM_ADMIN"]; // the ONE high-power platform administrator — sole manager of cities
 const PROJECT_ROLES = ["BUREAU_ANALYST", "BUREAU_HEAD", "CITY_ADMIN", "MINISTRY_ANALYST"]; // project tools — super user excluded

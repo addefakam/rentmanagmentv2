@@ -14,7 +14,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
     <ConsoleShell
       officer={{
         staffCode: officer.staffCode, fullName: officer.fullName, roleCode: officer.roleCode,
-        roleTier: officer.roleTier, orgUnitCode: officer.orgUnitCode,
+        roleTier: officer.roleTier, orgUnitId: officer.orgUnitId, orgUnitCode: officer.orgUnitCode,
         cityCode: officer.cityCode, national: officer.national,
       }}
     >

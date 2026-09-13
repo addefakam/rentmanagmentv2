@@ -33,7 +33,7 @@ import { parseModules } from "@/lib/tenant-modules";
 
 export type ClientOfficer = {
   staffCode: string; fullName: string; roleCode: string; roleTier: string;
-  orgUnitCode: string; cityCode: string | null; national: boolean;
+  orgUnitId: string; orgUnitCode: string; cityCode: string | null; national: boolean;
 };
 
 // SaaS module visibility map — a console page belongs to a tenant module; the

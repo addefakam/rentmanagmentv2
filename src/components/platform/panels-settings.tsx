@@ -4,7 +4,7 @@
 // opened on demand (/settings#org · /settings#staff ·
 // /settings#identity · /settings#federal · /settings#ladder):
 //   1. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
-//   2. Staff register   — officers of this city (bureau head + city admin)
+//   2. Staff register   — officers of this scope (sub-city officer / city admin)
 //   3. City identity    — trilingual names, currency, work week, canonical lang
 //   4. Federal register — national regulations reflected to every city (read-only)
 //   5. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
@@ -145,8 +145,11 @@ function LadderEditor() {
 }
 
 // ---------------------------------------------------------------------------
-// 4 — org hierarchy editor: add sub-cities / woredas with trilingual names,
-// and EDIT existing ones (EN / Amharic / Oromoo) via the row Edit dialog.
+// 4 — org hierarchy editor. OWNER DIRECTIVE — SUB-CITY DELEGATION: the
+// bureau head founds sub-cities (each with its one responsible officer);
+// the sub-city officer registers the woredas of his own area; the city
+// and system admins keep both tiers. Existing units are EDITABLE
+// (EN / Amharic / Oromoo) via the row Edit dialog.
 // Codes are permanent — they anchor file numbers, staff assignments and the
 // establishment register (O-7); only the three names are editable.
 // NOTE: actions run as the SIGNED-IN officer (no hardcoded actor) — the city
@@ -154,6 +157,11 @@ function LadderEditor() {
 // ---------------------------------------------------------------------------
 function OrgEditor() {
   const { boot, refresh, officer } = useBoot();
+  // OWNER DIRECTIVE — SUB-CITY DELEGATION: the bureau head only founds sub-cities
+  // (each with its one responsible officer); the sub-city officer registers
+  // the woredas of his own area; the city/system admin keeps both tiers.
+  const isBureauHead = officer.roleCode === "BUREAU_HEAD";
+  const isSubCityOfficer = officer.roleCode === "SUBCITY_MONITOR";
   const units = boot?.orgUnits ?? [];
   const bureaus = useMemo(() => units.filter((u) => u.tier === "BUREAU"), [units]);
   const [bureauId, setBureauId] = useState("");
@@ -161,15 +169,29 @@ function OrgEditor() {
   const subCities = units.filter((u) => u.tier === "SUB_CITY" && u.parentId === effectiveBureau);
   const [scId, setScId] = useState("");
   const effectiveSc = scId || subCities[0]?.id || "";
-  // Every woreda of the city is listed and editable — no sub-city hunting.
-  const allWoredas = useMemo(() => units.filter((u) => u.tier === "WOREDA").sort((a, b) => a.code.localeCompare(b.code)), [units]);
   const unitById = useMemo(() => new Map(units.map((u) => [u.id, u])), [units]);
+  // Every woreda visible in this console is listed and editable — for the
+  // sub-city officer that is exactly his own area's woredas (boot scope).
+  const allWoredas = useMemo(() => units.filter((u) => u.tier === "WOREDA").sort((a, b) => a.code.localeCompare(b.code)), [units]);
+  const mySubCity = isSubCityOfficer ? unitById.get(officer.orgUnitId) : null;
 
-  const [unit, setUnit] = useState({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" });
+  const defaultTier = isBureauHead ? "SUB_CITY" : "WOREDA";
+  const [unit, setUnit] = useState({ tier: defaultTier, code: "", nameEn: "", nameAm: "", nameOm: "" });
+  const [manager, setManager] = useState({ fullName: "", language: "en" });
   const create = async () => {
-    const parentId = unit.tier === "SUB_CITY" ? effectiveBureau : effectiveSc;
-    const out = await call("/api/org-units", "POST", { ...unit, parentId }, officer.staffCode);
-    if (out) { toast.success(`${out.code} registered (pending official register, O-7)`); setUnit({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" }); await refresh(); }
+    const parentId = unit.tier === "SUB_CITY" ? effectiveBureau : (isSubCityOfficer ? officer.orgUnitId : effectiveSc);
+    const payload = unit.tier === "SUB_CITY"
+      ? { ...unit, parentId, managerFullName: manager.fullName, managerLanguage: manager.language }
+      : { ...unit, parentId };
+    const out = await call("/api/org-units", "POST", payload, officer.staffCode) as { code?: string; manager?: { staffCode: string; fullName: string } } | null;
+    if (out) {
+      toast.success(out.manager
+        ? `${out.code} founded — responsible officer ${out.manager.fullName}, sign-in code ${out.manager.staffCode}`
+        : `${out.code ?? "Unit"} registered (pending official register, O-7)`);
+      setUnit({ tier: defaultTier, code: "", nameEn: "", nameAm: "", nameOm: "" });
+      setManager({ fullName: "", language: manager.language });
+      await refresh();
+    }
   };
 
   // Row editing — trilingual names via dialog (codes stay permanent).
@@ -187,20 +209,22 @@ function OrgEditor() {
 
   return (
     <div className="grid grid-cols-1 gap-3">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Field label="Bureau">
-          <SelectField value={effectiveBureau} onChange={setBureauId}
-            options={bureaus.map((b) => ({ value: b.id, label: `${b.code} — ${b.nameEn}` }))} />
-        </Field>
-        <Field label="Sub-city (parent for new woredas)">
-          <SelectField value={effectiveSc} onChange={setScId}
-            options={subCities.map((s) => ({ value: s.id, label: `${s.code} — ${s.nameEn}` }))} />
-        </Field>
-      </div>
+      {!isBureauHead && !isSubCityOfficer ? (
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <Field label="Bureau">
+            <SelectField value={effectiveBureau} onChange={setBureauId}
+              options={bureaus.map((b) => ({ value: b.id, label: `${b.code} — ${b.nameEn}` }))} />
+          </Field>
+          <Field label="Sub-city (parent for new woredas)">
+            <SelectField value={effectiveSc} onChange={setScId}
+              options={subCities.map((s) => ({ value: s.id, label: `${s.code} — ${s.nameEn}` }))} />
+          </Field>
+        </div>
+      ) : null}
 
       <DataTable
         headers={["Code", "Tier", "Under", "Names (EN · AM · OM)", "Status", "Actions"]}
-        rows={[...subCities, ...allWoredas].map((u) => [
+        rows={[...(mySubCity ? [mySubCity] : []), ...subCities, ...allWoredas].map((u) => [
           <span key={u.id} className="font-mono text-[10px]">{u.code}</span>,
           <span key={`t-${u.id}`} className="text-[10px]">{u.tier.replace("_", " ")}</span>,
           <span key={`p-${u.id}`} className="font-mono text-[10px] text-muted-foreground">
@@ -244,20 +268,50 @@ function OrgEditor() {
       </Dialog>
 
       <div className="rounded-lg border bg-muted/20 p-3">
-        <p className="mb-2 text-xs font-semibold">Register a new unit</p>
+        {isBureauHead ? (
+          <>
+            <p className="mb-1 text-xs font-semibold">Found a new sub-city (with its responsible officer)</p>
+            <p className="mb-2 text-[11px] text-muted-foreground">
+              One officer is issued with the sub-city — from then on HE manages its woredas and its staff. Woreda and staff registration are not city-bureau duties anymore.
+            </p>
+          </>
+        ) : isSubCityOfficer ? (
+          <>
+            <p className="mb-1 text-xs font-semibold">Register a woreda of your sub-city</p>
+            <p className="mb-2 text-[11px] text-muted-foreground">New woredas hang under your sub-city; you also appoint their staff under the Staff register tab.</p>
+          </>
+        ) : (
+          <p className="mb-2 text-xs font-semibold">Register a new unit</p>
+        )}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-5">
-          <Field label="Level">
-            <SelectField value={unit.tier} onChange={(v) => setUnit({ ...unit, tier: v })}
-              options={[{ value: "WOREDA", label: "Woreda" }, { value: "SUB_CITY", label: "Sub-city" }]} />
-          </Field>
-          <Field label="Code"><TextField value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value.toUpperCase() })} placeholder="AA-BOLE-W15" /></Field>
+          {isBureauHead || isSubCityOfficer ? (
+            <Field label="Level"><TextField value={isBureauHead ? "Sub-city" : "Woreda"} disabled /></Field>
+          ) : (
+            <Field label="Level">
+              <SelectField value={unit.tier} onChange={(v) => setUnit({ ...unit, tier: v })}
+                options={[{ value: "WOREDA", label: "Woreda" }, { value: "SUB_CITY", label: "Sub-city" }]} />
+            </Field>
+          )}
+          <Field label="Code"><TextField value={unit.code} onChange={(e) => setUnit({ ...unit, code: e.target.value.toUpperCase() })} placeholder={isBureauHead ? "AA-BOLE" : "AA-BOLE-W15"} /></Field>
           <Field label="Name (English)"><TextField value={unit.nameEn} onChange={(e) => setUnit({ ...unit, nameEn: e.target.value })} /></Field>
           <Field label="ስም (አማርኛ)"><TextField value={unit.nameAm} onChange={(e) => setUnit({ ...unit, nameAm: e.target.value })} /></Field>
           <Field label="Maqaa (Oromoo)"><TextField value={unit.nameOm} onChange={(e) => setUnit({ ...unit, nameOm: e.target.value })} /></Field>
+          {unit.tier === "SUB_CITY" ? (
+            <>
+              <Field label="Responsible officer (full name)"><TextField value={manager.fullName} onChange={(e) => setManager({ ...manager, fullName: e.target.value })} placeholder="e.g. Kebebe Tsegaye" /></Field>
+              <Field label="Officer language">
+                <SelectField value={manager.language} onChange={(v) => setManager({ ...manager, language: v })}
+                  options={[{ value: "am", label: "አማርኛ" }, { value: "en", label: "English" }, { value: "om", label: "Afaan Oromoo" }]} />
+              </Field>
+            </>
+          ) : null}
         </div>
         <div className="mt-2">
-          <ActionButton onClick={create} disabled={!unit.code || !unit.nameEn || (unit.tier === "WOREDA" && !effectiveSc)}>
-            Register unit
+          <ActionButton
+            onClick={create}
+            disabled={!unit.code || !unit.nameEn || (unit.tier === "WOREDA" && !(isSubCityOfficer ? officer.orgUnitId : effectiveSc)) || (unit.tier === "SUB_CITY" && (!effectiveBureau || !manager.fullName.trim()))}
+          >
+            {isBureauHead ? "Found sub-city + issue officer" : "Register unit"}
           </ActionButton>
         </div>
       </div>
@@ -266,26 +320,32 @@ function OrgEditor() {
 }
 
 // ---------------------------------------------------------------------------
-// 5 — staff register: the city Rent Control Bureau head adds and manages the
-// officers of ONE city (sign-in code auto-issued) — bureau, sub-city and
-// woreda desks, each with the role that fits (Dir. Arts. 6, 8, 9). The city
-// admin and system admins share the same register.
-// Capability: staff:manage (BUREAU_HEAD, CITY_ADMIN, SYSTEM_ADMIN).
+// 5 — staff register. OWNER DIRECTIVE — SUB-CITY DELEGATION: the sub-city
+// rent-control officer (SUBCITY_MONITOR) appoints the woreda desks of HIS
+// sub-city — registrars, stamping officers, hearing committee members
+// (sign-in code auto-issued). The city super-admin and system admins run
+// the whole-city register. The bureau head creates no staff — founding a
+// sub-city issues its responsible officer automatically.
+// Capability: staff:manage (CITY_ADMIN, SUBCITY_MONITOR, SYSTEM_ADMIN).
 // ---------------------------------------------------------------------------
 const CITY_ROLE_CODES = [
   "WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST",
   "BUREAU_HEAD", "COMMITTEE_MEMBER", "CITY_ADMIN",
 ];
+// The sub-city officer appoints woreda desks only (mirrors /api/staff).
+const SUBCITY_ASSIGNABLE = ["WOREDA_REGISTRAR", "WOREDA_STAMPER", "COMMITTEE_MEMBER"];
 
 function StaffRegister() {
   const { boot, refresh, officer } = useBoot();
+  const isSubCityOfficer = officer.roleCode === "SUBCITY_MONITOR";
   const [draft, setDraft] = useState({ fullName: "", roleCode: "WOREDA_REGISTRAR", orgUnitId: "", language: "en" });
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<{ staffCode: string; fullName: string } | null>(null);
   const staff = boot?.staff ?? [];
-  const roles = (boot?.roles ?? []).filter((r) => CITY_ROLE_CODES.includes(r.code));
-  // Home offices grouped by tier — the bureau head staffs the city bureau,
-  // every sub-city rent-control desk and every woreda office from ONE list.
+  const assignable = isSubCityOfficer ? SUBCITY_ASSIGNABLE : CITY_ROLE_CODES;
+  const roles = (boot?.roles ?? []).filter((r) => assignable.includes(r.code));
+  // Home offices grouped by tier — a city admin staffs bureau, sub-cities
+  // and woredas; a sub-city officer sees exactly his own area (boot scope).
   const tierLabel: Record<string, string> = { BUREAU: "City bureau", SUB_CITY: "Sub-city", WOREDA: "Woreda" };
   const tierOrder: Record<string, number> = { BUREAU: 0, SUB_CITY: 1, WOREDA: 2 };
   const units = (boot?.orgUnits ?? [])
@@ -341,14 +401,18 @@ function StaffRegister() {
       ) : null}
 
       <div className="rounded-lg border bg-muted/20 p-3">
-        <p className="mb-2 text-xs font-semibold">Add an officer to {boot?.cityConfig?.nameEn ?? "this city"}</p>
+        <p className="mb-2 text-xs font-semibold">
+          {isSubCityOfficer
+            ? `Add a woreda-desk officer to your sub-city`
+            : `Add an officer to ${boot?.cityConfig?.nameEn ?? "this city"}`}
+        </p>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
           <Field label="Full name"><TextField value={draft.fullName} onChange={(e) => setDraft({ ...draft, fullName: e.target.value })} placeholder="e.g. Kebebe Tsegaye" /></Field>
           <Field label="Role">
             <SelectField value={draft.roleCode} onChange={(v) => setDraft({ ...draft, roleCode: v })}
               options={roles.map((r) => ({ value: r.code, label: r.nameEn }))} />
           </Field>
-          <Field label="Home office (city bureau · sub-city · woreda)">
+          <Field label={isSubCityOfficer ? "Home office (your sub-city's woredas)" : "Home office (city bureau · sub-city · woreda)"}>
             <SelectField value={draft.orgUnitId} onChange={(v) => setDraft({ ...draft, orgUnitId: v })}
               options={units.map((u) => ({ value: u.id, label: u.label }))}
               placeholder="select office" />
@@ -360,7 +424,11 @@ function StaffRegister() {
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <ActionButton onClick={add} disabled={busy || !draft.fullName.trim() || !draft.orgUnitId}>Register officer</ActionButton>
-          <span className="text-[11px] text-muted-foreground">Staff codes are issued automatically (STF-####) and serve as the sign-in code. Post officers to any office of this city — bureau, sub-city or woreda — with the role that fits the desk (Dir. Art. 9 separates registrar and stamper). National roles are federal appointments and cannot be created from a city.</span>
+          <span className="text-[11px] text-muted-foreground">
+            {isSubCityOfficer
+              ? "You appoint the woreda desks of your sub-city — registrars, stamping officers and hearing committee members (Dir. Art. 9 separates registrar and stamper). Staff codes are issued automatically (STF-####) and serve as the sign-in code."
+              : "Staff codes are issued automatically (STF-####) and serve as the sign-in code. Post officers to any office of this city — bureau, sub-city or woreda — with the role that fits the desk (Dir. Art. 9 separates registrar and stamper). Each sub-city keeps ONE responsible officer; national roles are federal appointments and cannot be created from a city."}
+          </span>
         </div>
       </div>
     </div>
@@ -370,15 +438,19 @@ function StaffRegister() {
 // ---------------------------------------------------------------------------
 export function SettingsPage() {
   const { boot, officer } = useBoot();
-  // The city Rent Control Bureau head owns the staffing of his city — he is
-  // responsible for creating the officers at every sub-city and woreda desk.
-  const canManageStaff = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
+  // OWNER DIRECTIVE — SUB-CITY DELEGATION: the sub-city officer manages his
+  // area's woredas + staff here; city-level parameters stay with the city.
+  const isSubCityOfficer = officer.roleCode === "SUBCITY_MONITOR";
+  const isCityLevel = officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN" || officer.roleCode === "BUREAU_HEAD";
+  const canManageStaff = isSubCityOfficer || isCityLevel && officer.roleCode !== "BUREAU_HEAD";
   const tabs = [
-    { key: "org", label: "Organization hierarchy", hint: "Sub-cities and woredas (M13)" },
-    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: "Officers of this city — bureau, sub-city and woreda desks" }] : []),
-    { key: "identity", label: "City identity & parameters", hint: "The per-city rule set (Dir. Art. 14)" },
-    { key: "federal", label: "Federal register", hint: "National regulations reflected to every city" },
-    { key: "ladder", label: "Penalty ladder", hint: "M9 offense catalogue values (Dir. Art. 22)" },
+    { key: "org", label: "Organization hierarchy", hint: isSubCityOfficer ? "The woredas of your sub-city (M13)" : "Sub-cities and woredas (M13)" },
+    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: isSubCityOfficer ? "The woreda desks of your sub-city" : "Officers of this city — city admin desk" }] : []),
+    ...(isCityLevel ? [
+      { key: "identity", label: "City identity & parameters", hint: "The per-city rule set (Dir. Art. 14)" },
+      { key: "federal", label: "Federal register", hint: "National regulations reflected to every city" },
+      { key: "ladder", label: "Penalty ladder", hint: "M9 offense catalogue values (Dir. Art. 22)" },
+    ] : []),
   ];
   const [tab] = useHashTab(tabs.map((x) => x.key), "org");
   if (!boot) return null;
@@ -392,7 +464,9 @@ export function SettingsPage() {
       ) : null}
       {tab === "federal" ? <NationalRegulationsCard /> : null}
       {tab === "staff" && canManageStaff ? (
-        <Panel title="Staff register" subtitle="The city’s officers: the bureau head creates the rent-control staff of every level — city bureau, sub-city and woreda — issues their sign-in codes, moves them between offices and deactivates or reactivates accounts. Authority stops at this city’s boundary.">
+        <Panel title="Staff register" subtitle={isSubCityOfficer
+          ? "Your sub-city's desks: appoint the registrars, stamping officers and committee members of your woredas, issue their sign-in codes, move or deactivate them. Your authority stops at your sub-city's boundary."
+          : "The city's officers: the city super-admin creates staff at every level, issues sign-in codes, moves them between offices and deactivates or reactivates accounts. Each sub-city keeps ONE responsible officer — issued when the bureau head founds it."}>
           <StaffRegister />
         </Panel>
       ) : null}
@@ -402,7 +476,9 @@ export function SettingsPage() {
         </Panel>
       ) : null}
       {tab === "org" ? (
-        <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle="Sub-cities and woredas of the city bureau. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7).">
+        <Panel title="Organization hierarchy (M13 · Dir. Arts. 2, 6)" subtitle={isSubCityOfficer
+          ? "Your sub-city and its woredas. New woredas enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7)."
+          : "Sub-cities of the city bureau — each founded together with its ONE responsible officer, who then manages its woredas and staff. New units enter PENDING_OFFICIAL_REGISTER until reconciled with the establishment register (O-7)."}>
           <OrgEditor />
         </Panel>
       ) : null}

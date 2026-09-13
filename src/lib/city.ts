@@ -17,6 +17,7 @@ export type CityScope = {
     id: string; cityCode: string; nameEn: string; nameAm: string; nameOm: string;
     currency: string; workWeek: string; minLeaseYears: number; maxPrepayMonths: number;
     canonicalLang: string; complaintDecisionDays: number; appealDays: number;
+    bureauId?: string | null;
   } | null;
   bureau: OrgLite | null;
   bureauId: string | null;
@@ -103,4 +104,21 @@ export function cityCodeForOrgUnit(
   const bureau = bureauOf(units, orgUnitId);
   if (!bureau) return null;
   return configs.find((c) => c.bureauId === bureau.id)?.cityCode ?? null;
+}
+
+/** Owner directive — sub-city delegation. The sub-city rent-control officer
+ *  (SUBCITY_MONITOR) is responsible for the staff and woredas of HIS area:
+ *  when he signs in, everything he sees and touches is confined to his own
+ *  sub-city subtree. Returns the org-unit id whose subtree this officer is
+ *  confined to, or null when the role keeps the full city scope (bureau- or
+ *  woreda-attached roles, national officers). */
+export function subtreeRootForRole(
+  units: OrgLite[],
+  orgUnitId: string,
+  roleCode: string,
+): string | null {
+  if (roleCode !== "SUBCITY_MONITOR") return null;
+  const u = units.find((x) => x.id === orgUnitId);
+  if (!u || u.tier !== "SUB_CITY") return null;
+  return u.id;
 }
