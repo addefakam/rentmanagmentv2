@@ -1,0 +1,1 @@
+{"ok":false,"error":"A sub-city officer cannot appoint sub-city officers — that is the city bureau head's duty.","rule":"NFR-04 access control (ASVS V4)","code":"AUTH_CITY_SCOPE"}

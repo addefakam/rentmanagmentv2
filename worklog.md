@@ -1014,3 +1014,24 @@ Stage Summary:
 - Delegation model in force: city bureau head only FOUNDSub-cities with their one responsible officer; that officer — scoped strictly to his sub-city — runs the woredas and the staffing of his area. City/system admins keep the city-wide desk. Existing sub-cities WITHOUT an officer still need one appointed by the CITY_ADMIN (staff register).
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
 - SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
+
+---
+Task ID: 44
+Agent: Main agent (Super Z)
+Task: Owner directive — IN ADDITION to the Task 43 role, the city-level Rent Control Bureau head: (1) MANAGES his sub-cities; (2) generates DIFFERENT TYPES of report at city level UP TO WOREDA level; (3) can make any modification that is REFLECTED TO ALL SUB-CITIES.
+
+Work Log:
+- authz.ts: new capability "reports:bureau" = [BUREAU_HEAD, CITY_ADMIN, SYSTEM_ADMIN] (city management reports).
+- NEW /api/org-units/manager (POST, org:manage): the bureau head MANAGES sub-cities beyond founding — appoints the ONE responsible officer (SUBCITY_MONITOR) of an EXISTING sub-city; replacing requires the sitting officer's sign-in code as replaceStaffCode (incumbent deactivated, successor auto-issued STF-####). Sub-city officers are denied (CityScopeError); a monitor can never appoint — not even his own seat. Woreda/desk staffing stays with the sub-city officer (Task 43 split untouched).
+- NEW /api/reports/bureau (GET, reports:bureau): whole management suite of the acting city in one payload — staffing (per sub-city: officer, woreda count, active desks by role), registration pipeline per woreda (PRESENTED..REGISTERED/REJECTED), properties per woreda, payment ledger per woreda (receipts/ETB/cash flags), complaints & appeals per receiving unit, penalty cases per woreda (imposed ETB, cap, open). Every figure aggregates ALL sub-cities down to woreda; cityContext walls the scope (national officers may ?city=).
+- panels-s6s7.tsx: /reports gains a "Bureau reports" tab for BUREAU_HEAD/CITY_ADMIN — 9-stat city totals band, report-type selector (6 types), per-woreda tables, Download CSV export.
+- panels-settings.tsx: org editor table gains a "Responsible officer" column (name + STF code, amber "No responsible officer" when vacant) and an Appoint/Replace officer dialog per sub-city row (POST /api/org-units/manager); city-wide editors (identity, ladder, org) now state explicitly that every bureau-head modification is REFLECTED IMMEDIATELY IN ALL SUB-CITIES (shared city rule set + scoped boot payloads propagate renames, parameters, ladder values and appointments to every sub-city console).
+- LOCAL verify (scripts/verify-task44.sh): 17/17 PASS — suite aggregation (12 sub-cities/119 woredas), monitor+registrar 403 on reports, occupied-seat refusal naming sitting officer, wrong-replace refusal, replace flow (successor STF-2007 issued, incumbent STF-0003 login 401, successor boot scoped to AA-BOLE only), state restored (incumbent active again).
+- Commit 8eadcda pushed; Vercel live.
+- PRODUCTION verify (scripts/verify-prod-task44.sh, read-only): report suite 200 with AA fully aggregated (staffing rows == sub-cities, woreda rows == woredas, AA-BOLE officer listed); deny probes — monitor/registrar 403 on reports, monitor 403 AUTH_CITY_SCOPE on manager appointment (even with his own unit id), blind appointment on occupied AA-BOLE refused naming STF-0003 with nothing written; browser — AA bureau head: Bureau reports tab active (staffing table with "NO RESPONSIBLE OFFICER" rows, type switch to penalties OK, CSV enabled), settings org shows Responsible-officer column + "Replace officer" on AA-BOLE; NEK CITY_ADMIN regression: bureau reports tab present. Screenshots download/prod-task44-*.png.
+- Commit 7309833 (evidence) pushed.
+
+Stage Summary:
+- The city bureau head now MANAGES his sub-cities: sees who runs each one, fills vacant responsible-officer seats, replaces departing officers (new sign-in codes auto-issued) — and generates SIX report types (staffing, registration, properties, payments, complaints, penalties) at city level with every woreda breakdown, exportable to CSV. All his city-wide modifications (org renames, city parameters, penalty ladder, officer appointments) propagate instantly to every sub-city console. Production staffing shows most sub-cities awaiting appointments — fillable now from the Appoint officer action.
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.

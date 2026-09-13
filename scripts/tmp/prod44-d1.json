@@ -1,0 +1,1 @@
+{"ok":false,"error":"Role SUBCITY_MONITOR (STF-0003) is not authorized for capability reports:bureau. Allowed roles: BUREAU_HEAD, CITY_ADMIN, SYSTEM_ADMIN.","rule":"NFR-04 access control (ASVS V4)","code":"AUTH_FORBIDDEN"}

@@ -1,0 +1,1 @@
+{"ok":false,"error":"Cross-city access denied: the referenced sub-city is outside Addis Ababa (AA).","rule":"NFR-04 access control (ASVS V4)","code":"AUTH_CITY_SCOPE"}
