@@ -912,3 +912,24 @@ Stage Summary:
 - The ENTIRE system now follows the owner's link-first IA: short pages, one zone per screen, every zone reachable by a plain link — super user console, city-tier operations, settings, services, and all five project-tool evidence pages. Typography (Inter/Sora/JetBrains Mono/Noto Sans Ethiopic) and all APIs/enforcement are untouched; suites re-verified 133 local / 81 production (pre-deploy build).
 - Reusable lessons: Vercel Hobby-plan rate limits are account-wide across all six projects and block for 24 h; agent-browser census of [role=tab] + aria-selected is the fastest regression for the tab IA; keep hooks above early returns.
 - SECURITY NOTE: the GitHub PAT remains exposed in chat history — owner should revoke/rotate it after this session.
+
+---
+Task ID: 39
+Agent: Main agent (Super Z)
+Task: Settings page IA — move Organization hierarchy tab to top, followed by Staff register (owner directive); deploy to production.
+
+Work Log:
+- Reordered SettingsPage tabs in src/components/platform/panels-settings.tsx: org -> staff (conditional on staff:manage) -> identity -> federal -> ladder; default hash tab changed "identity" -> "org"; header comment updated.
+- Local tsc: 13 pre-existing panels-settings errors at lines 269-279 (staff table typing, untouched region); build has ignoreBuildErrors=true — no regressions from this change.
+- Sandbox next build failed on Google Fonts network fetch (fonts.gstatic.com unreachable) — pre-existing sandbox limitation; Vercel builds unaffected.
+- Local dev server had EMPTY database (0 rows) — ran bunx tsx prisma/seed.ts (9 staff, 2 cities), then verified via agent-browser.
+- Key learnings (reconfirmed): /api/platform boot requires the login COOKIE while business APIs accept x-staff-code; login is POST /api/auth/login {staffCode, city}; /settings is gated to BUREAU_HEAD + CITY_ADMIN only (rbac-pages.ts SETTINGS_ROLES) — registrar sees a blocked empty shell by design.
+- Created/deactivated temp CITY_ADMIN (STF-2002/STF-2003 local) for verification; last-admin deactivation guard verified working.
+- Verified locally: CITY_ADMIN sees [Organization hierarchy, Staff register, City identity & parameters, Federal register, Penalty ladder] with default=org and working deep-links #staff/#org; BUREAU_HEAD sees the same order minus Staff register.
+- Committed 4719533, pushed to main with PAT, waited for Vercel, verified PRODUCTION:
+  - NEK CITY_ADMIN STF-2003: [org, staff, identity, federal, ladder], default=org, #staff deep-link OK (screenshot download/prod-settings-nek-org-first.png).
+  - AA BUREAU_HEAD STF-0005: [org, identity, federal, ladder], default=org.
+
+Stage Summary:
+- Production live with new Settings tab order; all deep links (/settings#org, /settings#staff, /settings#identity, /settings#federal, /settings#ladder) still addressable.
+- Task 38 (Nekemte full business scenario) remains OPEN: file NEK-CENTRAL-W01/2026/0001 opened in production; v4 hybrid-auth scenario script rewrite still pending; remaining steps: checklist -> certify -> stamp (Dereje Wolde) -> register -> payments -> closure.
