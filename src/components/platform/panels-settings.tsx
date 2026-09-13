@@ -1,13 +1,13 @@
 // ============================================================================
 // panels-settings.tsx — City Settings (Dir. Art. 14 per-city rule sets).
 // LINK-FIRST IA: the editors are link-addressable zones — one per screen,
-// opened on demand (/settings#identity · /settings#federal ·
-// /settings#staff · /settings#ladder · /settings#org):
-//   1. City identity    — trilingual names, currency, work week, canonical lang
-//   2. Federal register — national regulations reflected to every city (read-only)
-//   3. Staff register   — officers of this city (city admin only)
-//   4. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
-//   5. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
+// opened on demand (/settings#org · /settings#staff ·
+// /settings#identity · /settings#federal · /settings#ladder):
+//   1. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
+//   2. Staff register   — officers of this city (city admin only)
+//   3. City identity    — trilingual names, currency, work week, canonical lang
+//   4. Federal register — national regulations reflected to every city (read-only)
+//   5. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
 // ============================================================================
 
 "use client";
@@ -321,13 +321,13 @@ export function SettingsPage() {
   const { boot, officer } = useBoot();
   const canManageStaff = officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
   const tabs = [
+    { key: "org", label: "Organization hierarchy", hint: "Sub-cities and woredas (M13)" },
+    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: "Officers of this city — add, deactivate, reactivate" }] : []),
     { key: "identity", label: "City identity & parameters", hint: "The per-city rule set (Dir. Art. 14)" },
     { key: "federal", label: "Federal register", hint: "National regulations reflected to every city" },
-    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: "Officers of this city — add, deactivate, reactivate" }] : []),
     { key: "ladder", label: "Penalty ladder", hint: "M9 offense catalogue values (Dir. Art. 22)" },
-    { key: "org", label: "Organization hierarchy", hint: "Sub-cities and woredas (M13)" },
   ];
-  const [tab] = useHashTab(tabs.map((x) => x.key), "identity");
+  const [tab] = useHashTab(tabs.map((x) => x.key), "org");
   if (!boot) return null;
   return (
     <div className="grid grid-cols-1 gap-4">
