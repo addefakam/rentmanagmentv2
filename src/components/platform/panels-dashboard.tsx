@@ -489,18 +489,6 @@ export function DashboardPage() {
       {isBureauHead ? (
         <div className="grid gap-3 md:grid-cols-2">
           <Link
-            href="/reports#bureau"
-            className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span className="font-display text-sm font-semibold tracking-tight">{t("nav.data", lang)}</span>
-              <Badge variant="outline" className="font-mono text-[10px]">M10, M11</Badge>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              City-level reports across all sub-cities down to every woreda — staffing, registration pipeline, properties, payments, complaints, penalties — exportable to CSV.
-            </p>
-          </Link>
-          <Link
             href="/settings#org"
             className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
           >
@@ -510,6 +498,18 @@ export function DashboardPage() {
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               Found sub-cities and appoint their one responsible officer; city-wide identity, parameters and penalty ladder — every modification is reflected in all sub-city consoles.
+            </p>
+          </Link>
+          <Link
+            href="/reports#bureau"
+            className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-display text-sm font-semibold tracking-tight">{t("nav.data", lang)}</span>
+              <Badge variant="outline" className="font-mono text-[10px]">M10, M11</Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              City-level reports across all sub-cities down to every woreda — staffing, registration pipeline, properties, payments, complaints, penalties — exportable to CSV.
             </p>
           </Link>
         </div>

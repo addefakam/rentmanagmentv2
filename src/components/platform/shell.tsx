@@ -75,6 +75,15 @@ const GROUP_ICONS: Record<string, typeof LayoutDashboard> = {
   "/project/uat": ClipboardCheck, "/project/pilot": Truck, "/project/golive": Rocket,
 };
 
+// Task 46 refinement (owner directive: "make Administration next to dashboard"):
+// per-role group render order. Roles not listed keep the NAV_GROUPS order. On
+// the city bureau head's minimal console the Administration group (City
+// Settings — sub-cities, responsible officers, city rules) sits directly
+// under the Dashboard, with the report surface last.
+const GROUP_ORDER_BY_ROLE: Record<string, string[]> = {
+  BUREAU_HEAD: ["overview", "admin", "insights"],
+};
+
 export function ConsoleShell({ officer, children }: { officer: ClientOfficer; children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -151,6 +160,11 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
   });
   const currentCity = boot?.cities.find((c) => c.cityCode === (boot?.cityCode ?? city));
 
+  // Group order: role-specific override (see GROUP_ORDER_BY_ROLE) or default.
+  const orderedGroups = (GROUP_ORDER_BY_ROLE[officer.roleCode] ?? NAV_GROUPS.map((g) => g.key))
+    .map((key) => NAV_GROUPS.find((g) => g.key === key))
+    .filter((g): g is (typeof NAV_GROUPS)[number] => Boolean(g));
+
   const nav = (
     <nav className="flex h-full flex-col gap-4 overflow-y-auto px-3 py-4" aria-label="Console">
       <Link href="/" className="mb-1 flex items-center gap-2 px-2" onClick={() => setMobileOpen(false)}>
@@ -160,7 +174,7 @@ export function ConsoleShell({ officer, children }: { officer: ClientOfficer; ch
           <span className="block truncate text-[10px] text-slate-400">{currentCity ? currentCity.nameEn : "…"} · Proc. 1320/2016</span>
         </span>
       </Link>
-      {NAV_GROUPS.map((g) => {
+      {orderedGroups.map((g) => {
         const items = visible.filter((n) => n.group === g.key);
         if (items.length === 0) return null;
         return (
