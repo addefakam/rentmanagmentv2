@@ -27,6 +27,7 @@ import {
 import { Stat, RuleNote } from "./kit";
 import { useBoot } from "./shell";
 import { call } from "./panels-s1";
+import { canAccess } from "@/lib/rbac-pages";
 import type { BureauReport } from "./panels-s6s7";
 import { t } from "./i18n";
 
@@ -462,6 +463,16 @@ export function DashboardPage() {
   // hold reports:bureau (city bureau head + city admin) — the same gate as
   // the Bureau reports tab; other roles keep the dashboard untouched.
   const canCityCharts = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN";
+  // Task 46 (owner directive — city bureau head MINIMAL console): his
+  // dashboard keeps the KPI band + city report charts + exactly the two
+  // working surfaces of his delegation role. The sprint construction grid
+  // and project evidence links belong to the desks, not to him.
+  const isBureauHead = officer.roleCode === "BUREAU_HEAD";
+  // Every other role: sprint deep links are filtered by the page RBAC so a
+  // card can never lead to a page the role cannot open (this also fixes the
+  // committee member's pre-existing dead sprint links).
+  const sprints = SPRINTS.filter((s) => canAccess(s.href, officer.roleCode));
+  const projectAccess = canAccess("/project", officer.roleCode);
   return (
     <div className="grid grid-cols-1 gap-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -475,35 +486,73 @@ export function DashboardPage() {
         <CityReportCharts staffCode={officer.staffCode} cityCode={boot.cityCode ?? officer.cityCode ?? ""} />
       ) : null}
 
-      <div className="rounded-xl border bg-white p-4">
-        <h2 className="mb-1 text-sm font-semibold">
-          {boot.cityConfig ? `${boot.cityConfig.nameEn} — ` : ""}Incremental Module Construction
-        </h2>
-        <p className="text-xs text-muted-foreground">
-          Seven sprints build the thirteen SRS modules. Each page is a working increment demonstrated to the owner; Gate G4 tests that all seven are demonstrated and no severity-1/2 defects remain open.
-        </p>
-        <RuleNote lang={lang} />
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        {SPRINTS.map((s) => (
+      {isBureauHead ? (
+        <div className="grid gap-3 md:grid-cols-2">
           <Link
-            key={s.key} href={s.href}
+            href="/reports#bureau"
             className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
           >
             <div className="flex items-center justify-between gap-2">
-              <span className="font-display text-sm font-semibold tracking-tight">{s.key} · {s.name}</span>
-              <Badge variant="outline" className="font-mono text-[10px]">{s.modules}</Badge>
+              <span className="font-display text-sm font-semibold tracking-tight">{t("nav.data", lang)}</span>
+              <Badge variant="outline" className="font-mono text-[10px]">M10, M11</Badge>
             </div>
-            <p className="mt-1 text-xs text-muted-foreground">{s.highlight}</p>
-            <p className="mt-2 text-xs font-medium">{boot.counts[s.countKey]} record{boot.counts[s.countKey] === 1 ? "" : "s"} in scope</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              City-level reports across all sub-cities down to every woreda — staffing, registration pipeline, properties, payments, complaints, penalties — exportable to CSV.
+            </p>
           </Link>
-        ))}
-        <Link href="/project" className="rounded-xl border border-dashed bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50">
-          <div className="text-sm font-semibold">{t("nav.evidence", lang)}</div>
-          <p className="mt-1 text-xs text-muted-foreground">Phase 3 promotion evidence, traceability closure and the Gate G4 exit checklist.</p>
-        </Link>
-      </div>
+          <Link
+            href="/settings#org"
+            className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-display text-sm font-semibold tracking-tight">{t("nav.settings", lang)} — Sub-cities & City Rules</span>
+              <Badge variant="outline" className="font-mono text-[10px]">M13</Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Found sub-cities and appoint their one responsible officer; city-wide identity, parameters and penalty ladder — every modification is reflected in all sub-city consoles.
+            </p>
+          </Link>
+        </div>
+      ) : (
+        <>
+          <div className="rounded-xl border bg-white p-4">
+            <h2 className="mb-1 text-sm font-semibold">
+              {boot.cityConfig ? `${boot.cityConfig.nameEn} — ` : ""}Incremental Module Construction
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Seven sprints build the thirteen SRS modules. Each page is a working increment demonstrated to the owner; Gate G4 tests that all seven are demonstrated and no severity-1/2 defects remain open.
+            </p>
+            <RuleNote lang={lang} />
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {sprints.map((s) => (
+              <Link
+                key={s.key} href={s.href}
+                className="rounded-xl border bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50 hover:shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-display text-sm font-semibold tracking-tight">{s.key} · {s.name}</span>
+                  <Badge variant="outline" className="font-mono text-[10px]">{s.modules}</Badge>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">{s.highlight}</p>
+                <p className="mt-2 text-xs font-medium">{boot.counts[s.countKey]} record{boot.counts[s.countKey] === 1 ? "" : "s"} in scope</p>
+              </Link>
+            ))}
+            {projectAccess ? (
+              <Link href="/project" className="rounded-xl border border-dashed bg-white p-4 text-left transition-colors hover:border-[#D4875A]/50">
+                <div className="text-sm font-semibold">{t("nav.evidence", lang)}</div>
+                <p className="mt-1 text-xs text-muted-foreground">Phase 3 promotion evidence, traceability closure and the Gate G4 exit checklist.</p>
+              </Link>
+            ) : null}
+            {!projectAccess && sprints.length === 0 ? (
+              <p className="px-1 text-xs text-muted-foreground">
+                Registry and operations desks open here for the officer roles they belong to.
+              </p>
+            ) : null}
+          </div>
+        </>
+      )}
     </div>
   );
 }
