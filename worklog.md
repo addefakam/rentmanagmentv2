@@ -933,3 +933,20 @@ Work Log:
 Stage Summary:
 - Production live with new Settings tab order; all deep links (/settings#org, /settings#staff, /settings#identity, /settings#federal, /settings#ladder) still addressable.
 - Task 38 (Nekemte full business scenario) remains OPEN: file NEK-CENTRAL-W01/2026/0001 opened in production; v4 hybrid-auth scenario script rewrite still pending; remaining steps: checklist -> certify -> stamp (Dereje Wolde) -> register -> payments -> closure.
+
+---
+Task ID: 40
+Agent: Main agent (Super Z)
+Task: Enable editing sub-cities and woredas in the Organization hierarchy editor (owner directive); deploy to production.
+
+Work Log:
+- API already supported trilingual rename (PATCH /api/org-units accepts nameEn/nameAm/nameOm); the UI only exposed an inline English-name onBlur edit.
+- Rewrote OrgEditor in src/components/platform/panels-settings.tsx following the established panels-cities.tsx Dialog pattern: per-row Edit button -> dialog with Name (English) / ስም (አማርኛ) / Maqaa (Afaan Oromoo), Save -> PATCH, toast + refresh. Removed the old onBlur rename.
+- Table now shows combined trilingual names column + Status + Actions; codes stay read-only and documented as permanent (anchor file numbers, staff assignments, establishment register O-7).
+- tsc: only the 13 pre-existing panels-settings staff-typing errors remain (untouched region).
+- Local browser verification (dev server, CITY_ADMIN STF-2003): Edit dialog opened for AA-ADDIS-KETEMA-W01, saved EN "Woreda 01 (Ketema)" / AM "አዲስ ከተማ ወረዳ 01" / OM "Woredaa 01 Kitamaa" — table row reflected all three after refresh.
+- Committed 293e30a, pushed to main, waited for Vercel, verified PRODUCTION as NEK CITY_ADMIN STF-2003: Edit buttons present (NEK-CENTRAL sub-city + NEK-CENTRAL-W01 woreda); dialog "Edit sub-city NEK-CENTRAL" prefilled with Nekemte Central / ነቀምቴ ማዕከላዊ / Niqimt Giddugaleessa; Cancel closed without mutating production data. Screenshot download/prod-settings-org-edit.png.
+
+Stage Summary:
+- Sub-cities and woredas are now fully editable (trilingual names) from City Settings -> Organization hierarchy, live in production. Codes intentionally immutable.
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint (file opened, lifecycle actions pending; v4 hybrid-auth script rewrite still pending).
