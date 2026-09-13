@@ -1075,3 +1075,20 @@ Stage Summary:
 - The city-level Rent Control Bureau head now sees ONLY what his role manages: Dashboard (KPIs + city report charts), Data & Reports (city→woreda report suite) and City Settings (sub-cities, responsible officers, city-wide rules). Every desk, catalog and project link is gone from his sidebar AND refused on direct URL. All other roles keep their consoles (with dead sprint/project links quietly fixed).
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
 - SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
+
+---
+Task ID: 46-r1
+Agent: Main agent (Super Z)
+Task: Owner refinement — "make Administration next to dashboard" (city bureau head console).
+
+Work Log:
+- shell.tsx: new GROUP_ORDER_BY_ROLE map — BUREAU_HEAD renders groups [overview, admin, insights], so ADMINISTRATION (City Settings) sits directly under Dashboard and INSIGHTS (Data & Reports) last. All other roles keep the default NAV_GROUPS order (registrar regression verified unchanged: Overview → Registry → Operations → Administration).
+- panels-dashboard.tsx: the two bureau-head management cards reordered to mirror the new sidebar (City Settings first, Data & Reports second).
+- tsc at the 66-error baseline; ESLint clean; LOCAL verify (scripts/verify-task46b.sh): bureau head groups ["Overview","Administration","Insights"], links [/, /settings, /reports]; dashboard cards settings-first. Screenshot task46b-bureau-head-order.png.
+- Commit 9eb3515 pushed 13:07 UTC — **NOT promoted by Vercel**. Retrigger commit e6f5858 (empty) pushed — also not promoted after ~30 min, while every previous push in this project went live in ~150–170 s.
+- Diagnostics: deployed chunk set unchanged / old order still served; no Vercel CLI or token in the environment to query build status; foreign commit 513d495 (UUID message) inspected — PNG evidence only, cannot break builds; `npx next build` now SUCCEEDS locally end-to-end (font fetch worked this time) — the code is build-clean, so the stall is on the Vercel side (build failing/queued/paused in their dashboard).
+
+Stage Summary:
+- Code-complete and locally verified: on the city bureau head console the ADMINISTRATION group now sits directly next to the Dashboard (Dashboard → City Settings → Data & Reports), dashboard cards match. PENDING PROMOTION: owner must check the Vercel dashboard for the builds of 9eb3515 / e6f5858 — once healthy, the live site picks the change up (or push any commit to retrigger).
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
