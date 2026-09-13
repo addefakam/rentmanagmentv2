@@ -14,12 +14,20 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, XAxis, YAxis,
+} from "recharts";
+import {
+  ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { Stat, RuleNote } from "./kit";
 import { useBoot } from "./shell";
 import { call } from "./panels-s1";
+import type { BureauReport } from "./panels-s6s7";
 import { t } from "./i18n";
 
 const SPRINTS = [
@@ -131,12 +139,329 @@ function SuperUserGeneralInfo({ staffCode, fullName }: { staffCode: string; full
   );
 }
 
+// ---------------------------------------------------------------------------
+// OWNER DIRECTIVE (Task 45) — CITY REPORT CHARTS on the city dashboard:
+// "in addition to current data display, city level report using different
+// charts in same artistic way". One fetch of GET /api/reports/bureau (the
+// Task 44 suite) feeds SIX distinct chart types — registration pipeline
+// (horizontal bars), property share (donut), payment ledger (vertical bars),
+// complaints (stacked bars), penalty profile (area) and staffing composition
+// (stacked bars) — rendered in the dashboard's own visual language: white
+// rounded cards, font-display titles, the tenant accent palette. Visible to
+// the reports:bureau desks (city bureau head + city admin); every other
+// keeps the dashboard exactly as it was.
+// ---------------------------------------------------------------------------
+
+const CHART_FALLBACK = { accent: "#D4875A", accentBright: "#E8A87E", primary: "#1D4ED8", secondary: "#0F766E" };
+
+// Read the ACTIVE tenant palette off :root so the charts follow each city's
+// white-label colors (same artistic way on every tenant, city-branded hues).
+// Memoized per boot identity — the tenant theme vars are already applied to
+// :root by TenantThemeProvider before the console shell renders any page.
+function useTenantPalette() {
+  const { boot } = useBoot();
+  return useMemo(() => {
+    if (typeof document === "undefined") return CHART_FALLBACK;
+    const cs = getComputedStyle(document.documentElement);
+    const v = (name: string, fb: string) => cs.getPropertyValue(name).trim() || fb;
+    return {
+      accent: v("--tenant-accent", CHART_FALLBACK.accent),
+      accentBright: v("--tenant-accent-bright", CHART_FALLBACK.accentBright),
+      primary: v("--tenant-primary", CHART_FALLBACK.primary),
+      secondary: v("--tenant-secondary", CHART_FALLBACK.secondary),
+    };
+  }, [boot]);
+}
+
+const statusLabel = (s: string) => s.charAt(0) + s.slice(1).toLowerCase().replace(/_/g, " ");
+// Axis-short form: strip the city prefix ("AA-BOLE-W01" -> "BOLE-W01").
+const shortUnit = (code: string) => code.replace(/^[A-Z]+-/, "");
+const compact = (n: number) =>
+  new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
+
+function ChartCard({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
+  return (
+    <div className="min-w-0 rounded-xl border bg-white p-4">
+      <h3 className="font-display text-sm font-semibold tracking-tight">{title}</h3>
+      <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">{subtitle}</p>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function ChartEmpty() {
+  return (
+    <div className="flex h-[230px] items-center justify-center rounded-lg border border-dashed px-6 text-center text-xs text-muted-foreground">
+      No records in city scope yet — the chart appears with the first entries.
+    </div>
+  );
+}
+
+function CityReportCharts({ staffCode, cityCode }: { staffCode: string; cityCode: string }) {
+  const pal = useTenantPalette();
+  const [rep, setRep] = useState<BureauReport | null>(null);
+  const [dead, setDead] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    void call("/api/reports/bureau", "GET", null, staffCode).then((d) => {
+      if (!alive) return;
+      if (d) setRep(d as BureauReport);
+      else setDead(true); // 403/network — the section stays out of the way
+    });
+    return () => { alive = false; };
+  }, [staffCode]);
+
+  const agg = useMemo(() => {
+    if (!rep) return null;
+    const woredas = rep.woredaRows;
+
+    const pipeline = rep.fileStatuses.map((s) => ({
+      stage: s, label: statusLabel(s),
+      count: woredas.reduce((n, w) => n + (w.files[s] ?? 0), 0),
+    }));
+
+    const bySub = new Map<string, { code: string; name: string; props: number }>();
+    for (const w of woredas) {
+      const e = bySub.get(w.subCityCode) ?? { code: w.subCityCode, name: w.subCityName, props: 0 };
+      e.props += w.properties;
+      bySub.set(w.subCityCode, e);
+    }
+    const propShare = [...bySub.values()].sort((a, b) => b.props - a.props);
+
+    const payTop = [...woredas]
+      .sort((a, b) => b.payments.totalEtb - a.payments.totalEtb).slice(0, 8)
+      .map((w) => ({ unit: shortUnit(w.woredaCode), full: `${w.woredaCode} — ${w.woredaName}`, etb: w.payments.totalEtb }));
+
+    const complaintTop = rep.complaintRows
+      .map((c) => ({ unit: shortUnit(c.unitCode), full: `${c.unitCode} — ${c.unitName}`, open: c.open, decided: c.decided }))
+      .sort((a, b) => b.open + b.decided - (a.open + a.decided)).slice(0, 8);
+
+    const finesTop = [...woredas]
+      .sort((a, b) => b.penalties.imposedEtb - a.penalties.imposedEtb).slice(0, 10)
+      .map((w) => ({ unit: shortUnit(w.woredaCode), full: `${w.woredaCode} — ${w.woredaName}`, etb: w.penalties.imposedEtb }));
+
+    const staffing = rep.staffing.map((s) => ({
+      unit: shortUnit(s.subCityCode), full: `${s.subCityCode} — ${s.subCityName}`,
+      Registrars: s.registrars, Stampers: s.stampers, Committee: s.committee,
+    }));
+
+    const blank = (rows: Record<string, unknown>[], keys: string[]) =>
+      rows.every((r) => keys.every((k) => !r[k]));
+
+    return {
+      pipeline, propShare, payTop, complaintTop, finesTop, staffing,
+      totalProps: propShare.reduce((n, r) => n + r.props, 0),
+      blank: {
+        pipeline: blank(pipeline, ["count"]),
+        propShare: blank(propShare, ["props"]),
+        payTop: blank(payTop, ["etb"]),
+        complaintTop: blank(complaintTop, ["open", "decided"]),
+        finesTop: blank(finesTop, ["etb"]),
+        staffing: blank(staffing, ["Registrars", "Stampers", "Committee"]),
+      },
+    };
+  }, [rep]);
+
+  if (dead) return null;
+  if (!agg) {
+    return (
+      <div className="grid gap-3">
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">City report charts</p>
+        <p className="px-1 py-4 text-sm text-muted-foreground">Preparing the city report charts…</p>
+      </div>
+    );
+  }
+
+  // Terracotta pipeline: bright at PRESENTED, deep at REGISTERED, red REJECTED.
+  const PIPELINE = [pal.accentBright, pal.accent, "#C1713F", "#A65A2E", "#7C4121", "#B91C1C"];
+  const DONUT = [pal.accent, pal.accentBright, pal.primary, pal.secondary, "#B45309", "#7C3AED", "#0369A1", "#059669", "#BE185D", "#4D7C0F", "#A16207"];
+
+  const cfgPipeline = { count: { label: "Files", color: pal.accent } } satisfies ChartConfig;
+  const cfgProps = { props: { label: "Properties", color: pal.accent } } satisfies ChartConfig;
+  const cfgPay = { etb: { label: "Received (ETB)", color: pal.accent } } satisfies ChartConfig;
+  const cfgComplaint = {
+    open: { label: "Open", color: "#D97706" }, decided: { label: "Decided", color: "#059669" },
+  } satisfies ChartConfig;
+  const cfgFines = { etb: { label: "Imposed (ETB)", color: "#B91C1C" } } satisfies ChartConfig;
+  const cfgStaff = {
+    Registrars: { label: "Registrars", color: pal.accent },
+    Stampers: { label: "Stampers", color: pal.accentBright },
+    Committee: { label: "Committee", color: pal.secondary },
+  } satisfies ChartConfig;
+
+  return (
+    <div className="grid gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          City report charts — {cityCode || rep?.cityCode} level down to every woreda
+        </p>
+        <Link
+          href="/reports#bureau"
+          className="text-xs font-medium text-foreground underline decoration-[#D4875A]/50 underline-offset-2 transition-colors hover:text-[#D4875A]"
+        >
+          Full report tables &amp; CSV
+        </Link>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        {/* 1 — Registration lifecycle per stage, horizontal bars (funnel read) */}
+        <ChartCard
+          title="Registration pipeline — files per lifecycle stage"
+          subtitle="Dir. Arts. 6–9 · every woreda of all sub-cities, presented to registered"
+        >
+          {agg.blank.pipeline ? <ChartEmpty /> : (
+            <ChartContainer config={cfgPipeline} className="h-[230px] w-full">
+              <BarChart data={agg.pipeline} layout="vertical" margin={{ left: 4, right: 28, top: 4, bottom: 4 }}>
+                <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="label" width={116} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <ChartTooltip content={<ChartTooltipContent hideLabel />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={16}>
+                  {agg.pipeline.map((p, i) => <Cell key={p.stage} fill={PIPELINE[i] ?? pal.accent} />)}
+                </Bar>
+              </BarChart>
+            </ChartContainer>
+          )}
+        </ChartCard>
+
+        {/* 2 — Property registry share per sub-city, donut with center total */}
+        <ChartCard
+          title="Property registry — share per sub-city"
+          subtitle="M2 · properties on the city register, aggregated per sub-city"
+        >
+          {agg.blank.propShare ? <ChartEmpty /> : (
+            <div className="relative">
+              <ChartContainer config={cfgProps} className="h-[230px] w-full">
+                <PieChart>
+                  <ChartTooltip content={<ChartTooltipContent hideLabel nameKey="code" />} />
+                  <Pie data={agg.propShare} dataKey="props" nameKey="code" innerRadius={58} outerRadius={88} paddingAngle={2} strokeWidth={1}>
+                    {agg.propShare.map((p, i) => <Cell key={p.code} fill={DONUT[i % DONUT.length]} />)}
+                  </Pie>
+                </PieChart>
+              </ChartContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-2">
+                <span className="font-display text-xl font-bold tabular-nums">{agg.totalProps.toLocaleString()}</span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">properties</span>
+              </div>
+              <div className="mt-1 flex flex-wrap justify-center gap-x-3 gap-y-1">
+                {agg.propShare.slice(0, 5).map((p, i) => (
+                  <span key={p.code} className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <span className="h-2 w-2 rounded-[2px]" style={{ backgroundColor: DONUT[i % DONUT.length] }} />
+                    {shortUnit(p.code)}
+                  </span>
+                ))}
+                {agg.propShare.length > 5 ? (
+                  <span className="text-[10px] text-muted-foreground">+{agg.propShare.length - 5} more</span>
+                ) : null}
+              </div>
+            </div>
+          )}
+        </ChartCard>
+
+        {/* 3 — Payment ledger per woreda, vertical bars (top 8 by ETB) */}
+        <ChartCard
+          title="Payment ledger — ETB received per woreda"
+          subtitle="Proc. Art. 13 · eight woredas with the highest electronic receipts"
+        >
+          {agg.blank.payTop ? <ChartEmpty /> : (
+            <ChartContainer config={cfgPay} className="h-[230px] w-full">
+              <BarChart data={agg.payTop} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="unit" tick={{ fontSize: 9 }} interval={0} angle={-32} textAnchor="end" height={46} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={compact} tick={{ fontSize: 10 }} width={52} axisLine={false} tickLine={false} />
+                <ChartTooltip content={<ChartTooltipContent labelKey="full" />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <Bar dataKey="etb" fill="var(--color-etb)" radius={[4, 4, 0, 0]} barSize={22} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </ChartCard>
+
+        {/* 4 — Complaints per receiving desk, stacked horizontal bars */}
+        <ChartCard
+          title="Complaints — open vs decided per receiving desk"
+          subtitle="M8/M12 · desks city-wide, eight busiest first"
+        >
+          {agg.blank.complaintTop ? <ChartEmpty /> : (
+            <ChartContainer config={cfgComplaint} className="h-[230px] w-full">
+              <BarChart data={agg.complaintTop} layout="vertical" margin={{ left: 4, right: 20, top: 4, bottom: 4 }}>
+                <CartesianGrid horizontal={false} strokeDasharray="3 3" />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <YAxis type="category" dataKey="unit" width={92} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
+                <ChartTooltip content={<ChartTooltipContent labelKey="full" />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar dataKey="open" stackId="c" fill="var(--color-open)" barSize={14} />
+                <Bar dataKey="decided" stackId="c" fill="var(--color-decided)" radius={[0, 4, 4, 0]} barSize={14} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </ChartCard>
+
+        {/* 5 — Penalty profile per woreda, area curve over the ranked profile */}
+        <ChartCard
+          title="Penalty profile — fines imposed per woreda"
+          subtitle="Proc. Arts. 29–32 · ten woredas with the heaviest imposed fines"
+        >
+          {agg.blank.finesTop ? <ChartEmpty /> : (
+            <ChartContainer config={cfgFines} className="h-[230px] w-full">
+              <AreaChart data={agg.finesTop} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="fillFines" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#B91C1C" stopOpacity={0.28} />
+                    <stop offset="95%" stopColor="#B91C1C" stopOpacity={0.03} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="unit" tick={{ fontSize: 9 }} interval={0} angle={-32} textAnchor="end" height={46} axisLine={false} tickLine={false} />
+                <YAxis tickFormatter={compact} tick={{ fontSize: 10 }} width={52} axisLine={false} tickLine={false} />
+                <ChartTooltip content={<ChartTooltipContent labelKey="full" />} cursor={{ stroke: "rgba(0,0,0,0.15)" }} />
+                <Area dataKey="etb" type="monotone" stroke="#B91C1C" strokeWidth={2} fill="url(#fillFines)" dot={false} />
+              </AreaChart>
+            </ChartContainer>
+          )}
+        </ChartCard>
+
+        {/* 6 — Staffing composition per sub-city, stacked vertical bars */}
+        <ChartCard
+          title="Staffing — active woreda desks per sub-city"
+          subtitle="Sub-city delegation · registrars, stampers and committee members"
+        >
+          {agg.blank.staffing ? <ChartEmpty /> : (
+            <ChartContainer config={cfgStaff} className="h-[230px] w-full">
+              <BarChart data={agg.staffing} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                <XAxis dataKey="unit" tick={{ fontSize: 9 }} interval={0} angle={-24} textAnchor="end" height={42} axisLine={false} tickLine={false} />
+                <YAxis allowDecimals={false} tick={{ fontSize: 10 }} width={30} axisLine={false} tickLine={false} />
+                <ChartTooltip content={<ChartTooltipContent labelKey="full" />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar dataKey="Registrars" stackId="d" fill="var(--color-Registrars)" barSize={22} />
+                <Bar dataKey="Stampers" stackId="d" fill="var(--color-Stampers)" barSize={22} />
+                <Bar dataKey="Committee" stackId="d" fill="var(--color-Committee)" radius={[4, 4, 0, 0]} barSize={22} />
+              </BarChart>
+            </ChartContainer>
+          )}
+        </ChartCard>
+      </div>
+
+      <p className="px-1 text-[11px] leading-relaxed text-muted-foreground">
+        {rep
+          ? `Generated ${new Date(rep.generatedAt).toISOString().replace("T", " ").slice(0, 16)} by ${rep.generatedBy.fullName} (${rep.generatedBy.staffCode}). Every figure aggregates ALL sub-cities and their woredas; bureau-head modifications are reflected in these numbers the moment they happen.`
+          : null}
+      </p>
+    </div>
+  );
+}
+
 export function DashboardPage() {
   const { boot, lang, officer } = useBoot();
   if (!boot) return null;
   if (officer.roleCode === "SYSTEM_ADMIN") {
     return <SuperUserGeneralInfo staffCode={officer.staffCode} fullName={officer.fullName} />;
   }
+  // Task 45: city report charts ride the dashboard ONLY for the desks that
+  // hold reports:bureau (city bureau head + city admin) — the same gate as
+  // the Bureau reports tab; other roles keep the dashboard untouched.
+  const canCityCharts = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN";
   return (
     <div className="grid grid-cols-1 gap-4">
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -145,6 +470,10 @@ export function DashboardPage() {
         <Stat label="Complaints" value={boot.counts.complaints} hint={`${boot.appeals.length} appeals`} />
         <Stat label="Deadline clocks" value={boot.counts.deadlines} hint={`${boot.counts.overdueDeadlines} overdue`} />
       </div>
+
+      {canCityCharts ? (
+        <CityReportCharts staffCode={officer.staffCode} cityCode={boot.cityCode ?? officer.cityCode ?? ""} />
+      ) : null}
 
       <div className="rounded-xl border bg-white p-4">
         <h2 className="mb-1 text-sm font-semibold">

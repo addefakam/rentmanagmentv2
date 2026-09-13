@@ -166,7 +166,9 @@ export function EnforcementPanel({ boot, lang, refresh }: PanelProps) {
 // the moment renders below a city totals band; Download CSV hands the same
 // table to stakeholders and the Ministry feed.
 // ---------------------------------------------------------------------------
-type BureauReport = {
+// Exported for panels-dashboard.tsx (Task 45 city report charts share the
+// same one-fetch report suite).
+export type BureauReport = {
   cityCode: string;
   generatedAt: string;
   generatedBy: { staffCode: string; fullName: string; roleCode: string };
