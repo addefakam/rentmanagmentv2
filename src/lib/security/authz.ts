@@ -70,9 +70,12 @@ export const CAPABILITIES: Record<string, string[]> = {
   "operations:manage": ["BUREAU_HEAD", "SYSTEM_ADMIN"], // hypercare, cycle, referrals, handover, PIR (plan A-42..A-48)
   "feed:publish": ["MINISTRY_ANALYST", "BUREAU_HEAD", "SYSTEM_ADMIN"], // national feed to the Ministry (A-45)
   "setting:manage": ["SYSTEM_ADMIN"], // platform settings incl. auth_mode switch
-  // City staff register — the city super-admin adds/moves/deactivates the
-  // officers of ONE city; the system admin does it fleet-wide.
-  "staff:manage": ["CITY_ADMIN", "SYSTEM_ADMIN"],
+  // City staff register — the city Rent Control Bureau head and the city
+  // super-admin add/move/deactivate the officers of ONE city (Dir. Art. 8:
+  // the bureau organizes its sub-city and woreda offices); the system admin
+  // does it fleet-wide. Scope wall: every reference stays inside the acting
+  // city's bureau subtree.
+  "staff:manage": ["BUREAU_HEAD", "CITY_ADMIN", "SYSTEM_ADMIN"],
   // Multi-city administration (per-city rule sets, Dir. Art. 14).
   // Owner directive (single-admin policy): exactly ONE administrator — the
   // SYSTEM_ADMIN — manages cities. The ministry analyst is oversight-only:

@@ -1,7 +1,8 @@
 // ============================================================================
-// /api/staff — city staff register (Dir. Art. 6; Dir. Art. 14 administration).
-// The CITY super-admin (role CITY_ADMIN, created automatically at city
-// onboarding) runs the staff register of ONE city:
+// /api/staff — city staff register (Dir. Arts. 6, 8, 9; Dir. Art. 14 admin).
+// The CITY Rent Control Bureau head (BUREAU_HEAD) and the city super-admin
+// (CITY_ADMIN, created automatically at city onboarding) run the staff
+// register of ONE city — bureau, sub-city and woreda desks alike:
 //   POST  : add an officer to the acting city — staff code auto-issued from
 //           the register sequence (STF-####), role must be a city-level role
 //           (national roles cannot be created from a city desk), org unit
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
         if (!orgUnitId) throw new Error("Home org unit is required.");
 
         const ctx = await cityContext(actor, {
-          city: input.cityCode ?? req.headers.get("x-city-code"),
+          city: (input.cityCode as string | undefined) ?? req.headers.get("x-city-code"),
           unitId: orgUnitId, unitLabel: "home org unit",
         });
         const role = await db.role.findUnique({ where: { code: roleCode } });
@@ -86,7 +87,7 @@ export async function PATCH(req: Request) {
         const user = await db.systemUser.findUnique({ where: { id }, include: { role: true, orgUnit: true } });
         if (!user) throw new Error("Unknown officer.");
         const ctx = await cityContext(actor, {
-          city: input.cityCode ?? req.headers.get("x-city-code"),
+          city: (input.cityCode as string | undefined) ?? req.headers.get("x-city-code"),
           unitId: user.orgUnitId, unitLabel: "officer's current org unit",
         });
 

@@ -4,7 +4,7 @@
 // opened on demand (/settings#org · /settings#staff ·
 // /settings#identity · /settings#federal · /settings#ladder):
 //   1. Org hierarchy    — sub-cities and woredas (M13) with trilingual names
-//   2. Staff register   — officers of this city (city admin only)
+//   2. Staff register   — officers of this city (bureau head + city admin)
 //   3. City identity    — trilingual names, currency, work week, canonical lang
 //   4. Federal register — national regulations reflected to every city (read-only)
 //   5. Penalty ladder   — M9 offense catalogue values (Dir. Art. 22)
@@ -266,9 +266,11 @@ function OrgEditor() {
 }
 
 // ---------------------------------------------------------------------------
-// 5 — staff register: the city super-admin adds and manages the officers of
-// ONE city (sign-in code auto-issued). System admins do the same for any
-// city they view. Capability: staff:manage (CITY_ADMIN, SYSTEM_ADMIN).
+// 5 — staff register: the city Rent Control Bureau head adds and manages the
+// officers of ONE city (sign-in code auto-issued) — bureau, sub-city and
+// woreda desks, each with the role that fits (Dir. Arts. 6, 8, 9). The city
+// admin and system admins share the same register.
+// Capability: staff:manage (BUREAU_HEAD, CITY_ADMIN, SYSTEM_ADMIN).
 // ---------------------------------------------------------------------------
 const CITY_ROLE_CODES = [
   "WOREDA_REGISTRAR", "WOREDA_STAMPER", "SUBCITY_MONITOR", "BUREAU_ANALYST",
@@ -282,7 +284,14 @@ function StaffRegister() {
   const [created, setCreated] = useState<{ staffCode: string; fullName: string } | null>(null);
   const staff = boot?.staff ?? [];
   const roles = (boot?.roles ?? []).filter((r) => CITY_ROLE_CODES.includes(r.code));
-  const units = boot?.orgUnits ?? [];
+  // Home offices grouped by tier — the bureau head staffs the city bureau,
+  // every sub-city rent-control desk and every woreda office from ONE list.
+  const tierLabel: Record<string, string> = { BUREAU: "City bureau", SUB_CITY: "Sub-city", WOREDA: "Woreda" };
+  const tierOrder: Record<string, number> = { BUREAU: 0, SUB_CITY: 1, WOREDA: 2 };
+  const units = (boot?.orgUnits ?? [])
+    .slice()
+    .sort((a, b) => (tierOrder[a.tier] ?? 9) - (tierOrder[b.tier] ?? 9) || a.code.localeCompare(b.code))
+    .map((u) => ({ ...u, label: `[${tierLabel[u.tier] ?? u.tier}] ${u.code} — ${u.nameEn}` }));
 
   const add = async () => {
     setBusy(true);
@@ -339,9 +348,9 @@ function StaffRegister() {
             <SelectField value={draft.roleCode} onChange={(v) => setDraft({ ...draft, roleCode: v })}
               options={roles.map((r) => ({ value: r.code, label: r.nameEn }))} />
           </Field>
-          <Field label="Home office">
+          <Field label="Home office (city bureau · sub-city · woreda)">
             <SelectField value={draft.orgUnitId} onChange={(v) => setDraft({ ...draft, orgUnitId: v })}
-              options={units.map((u) => ({ value: u.id, label: `${u.code} — ${u.nameEn}` }))}
+              options={units.map((u) => ({ value: u.id, label: u.label }))}
               placeholder="select office" />
           </Field>
           <Field label="Language">
@@ -351,7 +360,7 @@ function StaffRegister() {
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2">
           <ActionButton onClick={add} disabled={busy || !draft.fullName.trim() || !draft.orgUnitId}>Register officer</ActionButton>
-          <span className="text-[11px] text-muted-foreground">Staff codes are issued automatically (STF-####) and serve as the sign-in code. National roles are federal appointments and cannot be created from a city.</span>
+          <span className="text-[11px] text-muted-foreground">Staff codes are issued automatically (STF-####) and serve as the sign-in code. Post officers to any office of this city — bureau, sub-city or woreda — with the role that fits the desk (Dir. Art. 9 separates registrar and stamper). National roles are federal appointments and cannot be created from a city.</span>
         </div>
       </div>
     </div>
@@ -361,10 +370,12 @@ function StaffRegister() {
 // ---------------------------------------------------------------------------
 export function SettingsPage() {
   const { boot, officer } = useBoot();
-  const canManageStaff = officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
+  // The city Rent Control Bureau head owns the staffing of his city — he is
+  // responsible for creating the officers at every sub-city and woreda desk.
+  const canManageStaff = officer.roleCode === "BUREAU_HEAD" || officer.roleCode === "CITY_ADMIN" || officer.roleCode === "SYSTEM_ADMIN";
   const tabs = [
     { key: "org", label: "Organization hierarchy", hint: "Sub-cities and woredas (M13)" },
-    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: "Officers of this city — add, deactivate, reactivate" }] : []),
+    ...(canManageStaff ? [{ key: "staff", label: "Staff register", hint: "Officers of this city — bureau, sub-city and woreda desks" }] : []),
     { key: "identity", label: "City identity & parameters", hint: "The per-city rule set (Dir. Art. 14)" },
     { key: "federal", label: "Federal register", hint: "National regulations reflected to every city" },
     { key: "ladder", label: "Penalty ladder", hint: "M9 offense catalogue values (Dir. Art. 22)" },
@@ -381,7 +392,7 @@ export function SettingsPage() {
       ) : null}
       {tab === "federal" ? <NationalRegulationsCard /> : null}
       {tab === "staff" && canManageStaff ? (
-        <Panel title="Staff register" subtitle="The city’s officers: add new staff, issue sign-in codes, deactivate or reactivate accounts, and move officers between offices. City admin authority stops at this city’s boundary.">
+        <Panel title="Staff register" subtitle="The city’s officers: the bureau head creates the rent-control staff of every level — city bureau, sub-city and woreda — issues their sign-in codes, moves them between offices and deactivates or reactivates accounts. Authority stops at this city’s boundary.">
           <StaffRegister />
         </Panel>
       ) : null}
