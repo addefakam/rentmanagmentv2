@@ -967,3 +967,29 @@ Work Log:
 Stage Summary:
 - Every woreda of a city is now visible and editable (trilingual names) in City Settings -> Organization hierarchy, live in production; production data left in original state.
 - Task 38 (Nekemte full business scenario) still open at the same checkpoint.
+
+---
+Task ID: 42
+Agent: Main agent (Super Z)
+Task: "make city level Rent Control Bureau to create subcity and of the city and sub city level rent control — this user responsible to create different staffs with different role at his sub city level" — give the city Rent Control Bureau head (BUREAU_HEAD) the staff register so he staffs every sub-city/woreda desk; deploy to production.
+
+Work Log:
+- Gap analysis: sub-city creation was ALREADY available to BUREAU_HEAD (org:manage + "Register a new unit" form in the org editor); the missing half was staff creation — staff:manage was CITY_ADMIN/SYSTEM_ADMIN only and the Staff register tab was hidden from BUREAU_HEAD.
+- authz.ts: "staff:manage" now ["BUREAU_HEAD","CITY_ADMIN","SYSTEM_ADMIN"] (Dir. Arts. 6, 8, 9). City scope wall unchanged — cityContext() pins every org-unit reference inside the acting bureau subtree.
+- panels-settings.tsx: canManageStaff += BUREAU_HEAD; tab hint + panel subtitle rewritten (bureau head staffs city bureau, sub-city and woreda desks); Home office selector now tier-prefixed and ordered [City bureau] -> [Sub-city] -> [Woreda] with label "Home office (city bureau · sub-city · woreda)"; Add-officer hint explains Dir. Art. 9 registrar/stamper separation.
+- api/staff route header comment updated to bureau-head authority; city param typing narrowed (2 pre-existing tsc errors fixed).
+- types.ts Staff interface aligned with boot payload (added staffCode/isActive/orgUnitId) — cleared all 13 pre-existing panels-settings staff-typing tsc errors.
+- Local verification (dev 3210, seeded DB, BUREAU_HEAD STF-0005 AA):
+  - POST /api/org-units created SUB_CITY AA-TEST-SC and WOREDA AA-TEST-SC-W01 under it (org:manage).
+  - POST /api/staff as BUREAU_HEAD created STF-2004 SUBCITY_MONITOR @AA-TEST-SC and STF-2005 WOREDA_REGISTRAR @AA-TEST-SC-W01 — sign-in codes auto-issued.
+  - Deny: POST /api/staff with out-of-city unit -> 403 AUTH_CITY_SCOPE "Cross-city access denied: the referenced home org unit is outside Addis Ababa (AA)."
+  - Browser: STF-0005 sees 5 tabs with Staff register active; Home office options tier-grouped (radix portal probe [role=option]). Screenshots: download/settings-bureau-head-staff.png, settings-bureau-head-staff-form.png.
+- Committed 7a6c344, pushed bf240d5..7a6c344 to main with PAT, Vercel live.
+- PRODUCTION verification (read-only, no data created):
+  - AA BUREAU_HEAD STF-0005: Staff register tab present and active at /settings#staff; new form label live; Home office options "[City bureau] AA-BUREAU … / [Sub-city] … / [Woreda] …"; deny probe 403 AUTH_CITY_SCOPE; boot shows 6 staff rows, 130 org units. Screenshot download/prod-bureau-head-staff.png.
+  - NEK CITY_ADMIN STF-2003 regression: 5 tabs incl. Staff register. Screenshot download/prod-nek-cityadmin-staff.png.
+
+Stage Summary:
+- The city-level Rent Control Bureau head now runs the FULL staffing chain of his city from Settings: create sub-cities (org editor), then create the rent-control officers of every level — city bureau, sub-city, woreda — each with the role that fits the desk (registrar / stamper / monitor / analyst / committee / bureau head / city admin), and hand out their auto-issued sign-in codes. Everything scope-walled to his own city.
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint (file NEK-CENTRAL-W01/2026/0001 opened; lifecycle actions pending; v4 hybrid-auth script rewrite still pending).
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
