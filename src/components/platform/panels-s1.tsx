@@ -8,6 +8,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { t } from "./i18n";
@@ -109,6 +110,10 @@ export function AdminPanel({ boot, lang, refresh }: PanelProps) {
             ])}
             empty={t("state.empty", lang)}
           />
+          <p className="text-[11px] text-muted-foreground">
+            This is the register-status view. To rename a woreda or sub-city (English / አማርኛ / Afaan Oromoo), open{" "}
+            <Link href="/settings#org" className="font-medium text-foreground underline underline-offset-2 hover:text-[#D4875A]">City Settings → Organization hierarchy</Link>.
+          </p>
         </div>
       </Panel>
 

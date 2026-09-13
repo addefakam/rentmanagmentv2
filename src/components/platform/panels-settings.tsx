@@ -161,7 +161,9 @@ function OrgEditor() {
   const subCities = units.filter((u) => u.tier === "SUB_CITY" && u.parentId === effectiveBureau);
   const [scId, setScId] = useState("");
   const effectiveSc = scId || subCities[0]?.id || "";
-  const woredas = units.filter((u) => u.tier === "WOREDA" && u.parentId === effectiveSc);
+  // Every woreda of the city is listed and editable — no sub-city hunting.
+  const allWoredas = useMemo(() => units.filter((u) => u.tier === "WOREDA").sort((a, b) => a.code.localeCompare(b.code)), [units]);
+  const unitById = useMemo(() => new Map(units.map((u) => [u.id, u])), [units]);
 
   const [unit, setUnit] = useState({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" });
   const create = async () => {
@@ -190,17 +192,20 @@ function OrgEditor() {
           <SelectField value={effectiveBureau} onChange={setBureauId}
             options={bureaus.map((b) => ({ value: b.id, label: `${b.code} — ${b.nameEn}` }))} />
         </Field>
-        <Field label="Sub-city (for woreda edits)">
+        <Field label="Sub-city (parent for new woredas)">
           <SelectField value={effectiveSc} onChange={setScId}
             options={subCities.map((s) => ({ value: s.id, label: `${s.code} — ${s.nameEn}` }))} />
         </Field>
       </div>
 
       <DataTable
-        headers={["Code", "Tier", "Names (EN · AM · OM)", "Status", "Actions"]}
-        rows={[...subCities, ...woredas].map((u) => [
+        headers={["Code", "Tier", "Under", "Names (EN · AM · OM)", "Status", "Actions"]}
+        rows={[...subCities, ...allWoredas].map((u) => [
           <span key={u.id} className="font-mono text-[10px]">{u.code}</span>,
           <span key={`t-${u.id}`} className="text-[10px]">{u.tier.replace("_", " ")}</span>,
+          <span key={`p-${u.id}`} className="font-mono text-[10px] text-muted-foreground">
+            {u.tier === "SUB_CITY" ? "city bureau" : unitById.get(u.parentId ?? "")?.code ?? "—"}
+          </span>,
           <span key={`n-${u.id}`} className="block max-w-[260px]">
             <span className="block text-[11px] font-semibold">{u.nameEn}</span>
             <span className="block text-[10px] text-muted-foreground">{u.nameAm} · {u.nameOm}</span>
@@ -210,7 +215,7 @@ function OrgEditor() {
           </span>,
           <ActionButton key={`a-${u.id}`} variant="outline" onClick={() => openEdit(u)}>Edit</ActionButton>,
         ])}
-        empty="No units under this bureau."
+        empty="No units registered yet."
       />
 
       {/* Edit dialog — trilingual names (code is permanent) ---------------- */}
