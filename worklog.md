@@ -1057,3 +1057,21 @@ Stage Summary:
 - Production NEK has 0 registration files: the Task 38 lifecycle file must be re-opened in production when Task 38 resumes.
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
 - SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
+
+---
+Task ID: 46
+Agent: Main agent (Super Z)
+Task: Owner directive — CITY BUREAU HEAD MINIMAL SIDEBAR. "on city level side bar keep only important link that can managed by city level admin and remove remaining one for the task not concern you. make it minimal that related to his role."
+
+Work Log:
+- rbac-pages.ts: BUREAU_HEAD removed from REGISTRY_ROLES, OPERATIONS_ROLES, SERVICES_ROLES and PROJECT_ROLES — his sidebar and shell are now exactly Dashboard (/) · Data & Reports (/reports) · City Settings (/settings). Removed: parties, properties, registration, rent, complaints, enforcement, services, all 5 project pages (page map drives BOTH the sidebar and the ModuleFrame refusal). Confirmed first that no bureau-head duty lived in the removed pages (his actions are only in dashboard charts, /reports bureau tab, /settings org/identity/ladder — grep over panels; appeals are committee/desk work). CITY_ADMIN, SUBCITY_MONITOR and all desk roles untouched.
+- panels-dashboard.tsx: bureau head's dashboard swaps the "Incremental Module Construction" sprint grid + project-evidence card for exactly TWO management cards — Data & Reports (M10/M11, deep link /reports#bureau: city→woreda staffing/registration/properties/payments/complaints/penalties + CSV) and City Settings — Sub-cities & City Rules (M13, deep link /settings#org: founding, officer appointment, propagating rule set). KPI band + Task 45 city report charts unchanged. For every OTHER role the 7 sprint deep links are now filtered by canAccess (also fixes the committee member's pre-existing dead sprint links) and the /project card renders only for PROJECT_ROLES — registrar etc. no longer get a dead project card.
+- tsc at the 66-error pre-existing baseline (zero new); ESLint clean on both files.
+- LOCAL verify (scripts/verify-task46.sh + verify-task46a.sh, dev 3210): bureau head STF-0005 — sidebar links exactly [/, /reports, /settings], groups Overview/Insights/Administration only; dashboard mgmtReports+mgmtSettings true, 6 recharts surfaces, 0 desk cards, no sprint explainer; direct /parties /properties /registration /rent /complaints /enforcement /services /project ALL refused "Not available for your role"; /reports#bureau and /settings#org open normally. Registrar STF-0001 regression — sidebar unchanged (7 desk links + services, no settings), dashboard keeps explainer + S1–S6 sprint cards, S7 auto-filtered (no /reports access), project card gone (was a dead link before). Sub-city officer login regression OK. Screenshots task46-*.png.
+- Commit c7dc0f7 pushed (b6595f7..c7dc0f7), Vercel live.
+- PRODUCTION verify (scripts/verify-prod-task46.sh, read-only): AA STF-0005 sidebar exactly [/, /reports, /settings]; dashboard 2 management cards + 3 chart surfaces + 0 desk cards; direct /parties refused; /reports#bureau and /settings#org live. NEK STF-2003 CITY_ADMIN regression — full wide sidebar unchanged (registry + operations + insights + settings + services + 5 project links). Screenshots prod-task46-*.png.
+
+Stage Summary:
+- The city-level Rent Control Bureau head now sees ONLY what his role manages: Dashboard (KPIs + city report charts), Data & Reports (city→woreda report suite) and City Settings (sub-cities, responsible officers, city-wide rules). Every desk, catalog and project link is gone from his sidebar AND refused on direct URL. All other roles keep their consoles (with dead sprint/project links quietly fixed).
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
