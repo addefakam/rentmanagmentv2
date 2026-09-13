@@ -1092,3 +1092,22 @@ Stage Summary:
 - Code-complete and locally verified: on the city bureau head console the ADMINISTRATION group now sits directly next to the Dashboard (Dashboard → City Settings → Data & Reports), dashboard cards match. PENDING PROMOTION: owner must check the Vercel dashboard for the builds of 9eb3515 / e6f5858 — once healthy, the live site picks the change up (or push any commit to retrigger).
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
 - SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
+
+---
+Task ID: 47
+Agent: Main agent (Super Z)
+Task: Owner directive — "move the following to sub city level remove from city level access: Registry, Operations, Project tools — and push all changes."
+
+Work Log:
+- rbac-pages.ts: CITY_ADMIN removed from REGISTRY_ROLES, OPERATIONS_ROLES and PROJECT_ROLES — the whole city tier (bureau head since Task 46 + city administrator now) no longer sees parties, properties, registration, rent, complaints, enforcement or any project page; those desks belong to the sub-city officer and his woreda desks (SUBCITY_MONITOR / WOREDA_REGISTRAR / WOREDA_STAMPER keep them). City admin keeps Dashboard, Data & Reports (insights), City Settings (admin) and the Service Catalog. Header comment documents the directive.
+- panels-dashboard.tsx: minimal management-cards dashboard extended from BUREAU_HEAD to both city-level desks — city admin gets THREE cards (City Settings → /settings#org, Data & Reports → /reports#bureau, Service Catalog → /services); no sprint explainer, no project card for city level. Sprint/dead-link RBAC filtering for other roles unchanged.
+- shell.tsx: GROUP_ORDER_BY_ROLE += CITY_ADMIN — Administration group sits directly under Dashboard for both city-level roles.
+- ENV incident: the sandbox had wiped the local SQLite SystemUser table between messages (logins "Unknown or inactive staff code"; tsx count TOTAL: 0). Re-seeded with `bunx tsx prisma/seed.ts` (9 staff restored) before verifying.
+- LOCAL verify (scripts/verify-task47.sh): fresh AA CITY_ADMIN STF-2002 created via SYSTEM_ADMIN API — nav groups [Overview, Administration, Insights], links [/, /settings, /services, /reports]; dashboard 3 mgmt cards + 3 chart surfaces, no explainer/project; direct /parties /properties /registration /rent /complaints /enforcement /project ALL refused; /services opens. Bureau head STF-0005 unchanged. Sub-city officer STF-0003 @AA-BOLE keeps Registry+Operations+Insights+Settings. Screenshots task47-*.png.
+- Commit fd93a64 pushed (fb6d3e8..fd93a64) — Vercel promotion RECOVERED (the Task 46b stall cleared; earlier queued builds went live).
+- PRODUCTION verify (scripts/verify-prod-task47.sh, read-only): NEK CITY_ADMIN STF-2003 — groups [Overview, Administration, Insights], links [/, /settings, /services, /reports], dashboard 3 cards + charts, no sprint explainer, direct /parties refused, /services opens. AA BUREAU_HEAD STF-0005 regression unchanged. Screenshots prod-task47-*.png.
+
+Stage Summary:
+- The tier split is now absolute: CITY LEVEL (bureau head + city administrator) = manage & report only (Dashboard with city report charts, Data & Reports, City Settings, + Service Catalog for the city admin); SUB-CITY LEVEL (officer + woreda desks) = run Registry (parties, properties, registration, rent) and Operations (complaints, enforcement). Direct URL access to the moved pages is refused for both city-level roles; every local + production probe passed.
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
