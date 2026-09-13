@@ -1035,3 +1035,25 @@ Stage Summary:
 - The city bureau head now MANAGES his sub-cities: sees who runs each one, fills vacant responsible-officer seats, replaces departing officers (new sign-in codes auto-issued) — and generates SIX report types (staffing, registration, properties, payments, complaints, penalties) at city level with every woreda breakdown, exportable to CSV. All his city-wide modifications (org renames, city parameters, penalty ladder, officer appointments) propagate instantly to every sub-city console. Production staffing shows most sub-cities awaiting appointments — fillable now from the Appoint officer action.
 - Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
 - SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.
+
+---
+Task ID: 45
+Agent: Main agent (Super Z)
+Task: Owner directive — CITY DASHBOARD REPORT CHARTS. "at city level dashboard in addition to current data display city level report using different charts in same artistic way."
+
+Work Log:
+- panels-dashboard.tsx: new CityReportCharts section on the city dashboard ("/") rendered IN ADDITION to the existing KPI band + sprint link cards (those untouched). Gated to the reports:bureau desks (BUREAU_HEAD / CITY_ADMIN — same gate as the Bureau reports tab); all other roles keep the dashboard exactly as it was; SYSTEM_ADMIN branch untouched.
+- One fetch of GET /api/reports/bureau (Task 44 suite, no backend changes) feeds SIX distinct chart types: (1) registration pipeline per lifecycle stage — horizontal bars in a deepening terracotta funnel (Dir. Arts. 6-9); (2) property registry share per sub-city — donut with center total + mini legend (M2); (3) payment ledger ETB per woreda — vertical bars, top 8 (Proc. Art. 13); (4) complaints open vs decided per receiving desk — stacked horizontal bars with legend (M8/M12); (5) penalty profile ETB per woreda — area curve, top 10 (Proc. Arts. 29-32); (6) staffing composition per sub-city — stacked bars registrars/stampers/committee (Task 43 delegation).
+- Artistic consistency: white rounded-xl border cards, font-display titles, muted subtitles with legal citations, tenant accent palette read off :root CSS vars (useTenantPalette — charts follow each city's white-label colors; fallback #D4875A family), shadcn ChartContainer/ChartTooltip/ChartLegend wrappers, compact ETB axis ticks, graceful "No records in city scope yet" empty states per chart, footer generation line with the propagation note. Header row carries a "Full report tables & CSV" deep link to /reports#bureau (link-first IA preserved).
+- panels-s6s7.tsx: exported the BureauReport type (type-only import in the dashboard — no runtime cycle).
+- ESLint: replaced setState-in-effect palette hook with a boot-keyed useMemo (react-hooks/set-state-in-effect clean); tsc at the 66-error pre-existing baseline (zero new).
+- LOCAL verify (scripts/verify-task45.sh): 5/5 PASS — seeded 4 payments (1 cash -> auto penalty referral, ETB 30,900+ ledger) + 3 complaints (one full verify->investigate->decide pipeline) as the AA-BOLE-W01 registrar; bureau-head feed then shows 8 receipts / ETB 61,800 / 9 complaints (6 open, 3 decided) / 2 penalty cases / 12 sub-cities / 119 woredas; registrar denied 403.
+- LOCAL browser (scripts/verify-task45-browser.sh): bureau head STF-0005 — section + 6 recharts surfaces + tooltips ("Files | 28") + deep link; registrar STF-0001 — no charts section, 0 surfaces (dashboard unchanged). Screenshots task45-*.png.
+- Commit 65b85d5 pushed (65b85d5 + evidence b6595f7); Vercel live.
+- PRODUCTION verify (scripts/verify-prod-task45.sh): 7/7 PASS — AA feed 200 (11 sub-cities / 118 woredas / 28 files); registrar 403; bureau head sees the section with 6 chart cards (3 charts + 3 by-design empty states for payments/complaints/penalties — production has none of those records yet); deep link present; NEK CITY_ADMIN regression sees "CITY REPORT CHARTS — NEK LEVEL..." correctly scoped (all-empty: NEK currently has 0 files — the Task 38 scenario file is not in the production DB). Screenshots prod-task45-*.png.
+
+Stage Summary:
+- The city dashboard now answers "how is my city doing" at a glance: six different chart types aggregate ALL sub-cities down to every woreda, in the same visual language as the rest of the dashboard and in each city's own brand palette — while the KPI band and sprint links stay untouched. Bureau head + city admin only; charts fill themselves as soon as payments/complaints/penalties exist (proven locally).
+- Production NEK has 0 registration files: the Task 38 lifecycle file must be re-opened in production when Task 38 resumes.
+- Task 38 (Nekemte full business scenario) remains open at the same checkpoint.
+- SECURITY NOTE (standing): GitHub PAT still exposed in chat history — revoke/rotate after the session.

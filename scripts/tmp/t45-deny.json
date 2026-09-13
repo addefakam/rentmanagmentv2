@@ -1,0 +1,1 @@
+{"ok":false,"error":"Role WOREDA_REGISTRAR (STF-0001) is not authorized for capability reports:bureau. Allowed roles: BUREAU_HEAD, CITY_ADMIN, SYSTEM_ADMIN.","rule":"NFR-04 access control (ASVS V4)","code":"AUTH_FORBIDDEN"}
