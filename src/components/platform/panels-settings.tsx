@@ -18,7 +18,8 @@ import { t } from "./i18n";
 import { call } from "./panels-s1";
 import { useBoot } from "./shell";
 import { Panel, Field, TextField, SelectField, ActionButton, DataTable, StatusBadge, TabRail, useHashTab } from "./kit";
-import type { PenaltyParam } from "./types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "../ui/dialog";
+import type { OrgUnit, PenaltyParam } from "./types";
 
 // ---------------------------------------------------------------------------
 // 1 + 2 — identity and statutory parameters share one form per city.
@@ -144,7 +145,10 @@ function LadderEditor() {
 }
 
 // ---------------------------------------------------------------------------
-// 4 — org hierarchy editor: add sub-cities / woredas with trilingual names.
+// 4 — org hierarchy editor: add sub-cities / woredas with trilingual names,
+// and EDIT existing ones (EN / Amharic / Oromoo) via the row Edit dialog.
+// Codes are permanent — they anchor file numbers, staff assignments and the
+// establishment register (O-7); only the three names are editable.
 // NOTE: actions run as the SIGNED-IN officer (no hardcoded actor) — the city
 // scope wall rejects any unit reference outside the officer's own city.
 // ---------------------------------------------------------------------------
@@ -165,9 +169,18 @@ function OrgEditor() {
     const out = await call("/api/org-units", "POST", { ...unit, parentId }, officer.staffCode);
     if (out) { toast.success(`${out.code} registered (pending official register, O-7)`); setUnit({ tier: "WOREDA", code: "", nameEn: "", nameAm: "", nameOm: "" }); await refresh(); }
   };
-  const rename = async (id: string, nameEn: string) => {
-    const out = await call("/api/org-units", "PATCH", { id, nameEn }, officer.staffCode);
-    if (out) { toast.success(`${out.code} renamed`); await refresh(); }
+
+  // Row editing — trilingual names via dialog (codes stay permanent).
+  const [edit, setEdit] = useState<OrgUnit | null>(null);
+  const [editForm, setEditForm] = useState({ nameEn: "", nameAm: "", nameOm: "" });
+  const [busy, setBusy] = useState(false);
+  const openEdit = (u: OrgUnit) => { setEdit(u); setEditForm({ nameEn: u.nameEn, nameAm: u.nameAm, nameOm: u.nameOm }); };
+  const saveEdit = async () => {
+    if (!edit) return;
+    setBusy(true);
+    const out = await call("/api/org-units", "PATCH", { id: edit.id, ...editForm }, officer.staffCode) as { code?: string } | null;
+    setBusy(false);
+    if (out) { toast.success(`${out.code ?? edit.code} updated`); setEdit(null); await refresh(); }
   };
 
   return (
@@ -184,22 +197,46 @@ function OrgEditor() {
       </div>
 
       <DataTable
-        headers={["Code", "Tier", "Name (EN)", "Woredas under sub-city"]}
+        headers={["Code", "Tier", "Names (EN · AM · OM)", "Status", "Actions"]}
         rows={[...subCities, ...woredas].map((u) => [
           <span key={u.id} className="font-mono text-[10px]">{u.code}</span>,
           <span key={`t-${u.id}`} className="text-[10px]">{u.tier.replace("_", " ")}</span>,
-          <span key={`n-${u.id}`} className="flex items-center gap-1">
-            <TextField
-              defaultValue={u.nameEn}
-              onBlur={(e) => { if (e.target.value && e.target.value !== u.nameEn) void rename(u.id, e.target.value); }}
-            />
+          <span key={`n-${u.id}`} className="block max-w-[260px]">
+            <span className="block text-[11px] font-semibold">{u.nameEn}</span>
+            <span className="block text-[10px] text-muted-foreground">{u.nameAm} · {u.nameOm}</span>
           </span>,
           <span key={`c-${u.id}`} className="text-[10px] text-muted-foreground">
             {u.tier === "SUB_CITY" ? `${units.filter((w) => w.parentId === u.id).length} woredas` : u.confirmationStatus === "CONFIRMED" ? "confirmed" : "pending O-7"}
           </span>,
+          <ActionButton key={`a-${u.id}`} variant="outline" onClick={() => openEdit(u)}>Edit</ActionButton>,
         ])}
         empty="No units under this bureau."
       />
+
+      {/* Edit dialog — trilingual names (code is permanent) ---------------- */}
+      <Dialog open={!!edit} onOpenChange={(o) => { if (!o) setEdit(null); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit {edit?.tier === "SUB_CITY" ? "sub-city" : "woreda"} {edit?.code}</DialogTitle>
+            <DialogDescription>
+              Correct the unit&apos;s trilingual names. The code {edit?.code} is permanent — it anchors file numbers, staff assignments and the establishment register (O-7).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3">
+            <Field label="Name (English)"><TextField value={editForm.nameEn} onChange={(e) => setEditForm((f) => ({ ...f, nameEn: e.target.value }))} /></Field>
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <Field label="ስም (አማርኛ)"><TextField value={editForm.nameAm} onChange={(e) => setEditForm((f) => ({ ...f, nameAm: e.target.value }))} /></Field>
+              <Field label="Maqaa (Afaan Oromoo)"><TextField value={editForm.nameOm} onChange={(e) => setEditForm((f) => ({ ...f, nameOm: e.target.value }))} /></Field>
+            </div>
+          </div>
+          <DialogFooter>
+            <ActionButton variant="ghost" onClick={() => setEdit(null)}>Cancel</ActionButton>
+            <ActionButton onClick={saveEdit} disabled={busy || !editForm.nameEn.trim()}>
+              {busy ? "Saving…" : "Save changes"}
+            </ActionButton>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="rounded-lg border bg-muted/20 p-3">
         <p className="mb-2 text-xs font-semibold">Register a new unit</p>
